@@ -26,10 +26,12 @@ import {
     FilterList,
     School,
     Home,
-    ArrowBack
+    ArrowBack,
+    Visibility
 } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
+import QuestionDisplay from './QuestionDisplay';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
@@ -46,6 +48,7 @@ const MathPaperPage = () => {
 
     // Data states
     const [questions, setQuestions] = useState([]);
+    const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -167,6 +170,7 @@ const MathPaperPage = () => {
         setSearchTags([]);
         setSearchInput('');
         setQuestions([]);
+        setSelectedQuestion(null);
         setError('');
     };
 
@@ -398,9 +402,20 @@ const MathPaperPage = () => {
 
                         {questions.map((question, index) => (
                             <Box key={question.id} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                                <Typography variant="subtitle1" gutterBottom>
-                                    <strong>Question {question.question_no}</strong> - Year {question.year}, Paper {question.paper}
-                                </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                    <Typography variant="subtitle1" gutterBottom>
+                                        <strong>Question {question.question_no}</strong> - Year {question.year}, Paper {question.paper}
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<Visibility />}
+                                        onClick={() => setSelectedQuestion(question)}
+                                        sx={{ ml: 2 }}
+                                    >
+                                        View Details
+                                    </Button>
+                                </Box>
 
                                 <Typography variant="body1" sx={{ mb: 2 }}>
                                     <strong>Question:</strong> {question.correct_answer}
@@ -440,6 +455,13 @@ const MathPaperPage = () => {
                             </Box>
                         ))}
                     </Paper>
+                )}
+
+                {/* Question Display Section */}
+                {selectedQuestion && (
+                    <Box sx={{ mt: 4 }}>
+                        <QuestionDisplay question={selectedQuestion} />
+                    </Box>
                 )}
 
                 {/* No Results Message */}
