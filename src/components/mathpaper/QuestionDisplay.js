@@ -107,8 +107,8 @@ const QuestionDisplay = ({ question }) => {
 
             {/* Main Content Area */}
             <Grid container spacing={3}>
-                {/* Solution Area (Left) */}
-                <Grid item xs={12} md={8}>
+                {/* Solution Area (Left - 7/10 width) */}
+                <Grid item xs={12} md={8.4}>
                     <Paper elevation={2} sx={{ p: 4, height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                             <Functions sx={{ mr: 2, color: 'primary.main' }} />
@@ -246,8 +246,8 @@ const QuestionDisplay = ({ question }) => {
                     </Paper>
                 </Grid>
 
-                {/* Diagram Area (Right) */}
-                <Grid item xs={12} md={4}>
+                {/* Diagram Area (Right - 3/10 width) */}
+                <Grid item xs={12} md={3.6}>
                     <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                             <Image sx={{ mr: 2, color: 'primary.main' }} />
