@@ -1,0 +1,461 @@
+import React, { useState, useEffect } from 'react';
+import {
+    Box,
+    Container,
+    Typography,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    TextField,
+    Button,
+    Paper,
+    Grid,
+    Autocomplete,
+    Chip,
+    CircularProgress,
+    Alert,
+    AppBar,
+    Toolbar,
+    IconButton,
+    Breadcrumbs,
+    Link
+} from '@mui/material';
+import {
+    Search,
+    FilterList,
+    School,
+    Home,
+    ArrowBack
+} from '@mui/icons-material';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
+
+const MathPaperPage = () => {
+    const navigate = useNavigate();
+
+    // Filter states
+    const [selectedYear, setSelectedYear] = useState('');
+    const [selectedPaper, setSelectedPaper] = useState('');
+    const [selectedQuestionNo, setSelectedQuestionNo] = useState('');
+
+    // Search states
+    const [searchTags, setSearchTags] = useState([]);
+    const [availableTags, setAvailableTags] = useState([]);
+    const [searchInput, setSearchInput] = useState('');
+
+    // Data states
+    const [questions, setQuestions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    // Generate year options (2012-2025)
+    const yearOptions = Array.from({ length: 14 }, (_, i) => 2012 + i);
+
+    // Paper options
+    const paperOptions = ['I', 'II'];
+
+    // Question number options based on paper type
+    const getQuestionNumberOptions = (paper) => {
+        if (paper === 'I') {
+            return Array.from({ length: 16 }, (_, i) => i + 1);
+        } else if (paper === 'II') {
+            return Array.from({ length: 45 }, (_, i) => i + 1);
+        }
+        return [];
+    };
+
+    // Fetch available tags from Supabase
+    useEffect(() => {
+        const fetchAvailableTags = async () => {
+            try {
+                const { data, error } = await supabase
+                    .rpc('get_all_tags');
+
+                if (error) {
+                    console.error('Error fetching tags:', error);
+                    setError('Failed to load available tags');
+                } else {
+                    setAvailableTags(data || []);
+                }
+            } catch (err) {
+                console.error('Error fetching tags:', err);
+                setError('Failed to load available tags');
+            }
+        };
+
+        fetchAvailableTags();
+    }, []);
+
+    // Handle filter search
+    const handleFilterSearch = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            const { data, error } = await supabase
+                .rpc('filter_math_papers_by_year_paper', {
+                    filter_year: selectedYear || null,
+                    filter_paper: selectedPaper || null
+                });
+
+            if (error) {
+                console.error('Error fetching questions:', error);
+                setError('Failed to fetch questions');
+            } else {
+                // Filter by question number if selected
+                let filteredData = data || [];
+                if (selectedQuestionNo) {
+                    filteredData = filteredData.filter(q => q.question_no === parseInt(selectedQuestionNo));
+                }
+
+                setQuestions(filteredData);
+                console.log('Filtered questions:', filteredData);
+            }
+        } catch (err) {
+            console.error('Error fetching questions:', err);
+            setError('Failed to fetch questions');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle tag search
+    const handleTagSearch = async () => {
+        if (searchTags.length === 0) return;
+
+        setLoading(true);
+        setError('');
+
+        try {
+            // Search for each tag and combine results
+            const allResults = [];
+
+            for (const tag of searchTags) {
+                const { data, error } = await supabase
+                    .rpc('search_math_papers_by_keyword', {
+                        search_term: tag
+                    });
+
+                if (error) {
+                    console.error(`Error searching for tag "${tag}":`, error);
+                } else {
+                    allResults.push(...(data || []));
+                }
+            }
+
+            // Remove duplicates based on id
+            const uniqueResults = allResults.filter((question, index, self) =>
+                index === self.findIndex(q => q.id === question.id)
+            );
+
+            setQuestions(uniqueResults);
+            console.log('Tag search results:', uniqueResults);
+        } catch (err) {
+            console.error('Error searching by tags:', err);
+            setError('Failed to search by tags');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setSelectedYear('');
+        setSelectedPaper('');
+        setSelectedQuestionNo('');
+        setSearchTags([]);
+        setSearchInput('');
+        setQuestions([]);
+        setError('');
+    };
+
+    return (
+        <Box sx={{
+            minHeight: '100vh',
+            backgroundColor: 'background.default',
+            // Prevent vibration effects
+            '& .MuiSelect-select': {
+                transition: 'none !important'
+            },
+            '& .MuiFormControl-root': {
+                transition: 'none !important'
+            },
+            '& .MuiInputBase-root': {
+                transition: 'none !important'
+            },
+            '& .MuiAutocomplete-root': {
+                transition: 'none !important'
+            }
+        }}>
+            <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Toolbar>
+                    <IconButton edge="start" color="primary" onClick={() => navigate('/')} sx={{ mr: 2 }}>
+                        <ArrowBack />
+                    </IconButton>
+                    <Breadcrumbs aria-label="breadcrumb" sx={{ flexGrow: 1 }}>
+                        <Link component={RouterLink} to="/" color="inherit" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Home sx={{ mr: 0.5 }} fontSize="small" /> Home
+                        </Link>
+                        <Typography color="text.primary">Math Past Papers</Typography>
+                    </Breadcrumbs>
+                </Toolbar>
+            </AppBar>
+
+            <Container maxWidth="lg" sx={{ py: 4 }}>
+                <Box sx={{ mb: 4 }}>
+                    <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <School sx={{ mr: 1 }} color="primary" />
+                        Math Past Papers
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Filter and search through past mathematics examination papers
+                    </Typography>
+                </Box>
+
+                {/* Filter Section */}
+                <Paper sx={{ p: 3, mb: 4 }}>
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <FilterList sx={{ mr: 1 }} />
+                        Filter Questions
+                    </Typography>
+
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <FormControl fullWidth>
+                                <InputLabel>Year</InputLabel>
+                                <Select
+                                    value={selectedYear}
+                                    label="Year"
+                                    onChange={(e) => setSelectedYear(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value="">All Years</MenuItem>
+                                    {yearOptions.map((year) => (
+                                        <MenuItem key={year} value={year}>{year}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6} md={3}>
+                            <FormControl fullWidth>
+                                <InputLabel>Paper</InputLabel>
+                                <Select
+                                    value={selectedPaper}
+                                    label="Paper"
+                                    onChange={(e) => {
+                                        setSelectedPaper(e.target.value);
+                                        setSelectedQuestionNo(''); // Reset question number when paper changes
+                                    }}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 200
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value="">All Papers</MenuItem>
+                                    {paperOptions.map((paper) => (
+                                        <MenuItem key={paper} value={paper}>Paper {paper}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6} md={3}>
+                            <FormControl fullWidth>
+                                <InputLabel>Question Number</InputLabel>
+                                <Select
+                                    value={selectedQuestionNo}
+                                    label="Question Number"
+                                    onChange={(e) => setSelectedQuestionNo(e.target.value)}
+                                    disabled={!selectedPaper}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value="">All Questions</MenuItem>
+                                    {getQuestionNumberOptions(selectedPaper).map((num) => (
+                                        <MenuItem key={num} value={num}>{num}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={handleFilterSearch}
+                                disabled={loading}
+                                sx={{ height: 56 }}
+                            >
+                                {loading ? <CircularProgress size={24} /> : 'Search'}
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
+
+                {/* Tag Search Section */}
+                <Paper sx={{ p: 3, mb: 4 }}>
+                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Search sx={{ mr: 1 }} />
+                        Search by Tags
+                    </Typography>
+
+                    <Grid container spacing={3} alignItems="center">
+                        <Grid item xs={12} md={8}>
+                            <Autocomplete
+                                multiple
+                                options={availableTags}
+                                value={searchTags}
+                                onChange={(event, newValue) => setSearchTags(newValue)}
+                                inputValue={searchInput}
+                                onInputChange={(event, newInputValue) => setSearchInput(newInputValue)}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Search by tags"
+                                        placeholder="Type to search tags..."
+                                        helperText="Select multiple tags to search for questions containing any of these tags"
+                                    />
+                                )}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip
+                                            label={option}
+                                            {...getTagProps({ index })}
+                                            color="primary"
+                                            variant="outlined"
+                                        />
+                                    ))
+                                }
+                                freeSolo
+                                filterOptions={(options, params) => {
+                                    const filtered = options.filter(option =>
+                                        option.toLowerCase().includes(params.inputValue.toLowerCase())
+                                    );
+                                    return filtered;
+                                }}
+                                ListboxProps={{
+                                    style: {
+                                        maxHeight: 200
+                                    }
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                onClick={handleTagSearch}
+                                disabled={loading || searchTags.length === 0}
+                                sx={{ height: 56 }}
+                            >
+                                {loading ? <CircularProgress size={24} /> : 'Search Tags'}
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
+
+                {/* Clear Filters Button */}
+                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+                    <Button
+                        variant="text"
+                        onClick={handleClearFilters}
+                        disabled={loading}
+                    >
+                        Clear All Filters
+                    </Button>
+                </Box>
+
+                {/* Error Display */}
+                {error && (
+                    <Alert severity="error" sx={{ mb: 3 }}>
+                        {error}
+                    </Alert>
+                )}
+
+                {/* Results Section */}
+                {questions.length > 0 && (
+                    <Paper sx={{ p: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Results ({questions.length} questions found)
+                        </Typography>
+
+                        {questions.map((question, index) => (
+                            <Box key={question.id} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    <strong>Question {question.question_no}</strong> - Year {question.year}, Paper {question.paper}
+                                </Typography>
+
+                                <Typography variant="body1" sx={{ mb: 2 }}>
+                                    <strong>Question:</strong> {question.correct_answer}
+                                </Typography>
+
+                                <Grid container spacing={2} sx={{ mb: 2 }}>
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="body2"><strong>A:</strong> {question.option_a}</Typography>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="body2"><strong>B:</strong> {question.option_b}</Typography>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="body2"><strong>C:</strong> {question.option_c}</Typography>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="body2"><strong>D:</strong> {question.option_d}</Typography>
+                                    </Grid>
+                                </Grid>
+
+                                {question.tags && question.tags.length > 0 && (
+                                    <Box sx={{ mt: 1 }}>
+                                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>
+                                            <strong>Tags:</strong>
+                                        </Typography>
+                                        {question.tags.map((tag, tagIndex) => (
+                                            <Chip
+                                                key={tagIndex}
+                                                label={tag}
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ mr: 0.5, mb: 0.5 }}
+                                            />
+                                        ))}
+                                    </Box>
+                                )}
+                            </Box>
+                        ))}
+                    </Paper>
+                )}
+
+                {/* No Results Message */}
+                {!loading && questions.length === 0 && (selectedYear || selectedPaper || selectedQuestionNo || searchTags.length > 0) && (
+                    <Paper sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography variant="h6" color="text.secondary">
+                            No questions found matching your criteria
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Try adjusting your filters or search terms
+                        </Typography>
+                    </Paper>
+                )}
+            </Container>
+        </Box>
+    );
+};
+
+export default MathPaperPage;
