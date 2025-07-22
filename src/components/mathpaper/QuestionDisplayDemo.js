@@ -21,7 +21,7 @@ const QuestionDisplayDemo = () => {
         <Container maxWidth="xl" sx={{ py: 4 }}>
             <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <Typography variant="h3" component="h1" gutterBottom sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',

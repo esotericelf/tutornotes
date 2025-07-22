@@ -8,30 +8,41 @@ import LoginPage from './components/auth/LoginPage'
 import Dashboard from './components/dashboard/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import MathPaperPage from './components/mathpaper/MathPaperPage'
+import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
 import './App.css'
 
-// Create Material-UI theme
+// Create Material-UI theme with light color scheme
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
+      main: '#6c757d',
+      light: '#adb5bd',
+      dark: '#495057',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#dee2e6',
+      light: '#f8f9fa',
+      dark: '#ced4da',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#ffffff',
+      paper: '#f8f9fa',
     },
+    text: {
+      primary: '#495057',
+      secondary: '#6c757d',
+    },
+    divider: '#dee2e6',
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h4: {
       fontWeight: 600,
+      color: '#495057',
     },
     h6: {
       fontWeight: 500,
+      color: '#495057',
     },
   },
   components: {
@@ -40,6 +51,21 @@ const theme = createTheme({
         root: {
           textTransform: 'none',
           borderRadius: 8,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        },
+        contained: {
+          backgroundColor: '#6c757d',
+          '&:hover': {
+            backgroundColor: '#495057',
+          },
+        },
+        outlined: {
+          borderColor: '#dee2e6',
+          color: '#6c757d',
+          '&:hover': {
+            borderColor: '#adb5bd',
+            backgroundColor: '#f8f9fa',
+          },
         },
       },
     },
@@ -47,6 +73,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
+          backgroundColor: '#ffffff',
+          border: '1px solid #dee2e6',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
         },
       },
     },
@@ -54,6 +83,30 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
+          backgroundColor: '#ffffff',
+          border: '1px solid #dee2e6',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          color: '#495057',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#f8f9fa',
+          borderColor: '#dee2e6',
+          color: '#6c757d',
+        },
+        outlined: {
+          borderColor: '#dee2e6',
+          color: '#6c757d',
         },
       },
     },
@@ -71,6 +124,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/mathpaper" element={<MathPaperPage />} />
+              <Route path="/question-demo" element={<QuestionDisplayDemo />} />
               <Route
                 path="/dashboard"
                 element={

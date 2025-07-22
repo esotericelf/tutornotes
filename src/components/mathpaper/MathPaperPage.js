@@ -177,7 +177,7 @@ const MathPaperPage = () => {
     return (
         <Box sx={{
             minHeight: '100vh',
-            backgroundColor: 'background.default',
+            backgroundColor: '#ffffff',
             // Prevent vibration effects
             '& .MuiSelect-select': {
                 transition: 'none !important'
@@ -192,7 +192,7 @@ const MathPaperPage = () => {
                 transition: 'none !important'
             }
         }}>
-            <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
+            <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
                 <Toolbar>
                     <IconButton edge="start" color="primary" onClick={() => navigate('/')} sx={{ mr: 2 }}>
                         <ArrowBack />

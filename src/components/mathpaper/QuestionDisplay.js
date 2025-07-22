@@ -37,28 +37,28 @@ const QuestionDisplay = ({ question }) => {
         <Box sx={{ p: 3, maxWidth: '1200px', mx: 'auto' }}>
             {/* Header with Metadata */}
             <Paper
-                elevation={3}
+                elevation={2}
                 sx={{
                     p: 3,
                     mb: 3,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white'
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    border: '1px solid #dee2e6'
                 }}
             >
                 <Grid container spacing={3} alignItems="center">
                     {/* Year Block */}
                     <Grid item xs={12} sm={4}>
                         <Card sx={{
-                            background: 'rgba(255,255,255,0.1)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.2)'
+                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                            border: '1px solid #e9ecef',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                         }}>
                             <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                                <CalendarToday sx={{ fontSize: 40, mb: 1 }} />
-                                <Typography variant="h4" fontWeight="bold">
+                                <CalendarToday sx={{ fontSize: 40, mb: 1, color: '#6c757d' }} />
+                                <Typography variant="h4" fontWeight="bold" color="text.primary">
                                     {question.year}
                                 </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                <Typography variant="body2" color="text.secondary">
                                     Year
                                 </Typography>
                             </CardContent>
@@ -68,16 +68,16 @@ const QuestionDisplay = ({ question }) => {
                     {/* Paper Block */}
                     <Grid item xs={12} sm={4}>
                         <Card sx={{
-                            background: 'rgba(255,255,255,0.1)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.2)'
+                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                            border: '1px solid #e9ecef',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                         }}>
                             <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                                <School sx={{ fontSize: 40, mb: 1 }} />
-                                <Typography variant="h4" fontWeight="bold">
+                                <School sx={{ fontSize: 40, mb: 1, color: '#6c757d' }} />
+                                <Typography variant="h4" fontWeight="bold" color="text.primary">
                                     Paper {question.paper}
                                 </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                <Typography variant="body2" color="text.secondary">
                                     Paper Type
                                 </Typography>
                             </CardContent>
@@ -87,16 +87,16 @@ const QuestionDisplay = ({ question }) => {
                     {/* Question Number Block */}
                     <Grid item xs={12} sm={4}>
                         <Card sx={{
-                            background: 'rgba(255,255,255,0.1)',
-                            backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.2)'
+                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                            border: '1px solid #e9ecef',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                         }}>
                             <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                                <Assignment sx={{ fontSize: 40, mb: 1 }} />
-                                <Typography variant="h4" fontWeight="bold">
+                                <Assignment sx={{ fontSize: 40, mb: 1, color: '#6c757d' }} />
+                                <Typography variant="h4" fontWeight="bold" color="text.primary">
                                     #{question.question_no}
                                 </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                <Typography variant="body2" color="text.secondary">
                                     Question
                                 </Typography>
                             </CardContent>
@@ -128,8 +128,9 @@ const QuestionDisplay = ({ question }) => {
                                 elevation={1}
                                 sx={{
                                     p: 3,
-                                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                                    borderLeft: '4px solid #667eea'
+                                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                    borderLeft: '4px solid #6c757d',
+                                    border: '1px solid #dee2e6'
                                 }}
                             >
                                 <Typography variant="body1" sx={{ mb: 2 }}>
@@ -171,8 +172,9 @@ const QuestionDisplay = ({ question }) => {
                                 elevation={1}
                                 sx={{
                                     p: 3,
-                                    background: 'linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%)',
-                                    borderLeft: '4px solid #28a745'
+                                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                    borderLeft: '4px solid #6c757d',
+                                    border: '1px solid #dee2e6'
                                 }}
                             >
                                 <Typography variant="body1" sx={{ mb: 2 }}>
@@ -216,7 +218,7 @@ const QuestionDisplay = ({ question }) => {
                                     </Box>
                                 </Box>
 
-                                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
                                     Therefore, the extremum occurs at the point (2, -3) and it is a minimum since a &gt; 0.
                                 </Typography>
                             </Paper>
@@ -263,7 +265,7 @@ const QuestionDisplay = ({ question }) => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                                 border: '2px dashed #dee2e6',
                                 borderRadius: 2
                             }}

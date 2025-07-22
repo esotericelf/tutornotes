@@ -73,9 +73,9 @@ const HomePage = () => {
     }
 
     return (
-        <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
+        <Box sx={{ minHeight: '100vh', backgroundColor: '#ffffff' }}>
             {/* Navigation Bar */}
-            <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
+            <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
                 <Toolbar>
                     <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                         <School sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
@@ -84,6 +84,13 @@ const HomePage = () => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => navigate('/question-demo')}
+                            sx={{ mr: 1 }}
+                        >
+                            View Demo
+                        </Button>
                         {user ? (
                             <>
                                 <Button
@@ -122,8 +129,8 @@ const HomePage = () => {
             {/* Hero Section */}
             <Box
                 sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    color: '#495057',
                     py: 12,
                     position: 'relative',
                     overflow: 'hidden'
@@ -170,10 +177,10 @@ const HomePage = () => {
                                 px: 4,
                                 py: 1.5,
                                 fontSize: '1.2rem',
-                                backgroundColor: 'white',
-                                color: 'primary.main',
+                                backgroundColor: '#6c757d',
+                                color: 'white',
                                 '&:hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                                    backgroundColor: '#495057'
                                 }
                             }}
                         >
