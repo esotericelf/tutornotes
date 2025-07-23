@@ -1,295 +1,282 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-    Box,
     Paper,
     Typography,
-    Grid,
-    Chip,
+    Box,
     Divider,
-    Card,
-    CardContent,
+    Collapse,
     IconButton,
-    Tooltip
+    Breadcrumbs,
+    Link
 } from '@mui/material';
-import {
-    School,
-    CalendarToday,
-    Assignment,
-    Functions,
-    Lightbulb,
-    Image
-} from '@mui/icons-material';
-import 'katex/dist/katex.min.css';
+import { ExpandMore, ExpandLess, Home } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
+import { useNavigate } from 'react-router-dom';
+import 'katex/dist/katex.min.css';
 
 const QuestionDisplay = ({ question }) => {
-    if (!question) {
-        return (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
-                    No question selected
+    const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
+    const navigate = useNavigate();
+
+    const handleSolutionDiagramToggle = () => {
+        setSolutionDiagramExpanded(!solutionDiagramExpanded);
+    };
+
+    const handleHomeClick = () => {
+        navigate('/');
+    };
+
+    // Helper function to render text with LaTeX
+    const renderWithLaTeX = (text) => {
+        if (!text) return '';
+
+        // Split text by LaTeX delimiters
+        const parts = text.split(/(\$[^$]+\$|\\\([^)]+\\\)|\\\[[^\]]+\\\])/);
+
+        return parts.map((part, index) => {
+            if (part.startsWith('$') && part.endsWith('$')) {
+                // Inline math: $...$
+                const math = part.slice(1, -1);
+                return <InlineMath key={index} math={math} />;
+            } else if (part.startsWith('\\(') && part.endsWith('\\)')) {
+                // Inline math: \(...\)
+                const math = part.slice(2, -2);
+                return <InlineMath key={index} math={math} />;
+            } else if (part.startsWith('\\[') && part.endsWith('\\]')) {
+                // Block math: \[...\]
+                const math = part.slice(2, -2);
+                return <BlockMath key={index} math={math} />;
+            } else {
+                // Regular text
+                return <span key={index}>{part}</span>;
+            }
+        });
+    };
+
+    // Helper function to render solution with proper formatting
+    const renderSolution = (solution) => {
+        if (!solution) return '';
+
+        return solution.split('\n').map((line, index) => {
+            if (line.trim() === '') {
+                return <Box key={index} sx={{ height: '1rem' }} />;
+            }
+            return (
+                <Typography key={index} variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 1 }}>
+                    {renderWithLaTeX(line)}
                 </Typography>
-            </Box>
-        );
-    }
+            );
+        });
+    };
 
     return (
-        <Box sx={{ p: 3, maxWidth: '1200px', mx: 'auto' }}>
-            {/* Header with Metadata */}
+        <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
+            {/* Breadcrumb Navigation */}
+            <Box sx={{ mb: 3 }}>
+                <Breadcrumbs aria-label="breadcrumb">
+                    <Link
+                        component="button"
+                        variant="body1"
+                        onClick={handleHomeClick}
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            textDecoration: 'none',
+                            color: 'primary.main',
+                            '&:hover': { textDecoration: 'underline' }
+                        }}
+                    >
+                        <Home sx={{ mr: 0.5, fontSize: 20 }} />
+                        Home
+                    </Link>
+                    <Typography color="text.primary">Question {question.question_no}</Typography>
+                </Breadcrumbs>
+            </Box>
+
+            {/* Metadata Row */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                <Paper
+                    elevation={2}
+                    sx={{
+                        padding: 2,
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        minWidth: 120,
+                        textAlign: 'center'
+                    }}
+                >
+                    <Typography variant="h6" fontWeight="bold">
+                        {question.year}
+                    </Typography>
+                    <Typography variant="body2">Year</Typography>
+                </Paper>
+
+                <Paper
+                    elevation={2}
+                    sx={{
+                        padding: 2,
+                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        color: 'white',
+                        minWidth: 120,
+                        textAlign: 'center'
+                    }}
+                >
+                    <Typography variant="h6" fontWeight="bold">
+                        {question.paper}
+                    </Typography>
+                    <Typography variant="body2">Paper</Typography>
+                </Paper>
+
+                <Paper
+                    elevation={2}
+                    sx={{
+                        padding: 2,
+                        background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                        color: 'white',
+                        minWidth: 120,
+                        textAlign: 'center'
+                    }}
+                >
+                    <Typography variant="h6" fontWeight="bold">
+                        {question.question_no}
+                    </Typography>
+                    <Typography variant="body2">Question</Typography>
+                </Paper>
+            </Box>
+
+            {/* Question Section */}
             <Paper
-                elevation={2}
+                elevation={3}
                 sx={{
-                    p: 3,
+                    padding: 4,
                     mb: 3,
-                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                    border: '1px solid #dee2e6'
+                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                    borderRadius: 3
                 }}
             >
-                <Grid container spacing={3} alignItems="center">
-                    {/* Year Block */}
-                    <Grid item xs={12} sm={4}>
-                        <Card sx={{
-                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                            border: '1px solid #e9ecef',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                        }}>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                                <CalendarToday sx={{ fontSize: 40, mb: 1, color: '#6c757d' }} />
-                                <Typography variant="h4" fontWeight="bold" color="text.primary">
-                                    {question.year}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Year
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
+                <Divider sx={{ mb: 2 }} />
 
-                    {/* Paper Block */}
-                    <Grid item xs={12} sm={4}>
-                        <Card sx={{
-                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                            border: '1px solid #e9ecef',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                        }}>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                                <School sx={{ fontSize: 40, mb: 1, color: '#6c757d' }} />
-                                <Typography variant="h4" fontWeight="bold" color="text.primary">
-                                    Paper {question.paper}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Paper Type
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
+                {/* Question Content with optional diagram */}
+                <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                    {/* Question Text - 70% width or full width if no diagram */}
+                    <Box sx={{ flex: question.questionDiagram ? '0 0 70%' : '1 1 100%' }}>
+                        <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 3 }}>
+                            {renderWithLaTeX(question.question)}
+                        </Typography>
 
-                    {/* Question Number Block */}
-                    <Grid item xs={12} sm={4}>
-                        <Card sx={{
-                            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                            border: '1px solid #e9ecef',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                        }}>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                                <Assignment sx={{ fontSize: 40, mb: 1, color: '#6c757d' }} />
-                                <Typography variant="h4" fontWeight="bold" color="text.primary">
-                                    #{question.question_no}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Question
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
-            </Paper>
-
-            {/* Main Content Area */}
-            <Grid container spacing={3}>
-                {/* Solution Area (Left - 7/10 width) */}
-                <Grid item xs={12} md={8.4}>
-                    <Paper elevation={2} sx={{ p: 4, height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                            <Functions sx={{ mr: 2, color: 'primary.main' }} />
-                            <Typography variant="h5" fontWeight="bold">
-                                Question & Solution
-                            </Typography>
-                        </Box>
-
-                        <Divider sx={{ mb: 3 }} />
-
-                        {/* Question Statement */}
-                        <Box sx={{ mb: 4 }}>
-                            <Typography variant="h6" fontWeight="bold" color="primary" gutterBottom>
-                                Question Statement:
-                            </Typography>
-                            <Paper
-                                elevation={1}
-                                sx={{
-                                    p: 3,
-                                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                                    borderLeft: '4px solid #6c757d',
-                                    border: '1px solid #dee2e6'
-                                }}
-                            >
-                                <Typography variant="body1" sx={{ mb: 2 }}>
-                                    {question.correct_answer}
-                                </Typography>
-
-                                {/* Multiple Choice Options */}
-                                <Grid container spacing={2} sx={{ mt: 2 }}>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            A: {question.option_a}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            B: {question.option_b}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            C: {question.option_c}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                            D: {question.option_d}
-                                        </Typography>
-                                    </Grid>
-                                </Grid>
-                            </Paper>
-                        </Box>
-
-                        {/* Solution */}
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold" color="success.main" gutterBottom>
-                                Solution:
-                            </Typography>
-                            <Paper
-                                elevation={1}
-                                sx={{
-                                    p: 3,
-                                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                                    borderLeft: '4px solid #6c757d',
-                                    border: '1px solid #dee2e6'
-                                }}
-                            >
-                                <Typography variant="body1" sx={{ mb: 2 }}>
-                                    To find the extremum of a quadratic function, we use the method of completing the square or calculus.
-                                </Typography>
-
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                        <strong>Step 1:</strong> Identify the quadratic function in standard form:
-                                    </Typography>
-                                    <Box sx={{ textAlign: 'center', my: 2 }}>
-                                        <BlockMath math="f(x) = ax^2 + bx + c" />
-                                    </Box>
-                                </Box>
-
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                        <strong>Step 2:</strong> The vertex form is:
-                                    </Typography>
-                                    <Box sx={{ textAlign: 'center', my: 2 }}>
-                                        <BlockMath math="f(x) = a(x - h)^2 + k" />
-                                    </Box>
-                                </Box>
-
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                        <strong>Step 3:</strong> The coordinates of the vertex (extremum) are:
-                                    </Typography>
-                                    <Box sx={{ textAlign: 'center', my: 2 }}>
-                                        <BlockMath math="h = -\frac{b}{2a}, \quad k = f(h)" />
-                                    </Box>
-                                </Box>
-
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body1" sx={{ mb: 1 }}>
-                                        <strong>Step 4:</strong> For the function <InlineMath math="f(x) = 2x^2 - 8x + 5" />:
-                                    </Typography>
-                                    <Box sx={{ textAlign: 'center', my: 2 }}>
-                                        <BlockMath math="h = -\frac{-8}{2(2)} = 2" />
-                                        <BlockMath math="k = f(2) = 2(2)^2 - 8(2) + 5 = 8 - 16 + 5 = -3" />
-                                    </Box>
-                                </Box>
-
-                                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                                    Therefore, the extremum occurs at the point (2, -3) and it is a minimum since a &gt; 0.
-                                </Typography>
-                            </Paper>
-                        </Box>
-
-                        {/* Tags */}
-                        {question.tags && question.tags.length > 0 && (
+                        {/* Multiple Choice Options */}
+                        {question.options && (
                             <Box sx={{ mt: 3 }}>
-                                <Typography variant="body2" color="text.secondary" gutterBottom>
-                                    Tags:
-                                </Typography>
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                    {question.tags.map((tag, index) => (
-                                        <Chip
-                                            key={index}
-                                            label={tag}
-                                            size="small"
-                                            color="primary"
-                                            variant="outlined"
-                                        />
+                                <Box sx={{ display: 'grid', gap: 1 }}>
+                                    {question.options.map((option, index) => (
+                                        <Box key={index} sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            p: 2,
+                                            bgcolor: 'rgba(255,255,255,0.7)',
+                                            borderRadius: 1,
+                                            border: '1px solid rgba(0,0,0,0.1)'
+                                        }}>
+                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 2, minWidth: '30px' }}>
+                                                {String.fromCharCode(65 + index)})
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {renderWithLaTeX(option)}
+                                            </Typography>
+                                        </Box>
                                     ))}
                                 </Box>
                             </Box>
                         )}
-                    </Paper>
-                </Grid>
+                    </Box>
 
-                {/* Diagram Area (Right - 3/10 width) */}
-                <Grid item xs={12} md={3.6}>
-                    <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                            <Image sx={{ mr: 2, color: 'primary.main' }} />
-                            <Typography variant="h6" fontWeight="bold">
-                                Diagram & Visualization
-                            </Typography>
+                    {/* Question Diagram - 30% width, only if exists */}
+                    {question.questionDiagram && (
+                        <Box sx={{ flex: '0 0 30%' }}>
+                            <Paper
+                                elevation={2}
+                                sx={{
+                                    padding: 2,
+                                    background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                                    borderRadius: 2,
+                                    height: '100%'
+                                }}
+                            >
+                                <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" align="center">
+                                    Diagram
+                                </Typography>
+                                <div dangerouslySetInnerHTML={{ __html: question.questionDiagram }} />
+                            </Paper>
                         </Box>
+                    )}
+                </Box>
+            </Paper>
 
-                        <Divider sx={{ mb: 3 }} />
+            {/* Solution Section */}
+            <Paper
+                elevation={3}
+                sx={{
+                    padding: 4,
+                    background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                    borderRadius: 3
+                }}
+            >
+                <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">
+                    Solution
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
 
-                        {/* Placeholder for Diagram */}
-                        <Box
+                <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                    {/* Solution Text - 70% width */}
+                    <Box sx={{ flex: '0 0 70%' }}>
+                        {renderSolution(question.solution)}
+                    </Box>
+
+                    {/* Solution Diagram - 30% width */}
+                    <Box sx={{ flex: '0 0 30%' }}>
+                        <Paper
+                            elevation={1}
                             sx={{
-                                height: '400px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                                border: '2px dashed #dee2e6',
-                                borderRadius: 2
+                                background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                                borderRadius: 2,
+                                height: 'fit-content',
+                                overflow: 'hidden'
                             }}
                         >
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Image sx={{ fontSize: 60, color: '#adb5bd', mb: 2 }} />
-                                <Typography variant="body2" color="text.secondary">
-                                    Diagram placeholder
+                            <Box
+                                sx={{
+                                    padding: 2,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid rgba(0,0,0,0.1)'
+                                }}
+                                onClick={handleSolutionDiagramToggle}
+                            >
+                                <Typography variant="h6" fontWeight="bold" color="primary">
+                                    Solution Diagram
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Interactive graph will be displayed here
-                                </Typography>
+                                <IconButton size="small">
+                                    {solutionDiagramExpanded ? <ExpandLess /> : <ExpandMore />}
+                                </IconButton>
                             </Box>
-                        </Box>
 
-                        {/* Additional Notes */}
-                        <Box sx={{ mt: 3 }}>
-                            <Typography variant="body2" color="text.secondary">
-                                <strong>Note:</strong> This area will contain interactive diagrams, graphs, and visual aids to help understand the mathematical concepts.
-                            </Typography>
-                        </Box>
-                    </Paper>
-                </Grid>
-            </Grid>
+                            <Collapse in={solutionDiagramExpanded}>
+                                <Box sx={{ padding: 2 }}>
+                                    {question.solutionDiagram ? (
+                                        <div dangerouslySetInnerHTML={{ __html: question.solutionDiagram }} />
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                            No diagram available for this solution.
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Collapse>
+                        </Paper>
+                    </Box>
+                </Box>
+            </Paper>
         </Box>
     );
 };
