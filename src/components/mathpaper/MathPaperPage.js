@@ -21,6 +21,8 @@ import {
     Breadcrumbs,
     Link
 } from '@mui/material';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 import {
     Search,
     FilterList,
@@ -35,6 +37,24 @@ import QuestionDisplay from './QuestionDisplay';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
+    const questionDetailsRef = React.useRef(null);
+
+    // Helper function to render LaTeX content
+    const renderLatexContent = (content) => {
+        if (!content) return null;
+
+        // Split content by LaTeX delimiters
+        const parts = content.split(/(\$[^$]+\$)/);
+
+        return parts.map((part, index) => {
+            if (part.startsWith('$') && part.endsWith('$')) {
+                // Remove the $ delimiters and render as LaTeX
+                const latex = part.slice(1, -1);
+                return <InlineMath key={index} math={latex} />;
+            }
+            return <span key={index}>{part}</span>;
+        });
+    };
 
     // Filter states
     const [selectedYear, setSelectedYear] = useState('');
@@ -114,6 +134,20 @@ const MathPaperPage = () => {
 
                 setQuestions(filteredData);
                 console.log('Filtered questions:', filteredData);
+
+                // If exactly one result and all three filters are specified, show details directly
+                if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
+                    setSelectedQuestion(filteredData[0]);
+                    // Scroll to question details after a short delay to ensure component is rendered
+                    setTimeout(() => {
+                        questionDetailsRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }, 100);
+                } else {
+                    setSelectedQuestion(null);
+                }
             }
         } catch (err) {
             console.error('Error fetching questions:', err);
@@ -197,16 +231,23 @@ const MathPaperPage = () => {
                     <IconButton edge="start" color="primary" onClick={() => navigate('/')} sx={{ mr: 2 }}>
                         <ArrowBack />
                     </IconButton>
-                    <Breadcrumbs aria-label="breadcrumb" sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        Math Past Papers
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+
+            <Container maxWidth="lg" sx={{ py: 4 }}>
+                {/* Breadcrumb */}
+                <Box sx={{ mb: 3 }}>
+                    <Breadcrumbs aria-label="breadcrumb">
                         <Link component={RouterLink} to="/" color="inherit" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
                             <Home sx={{ mr: 0.5 }} fontSize="small" /> Home
                         </Link>
                         <Typography color="text.primary">Math Past Papers</Typography>
                     </Breadcrumbs>
-                </Toolbar>
-            </AppBar>
+                </Box>
 
-            <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Box sx={{ mb: 4 }}>
                     <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <School sx={{ mr: 1 }} color="primary" />
@@ -224,8 +265,8 @@ const MathPaperPage = () => {
                         Filter Questions
                     </Typography>
 
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6} md={3}>
+                    <Grid container spacing={3} alignItems="center">
+                        <Grid item xs={12} sm={6} md={2}>
                             <FormControl fullWidth>
                                 <InputLabel>Year</InputLabel>
                                 <Select
@@ -248,7 +289,7 @@ const MathPaperPage = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid item xs={12} sm={6} md={2}>
                             <FormControl fullWidth>
                                 <InputLabel>Paper</InputLabel>
                                 <Select
@@ -274,7 +315,7 @@ const MathPaperPage = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid item xs={12} sm={6} md={2}>
                             <FormControl fullWidth>
                                 <InputLabel>Question Number</InputLabel>
                                 <Select
@@ -298,29 +339,7 @@ const MathPaperPage = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                onClick={handleFilterSearch}
-                                disabled={loading}
-                                sx={{ height: 56 }}
-                            >
-                                {loading ? <CircularProgress size={24} /> : 'Search'}
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </Paper>
-
-                {/* Tag Search Section */}
-                <Paper sx={{ p: 3, mb: 4 }}>
-                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Search sx={{ mr: 1 }} />
-                        Search by Tags
-                    </Typography>
-
-                    <Grid container spacing={3} alignItems="center">
-                        <Grid item xs={12} md={8}>
+                        <Grid item xs={12} sm={6} md={4}>
                             <Autocomplete
                                 multiple
                                 options={availableTags}
@@ -333,7 +352,8 @@ const MathPaperPage = () => {
                                         {...params}
                                         label="Search by tags"
                                         placeholder="Type to search tags..."
-                                        helperText="Select multiple tags to search for questions containing any of these tags"
+                                        helperText=""
+                                        sx={{ minWidth: '200px' }}
                                     />
                                 )}
                                 renderTags={(value, getTagProps) =>
@@ -343,6 +363,7 @@ const MathPaperPage = () => {
                                             {...getTagProps({ index })}
                                             color="primary"
                                             variant="outlined"
+                                            size="small"
                                         />
                                     ))
                                 }
@@ -361,30 +382,42 @@ const MathPaperPage = () => {
                             />
                         </Grid>
 
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} sm={6} md={1}>
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={handleFilterSearch}
+                                disabled={loading}
+                                sx={{ height: 56 }}
+                            >
+                                {loading ? <CircularProgress size={24} /> : 'Search'}
+                            </Button>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6} md={1}>
                             <Button
                                 variant="outlined"
                                 fullWidth
-                                onClick={handleTagSearch}
-                                disabled={loading || searchTags.length === 0}
+                                onClick={handleClearFilters}
+                                disabled={loading}
                                 sx={{ height: 56 }}
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Search Tags'}
+                                Clear
                             </Button>
                         </Grid>
                     </Grid>
-                </Paper>
 
-                {/* Clear Filters Button */}
-                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
-                    <Button
-                        variant="text"
-                        onClick={handleClearFilters}
-                        disabled={loading}
-                    >
-                        Clear All Filters
-                    </Button>
-                </Box>
+                    <Box sx={{ mt: 2 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={handleTagSearch}
+                            disabled={loading || searchTags.length === 0}
+                            startIcon={<Search />}
+                        >
+                            Search Tags
+                        </Button>
+                    </Box>
+                </Paper>
 
                 {/* Error Display */}
                 {error && (
@@ -394,7 +427,7 @@ const MathPaperPage = () => {
                 )}
 
                 {/* Results Section */}
-                {questions.length > 0 && (
+                {questions.length > 0 && !selectedQuestion && (
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom>
                             Results ({questions.length} questions found)
@@ -404,7 +437,30 @@ const MathPaperPage = () => {
                             <Box key={question.id} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                                     <Typography variant="subtitle1" gutterBottom>
-                                        <strong>Question {question.question_no}</strong> - Year {question.year}, Paper {question.paper}
+                                        <strong>Question {question.question_no}</strong> -
+                                        <Box component="span" sx={{
+                                            color: '#ffffff',
+                                            fontWeight: 'bold',
+                                            backgroundColor: '#87ceeb',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: 1,
+                                            mx: 0.5
+                                        }}>
+                                            Year {question.year}
+                                        </Box>
+                                        ,
+                                        <Box component="span" sx={{
+                                            color: '#ffffff',
+                                            fontWeight: 'bold',
+                                            backgroundColor: '#ffa500',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: 1,
+                                            mx: 0.5
+                                        }}>
+                                            Paper {question.paper}
+                                        </Box>
                                     </Typography>
                                     <Button
                                         variant="outlined"
@@ -418,21 +474,21 @@ const MathPaperPage = () => {
                                 </Box>
 
                                 <Typography variant="body1" sx={{ mb: 2 }}>
-                                    <strong>Question:</strong> {question.correct_answer}
+                                    <strong>Question:</strong> {renderLatexContent(question.correct_answer)}
                                 </Typography>
 
                                 <Grid container spacing={2} sx={{ mb: 2 }}>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>A:</strong> {question.option_a}</Typography>
+                                        <Typography variant="body2"><strong>A:</strong> {renderLatexContent(question.option_a)}</Typography>
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>B:</strong> {question.option_b}</Typography>
+                                        <Typography variant="body2"><strong>B:</strong> {renderLatexContent(question.option_b)}</Typography>
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>C:</strong> {question.option_c}</Typography>
+                                        <Typography variant="body2"><strong>C:</strong> {renderLatexContent(question.option_c)}</Typography>
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>D:</strong> {question.option_d}</Typography>
+                                        <Typography variant="body2"><strong>D:</strong> {renderLatexContent(question.option_d)}</Typography>
                                     </Grid>
                                 </Grid>
 
@@ -459,13 +515,24 @@ const MathPaperPage = () => {
 
                 {/* Question Display Section */}
                 {selectedQuestion && (
-                    <Box sx={{ mt: 4 }}>
+                    <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
+                        {questions.length > 1 && (
+                            <Box sx={{ mb: 3 }}>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<ArrowBack />}
+                                    onClick={() => setSelectedQuestion(null)}
+                                >
+                                    Back to Results ({questions.length} questions)
+                                </Button>
+                            </Box>
+                        )}
                         <QuestionDisplay question={selectedQuestion} />
                     </Box>
                 )}
 
                 {/* No Results Message */}
-                {!loading && questions.length === 0 && (selectedYear || selectedPaper || selectedQuestionNo || searchTags.length > 0) && (
+                {!loading && questions.length === 0 && !selectedQuestion && (selectedYear || selectedPaper || selectedQuestionNo || searchTags.length > 0) && (
                     <Paper sx={{ p: 3, textAlign: 'center' }}>
                         <Typography variant="h6" color="text.secondary">
                             No questions found matching your criteria

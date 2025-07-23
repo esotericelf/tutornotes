@@ -84,13 +84,6 @@ const HomePage = () => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => navigate('/question-demo')}
-                            sx={{ mr: 1 }}
-                        >
-                            View Demo
-                        </Button>
                         {user ? (
                             <>
                                 <Button

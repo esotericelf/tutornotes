@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Typography, Box } from '@mui/material';
+import { Container, Box } from '@mui/material';
 import QuestionDisplay from './QuestionDisplay';
 
 const QuestionDisplayDemo = () => {

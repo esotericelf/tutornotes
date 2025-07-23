@@ -5,25 +5,17 @@ import {
     Box,
     Divider,
     Collapse,
-    IconButton,
-    Breadcrumbs,
-    Link
+    IconButton
 } from '@mui/material';
-import { ExpandMore, ExpandLess, Home } from '@mui/icons-material';
+import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
-import { useNavigate } from 'react-router-dom';
 import 'katex/dist/katex.min.css';
 
 const QuestionDisplay = ({ question }) => {
     const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
-    const navigate = useNavigate();
 
     const handleSolutionDiagramToggle = () => {
         setSolutionDiagramExpanded(!solutionDiagramExpanded);
-    };
-
-    const handleHomeClick = () => {
-        navigate('/');
     };
 
     // Helper function to render text with LaTeX
@@ -71,28 +63,6 @@ const QuestionDisplay = ({ question }) => {
 
     return (
         <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
-            {/* Breadcrumb Navigation */}
-            <Box sx={{ mb: 3 }}>
-                <Breadcrumbs aria-label="breadcrumb">
-                    <Link
-                        component="button"
-                        variant="body1"
-                        onClick={handleHomeClick}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            textDecoration: 'none',
-                            color: 'primary.main',
-                            '&:hover': { textDecoration: 'underline' }
-                        }}
-                    >
-                        <Home sx={{ mr: 0.5, fontSize: 20 }} />
-                        Home
-                    </Link>
-                    <Typography color="text.primary">Question {question.question_no}</Typography>
-                </Breadcrumbs>
-            </Box>
-
             {/* Metadata Row */}
             <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                 <Paper
@@ -144,73 +114,77 @@ const QuestionDisplay = ({ question }) => {
                 </Paper>
             </Box>
 
-            {/* Question Section */}
-            <Paper
-                elevation={3}
-                sx={{
-                    padding: 4,
-                    mb: 3,
-                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                    borderRadius: 3
-                }}
-            >
-                <Divider sx={{ mb: 2 }} />
+            {/* Question Section - Only show if question text or diagram exists */}
+            {(question.question || question.questionDiagram) && (
+                <Paper
+                    elevation={3}
+                    sx={{
+                        padding: 4,
+                        mb: 3,
+                        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                        borderRadius: 3
+                    }}
+                >
+                    <Divider sx={{ mb: 2 }} />
 
-                {/* Question Content with optional diagram */}
-                <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-                    {/* Question Text - 70% width or full width if no diagram */}
-                    <Box sx={{ flex: question.questionDiagram ? '0 0 70%' : '1 1 100%' }}>
-                        <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 3 }}>
-                            {renderWithLaTeX(question.question)}
-                        </Typography>
+                    {/* Question Content with optional diagram */}
+                    <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                        {/* Question Text - 70% width or full width if no diagram */}
+                        <Box sx={{ flex: question.questionDiagram ? '0 0 70%' : '1 1 100%' }}>
+                            {question.question && (
+                                <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 3 }}>
+                                    {renderWithLaTeX(question.question)}
+                                </Typography>
+                            )}
 
-                        {/* Multiple Choice Options */}
-                        {question.options && (
-                            <Box sx={{ mt: 3 }}>
-                                <Box sx={{ display: 'grid', gap: 1 }}>
-                                    {question.options.map((option, index) => (
-                                        <Box key={index} sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            p: 2,
-                                            bgcolor: 'rgba(255,255,255,0.7)',
-                                            borderRadius: 1,
-                                            border: '1px solid rgba(0,0,0,0.1)'
-                                        }}>
-                                            <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 2, minWidth: '30px' }}>
-                                                {String.fromCharCode(65 + index)})
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {renderWithLaTeX(option)}
-                                            </Typography>
-                                        </Box>
-                                    ))}
+                            {/* Multiple Choice Options */}
+                            {question.options && (
+                                <Box sx={{ mt: 3 }}>
+                                    <Box sx={{ display: 'grid', gap: 1 }}>
+                                        {question.options.map((option, index) => (
+                                            <Box key={index} sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                p: 2,
+                                                bgcolor: 'rgba(255,255,255,0.7)',
+                                                borderRadius: 1,
+                                                border: '1px solid rgba(0,0,0,0.1)'
+                                            }}>
+                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 2, minWidth: '30px' }}>
+                                                    {String.fromCharCode(65 + index)})
+                                                </Typography>
+                                                <Typography variant="body1">
+                                                    {renderWithLaTeX(option)}
+                                                </Typography>
+                                            </Box>
+                                        ))}
+                                    </Box>
                                 </Box>
+                            )}
+                        </Box>
+
+                        {/* Question Diagram - 30% width, only if exists */}
+                        {question.questionDiagram && (
+                            <Box sx={{ flex: '0 0 30%' }}>
+                                <Paper
+                                    elevation={2}
+                                    sx={{
+                                        padding: 2,
+                                        background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                                        borderRadius: 2,
+                                        height: '100%'
+                                    }}
+                                >
+                                    <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" align="center">
+                                        Diagram
+                                    </Typography>
+                                    <div dangerouslySetInnerHTML={{ __html: question.questionDiagram }} />
+                                </Paper>
                             </Box>
                         )}
                     </Box>
-
-                    {/* Question Diagram - 30% width, only if exists */}
-                    {question.questionDiagram && (
-                        <Box sx={{ flex: '0 0 30%' }}>
-                            <Paper
-                                elevation={2}
-                                sx={{
-                                    padding: 2,
-                                    background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-                                    borderRadius: 2,
-                                    height: '100%'
-                                }}
-                            >
-                                <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" align="center">
-                                    Diagram
-                                </Typography>
-                                <div dangerouslySetInnerHTML={{ __html: question.questionDiagram }} />
-                            </Paper>
-                        </Box>
-                    )}
-                </Box>
-            </Paper>
+                </Paper>
+            )}
 
             {/* Solution Section */}
             <Paper
