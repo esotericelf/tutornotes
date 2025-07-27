@@ -21,7 +21,7 @@ import {
     Breadcrumbs,
     Link
 } from '@mui/material';
-import { InlineMath, BlockMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import {
     Search,
@@ -433,83 +433,75 @@ const MathPaperPage = () => {
                             Results ({questions.length} questions found)
                         </Typography>
 
-                        {questions.map((question, index) => (
-                            <Box key={question.id} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                    <Typography variant="subtitle1" gutterBottom>
-                                        <strong>Question {question.question_no}</strong> -
-                                        <Box component="span" sx={{
-                                            color: '#ffffff',
-                                            fontWeight: 'bold',
-                                            backgroundColor: '#87ceeb',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: 1,
-                                            mx: 0.5
-                                        }}>
-                                            Year {question.year}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {questions.map((question, index) => (
+                                <Box
+                                    key={question.id}
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        p: 2,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        borderRadius: 1,
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: 'action.hover',
+                                            borderColor: 'primary.main'
+                                        },
+                                        transition: 'all 0.2s ease-in-out'
+                                    }}
+                                    onClick={() => setSelectedQuestion(question)}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 'bold', minWidth: 60 }}>
+                                            #{index + 1}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Chip
+                                                label={`Year ${question.year}`}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: '#87ceeb',
+                                                    color: '#ffffff',
+                                                    fontWeight: 'bold'
+                                                }}
+                                            />
+                                            <Chip
+                                                label={`Paper ${question.paper}`}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: '#ffa500',
+                                                    color: '#ffffff',
+                                                    fontWeight: 'bold'
+                                                }}
+                                            />
+                                            <Chip
+                                                label={`Q${question.question_no}`}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: '#6c757d',
+                                                    color: '#ffffff',
+                                                    fontWeight: 'bold'
+                                                }}
+                                            />
                                         </Box>
-                                        ,
-                                        <Box component="span" sx={{
-                                            color: '#ffffff',
-                                            fontWeight: 'bold',
-                                            backgroundColor: '#ffa500',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: 1,
-                                            mx: 0.5
-                                        }}>
-                                            Paper {question.paper}
-                                        </Box>
-                                    </Typography>
+                                    </Box>
                                     <Button
                                         variant="outlined"
                                         size="small"
                                         startIcon={<Visibility />}
-                                        onClick={() => setSelectedQuestion(question)}
-                                        sx={{ ml: 2 }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedQuestion(question);
+                                        }}
                                     >
-                                        View Details
+                                        View
                                     </Button>
                                 </Box>
-
-                                <Typography variant="body1" sx={{ mb: 2 }}>
-                                    <strong>Question:</strong> {renderLatexContent(question.correct_answer)}
-                                </Typography>
-
-                                <Grid container spacing={2} sx={{ mb: 2 }}>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>A:</strong> {renderLatexContent(question.option_a)}</Typography>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>B:</strong> {renderLatexContent(question.option_b)}</Typography>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>C:</strong> {renderLatexContent(question.option_c)}</Typography>
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <Typography variant="body2"><strong>D:</strong> {renderLatexContent(question.option_d)}</Typography>
-                                    </Grid>
-                                </Grid>
-
-                                {question.tags && question.tags.length > 0 && (
-                                    <Box sx={{ mt: 1 }}>
-                                        <Typography variant="body2" component="span" sx={{ mr: 1 }}>
-                                            <strong>Tags:</strong>
-                                        </Typography>
-                                        {question.tags.map((tag, tagIndex) => (
-                                            <Chip
-                                                key={tagIndex}
-                                                label={tag}
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ mr: 0.5, mb: 0.5 }}
-                                            />
-                                        ))}
-                                    </Box>
-                                )}
-                            </Box>
-                        ))}
+                            ))}
+                        </Box>
                     </Paper>
                 )}
 

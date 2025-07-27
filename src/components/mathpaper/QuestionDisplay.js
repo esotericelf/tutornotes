@@ -4,7 +4,6 @@ import {
     Typography,
     Box,
     Divider,
-    Collapse,
     IconButton
 } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
@@ -61,6 +60,27 @@ const QuestionDisplay = ({ question }) => {
         });
     };
 
+    // Helper function to convert GeoGebra URL to iframe
+    const renderGeoGebraDiagram = (url) => {
+        if (!url) return null;
+
+        // Check if it's already an iframe
+        if (url.includes('<iframe')) {
+            // If it's already a full iframe, just return it as is
+            return url;
+        }
+
+        // Convert GeoGebra URL to iframe
+        // Format: https://www.geogebra.org/m/pjvsczsg
+        if (url.includes('geogebra.org/m/')) {
+            const materialId = url.split('/m/')[1];
+            const iframeHtml = `<iframe scrolling="no" title="GeoGebra Diagram" src="https://www.geogebra.org/material/iframe/id/${materialId}/width/100%/height/100%/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="100%" height="100%" style="border:0px;"></iframe>`;
+            return iframeHtml;
+        }
+
+        return url;
+    };
+
     return (
         <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
             {/* Metadata Row */}
@@ -115,7 +135,7 @@ const QuestionDisplay = ({ question }) => {
             </Box>
 
             {/* Question Section - Only show if question text or diagram exists */}
-            {(question.question || question.questionDiagram) && (
+            {(question.question || question.question_diagram) && (
                 <Paper
                     elevation={3}
                     sx={{
@@ -130,7 +150,7 @@ const QuestionDisplay = ({ question }) => {
                     {/* Question Content with optional diagram */}
                     <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
                         {/* Question Text - 70% width or full width if no diagram */}
-                        <Box sx={{ flex: question.questionDiagram ? '0 0 70%' : '1 1 100%' }}>
+                        <Box sx={{ flex: question.question_diagram ? '0 0 70%' : '1 1 100%' }}>
                             {question.question && (
                                 <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 3 }}>
                                     {renderWithLaTeX(question.question)}
@@ -164,7 +184,7 @@ const QuestionDisplay = ({ question }) => {
                         </Box>
 
                         {/* Question Diagram - 30% width, only if exists */}
-                        {question.questionDiagram && (
+                        {question.question_diagram && (
                             <Box sx={{ flex: '0 0 30%' }}>
                                 <Paper
                                     elevation={2}
@@ -178,7 +198,7 @@ const QuestionDisplay = ({ question }) => {
                                     <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" align="center">
                                         Diagram
                                     </Typography>
-                                    <div dangerouslySetInnerHTML={{ __html: question.questionDiagram }} />
+                                    <div dangerouslySetInnerHTML={{ __html: renderGeoGebraDiagram(question.question_diagram) }} />
                                 </Paper>
                             </Box>
                         )}
@@ -195,58 +215,131 @@ const QuestionDisplay = ({ question }) => {
                     borderRadius: 3
                 }}
             >
-                <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">
-                    Solution
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h5" fontWeight="bold" color="primary">
+                        Solution
+                    </Typography>
+
+                    {/* Correct Answer Badge */}
+                    {question.correct_answer && (
+                        <Paper
+                            elevation={2}
+                            sx={{
+                                padding: 2,
+                                background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+                                color: 'white',
+                                minWidth: 120,
+                                textAlign: 'center'
+                            }}
+                        >
+                            <Typography variant="h6" fontWeight="bold">
+                                {question.correct_answer}
+                            </Typography>
+                            <Typography variant="body2">Correct Answer</Typography>
+                        </Paper>
+                    )}
+                </Box>
                 <Divider sx={{ mb: 2 }} />
 
-                <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
-                    {/* Solution Text - 70% width */}
-                    <Box sx={{ flex: '0 0 70%' }}>
+                <Box sx={{ display: 'flex', gap: 3, position: 'relative', minHeight: '300px' }}>
+                    {/* Solution Text - Full width when diagram collapsed, 50% when expanded */}
+                    <Box sx={{
+                        flex: solutionDiagramExpanded ? '0 0 50%' : '1 1 100%',
+                        transition: 'flex 0.3s ease-in-out',
+                        paddingRight: solutionDiagramExpanded ? 0 : '70px'
+                    }}>
                         {renderSolution(question.solution)}
                     </Box>
 
-                    {/* Solution Diagram - 30% width */}
-                    <Box sx={{ flex: '0 0 30%' }}>
+                    {/* Solution Diagram Sidebar - 50% width, full height, collapsible */}
+                    <Box sx={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: solutionDiagramExpanded ? '50%' : '60px',
+                        transition: 'width 0.3s ease-in-out',
+                        zIndex: 1
+                    }}>
                         <Paper
-                            elevation={1}
+                            elevation={3}
                             sx={{
+                                width: '100%',
+                                height: '100%',
                                 background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
                                 borderRadius: 2,
-                                height: 'fit-content',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column'
                             }}
                         >
+                            {/* Toggle Button */}
                             <Box
                                 sx={{
-                                    padding: 2,
+                                    padding: 1,
                                     display: 'flex',
-                                    justifyContent: 'space-between',
+                                    justifyContent: 'center',
                                     alignItems: 'center',
                                     cursor: 'pointer',
-                                    borderBottom: '1px solid rgba(0,0,0,0.1)'
+                                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255,255,255,0.2)'
+                                    }
                                 }}
                                 onClick={handleSolutionDiagramToggle}
                             >
-                                <Typography variant="h6" fontWeight="bold" color="primary">
-                                    Solution Diagram
-                                </Typography>
-                                <IconButton size="small">
+                                <IconButton size="small" color="primary">
                                     {solutionDiagramExpanded ? <ExpandLess /> : <ExpandMore />}
                                 </IconButton>
+                                {solutionDiagramExpanded && (
+                                    <Typography variant="body2" fontWeight="bold" color="primary" sx={{ ml: 1 }}>
+                                        Solution Diagram
+                                    </Typography>
+                                )}
                             </Box>
 
-                            <Collapse in={solutionDiagramExpanded}>
-                                <Box sx={{ padding: 2 }}>
-                                    {question.solutionDiagram ? (
-                                        <div dangerouslySetInnerHTML={{ __html: question.solutionDiagram }} />
+                            {/* Diagram Content */}
+                            <Box sx={{
+                                flex: 1,
+                                padding: 0,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                overflow: 'hidden'
+                            }}>
+                                {solutionDiagramExpanded ? (
+                                    question.solution_diagram ? (
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: renderGeoGebraDiagram(question.solution_diagram) }}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center'
+                                            }}
+                                        />
                                     ) : (
                                         <Typography variant="body2" color="text.secondary">
                                             No diagram available for this solution.
                                         </Typography>
-                                    )}
-                                </Box>
-                            </Collapse>
+                                    )
+                                ) : (
+                                    <Typography
+                                        variant="body2"
+                                        color="primary"
+                                        sx={{
+                                            writingMode: 'vertical-rl',
+                                            textOrientation: 'mixed',
+                                            transform: 'rotate(180deg)',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Diagram
+                                    </Typography>
+                                )}
+                            </Box>
                         </Paper>
                     </Box>
                 </Box>
