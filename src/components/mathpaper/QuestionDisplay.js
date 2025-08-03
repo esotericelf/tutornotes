@@ -12,10 +12,45 @@ import 'katex/dist/katex.min.css';
 
 const QuestionDisplay = ({ question }) => {
     const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
+    const [selectedDiagramIndex, setSelectedDiagramIndex] = useState(0);
 
     const handleSolutionDiagramToggle = () => {
         setSolutionDiagramExpanded(!solutionDiagramExpanded);
     };
+
+    // Parse solution_diagram - could be string, array, or PostgreSQL array
+    const getSolutionDiagrams = () => {
+        if (!question.solution_diagram) return [];
+
+        // If it's already an array, return it
+        if (Array.isArray(question.solution_diagram)) {
+            return question.solution_diagram;
+        }
+
+        // If it's a string, check if it's a PostgreSQL array format
+        if (typeof question.solution_diagram === 'string') {
+            // PostgreSQL array format: {item1,item2,item3}
+            if (question.solution_diagram.startsWith('{') && question.solution_diagram.endsWith('}')) {
+                const content = question.solution_diagram.slice(1, -1); // Remove { and }
+                if (content.trim() === '') return [];
+                return content.split(',').map(item => item.trim().replace(/^"(.*)"$/, '$1'));
+            }
+
+            // Try to parse as JSON array
+            try {
+                const parsed = JSON.parse(question.solution_diagram);
+                return Array.isArray(parsed) ? parsed : [question.solution_diagram];
+            } catch {
+                // If parsing fails, treat as single string
+                return [question.solution_diagram];
+            }
+        }
+
+        // Fallback: treat as single item
+        return [question.solution_diagram];
+    };
+
+    const solutionDiagrams = getSolutionDiagrams();
 
     // Helper function to render text with LaTeX
     const renderWithLaTeX = (text) => {
@@ -60,25 +95,53 @@ const QuestionDisplay = ({ question }) => {
         });
     };
 
-    // Helper function to convert GeoGebra URL to iframe
-    const renderGeoGebraDiagram = (url) => {
-        if (!url) return null;
+    // Helper function to render various diagram types including HTML
+    const renderGeoGebraDiagram = (content) => {
+        if (!content) return null;
 
         // Check if it's already an iframe
-        if (url.includes('<iframe')) {
-            // If it's already a full iframe, just return it as is
-            return url;
+        if (content.includes('<iframe')) {
+            return content;
+        }
+
+        // Check if it's HTML content (starts with < and contains HTML tags)
+        if (content.trim().startsWith('<') && (content.includes('<div') || content.includes('<svg') || content.includes('<html'))) {
+            return content; // Return HTML content as-is
+        }
+
+        // Check if it's a URL to an HTML file or JSXGraph
+        if (content.includes('.html') || (content.includes('http') && !content.includes('geogebra.org') && !content.includes('replit'))) {
+            // Special handling for JSXGraph URLs
+            if (content.includes('jsxgraphdemo.netlify.app')) {
+                return `<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <iframe src="${content}"
+                            width="100%"
+                            height="500px"
+                            style="border: none; background: white; overflow: hidden;"
+                            title="JSXGraph Diagram"
+                            scrolling="no"
+                            allowfullscreen>
+                    </iframe>
+                </div>`;
+            }
+            return `<iframe src="${content}" width="100%" height="100%" style="border: none; overflow: hidden;" title="HTML Diagram" scrolling="no" allowfullscreen></iframe>`;
         }
 
         // Convert GeoGebra URL to iframe
-        // Format: https://www.geogebra.org/m/pjvsczsg
-        if (url.includes('geogebra.org/m/')) {
-            const materialId = url.split('/m/')[1];
+        if (content.includes('geogebra.org/m/')) {
+            const materialId = content.split('/m/')[1];
             const iframeHtml = `<iframe scrolling="no" title="GeoGebra Diagram" src="https://www.geogebra.org/material/iframe/id/${materialId}/width/100%/height/100%/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="100%" height="100%" style="border:0px;"></iframe>`;
             return iframeHtml;
         }
 
-        return url;
+        // Convert Replit URL to iframe
+        if (content.includes('replit.dev') || content.includes('replit.com') || content.includes('replit.app')) {
+            const iframeHtml = `<iframe src="${content}" width="100%" height="100%" style="border:0px;" title="Replit Diagram" allowfullscreen></iframe>`;
+            return iframeHtml;
+        }
+
+        // If it's plain text, wrap it in a div
+        return `<div style="padding: 20px; text-align: center;">${content}</div>`;
     };
 
     return (
@@ -266,7 +329,7 @@ const QuestionDisplay = ({ question }) => {
                             sx={{
                                 width: '100%',
                                 height: '100%',
-                                background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                                background: '#F4FFED',
                                 borderRadius: 2,
                                 overflow: 'hidden',
                                 display: 'flex',
@@ -304,24 +367,79 @@ const QuestionDisplay = ({ question }) => {
                                 flex: 1,
                                 padding: 0,
                                 display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
+                                flexDirection: 'column',
                                 overflow: 'hidden'
                             }}>
                                 {solutionDiagramExpanded ? (
-                                    question.solution_diagram ? (
-                                        <div
-                                            dangerouslySetInnerHTML={{ __html: renderGeoGebraDiagram(question.solution_diagram) }}
-                                            style={{
-                                                width: '100%',
-                                                height: '100%',
+                                    solutionDiagrams.length > 0 ? (
+                                        <>
+                                            {/* Diagram Tabs - Only show if multiple diagrams */}
+                                            {solutionDiagrams.length > 1 && (
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                                    overflowX: 'auto',
+                                                    '&::-webkit-scrollbar': {
+                                                        height: '4px'
+                                                    },
+                                                    '&::-webkit-scrollbar-track': {
+                                                        background: 'rgba(0,0,0,0.1)'
+                                                    },
+                                                    '&::-webkit-scrollbar-thumb': {
+                                                        background: 'rgba(0,0,0,0.3)',
+                                                        borderRadius: '2px'
+                                                    }
+                                                }}>
+                                                    {solutionDiagrams.map((_, index) => (
+                                                        <Box
+                                                            key={index}
+                                                            sx={{
+                                                                padding: '8px 16px',
+                                                                cursor: 'pointer',
+                                                                borderBottom: selectedDiagramIndex === index ? '2px solid #1976d2' : 'none',
+                                                                backgroundColor: selectedDiagramIndex === index ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
+                                                                color: selectedDiagramIndex === index ? '#1976d2' : 'inherit',
+                                                                fontWeight: selectedDiagramIndex === index ? 'bold' : 'normal',
+                                                                whiteSpace: 'nowrap',
+                                                                minWidth: 'fit-content',
+                                                                '&:hover': {
+                                                                    backgroundColor: 'rgba(25, 118, 210, 0.05)'
+                                                                }
+                                                            }}
+                                                            onClick={() => setSelectedDiagramIndex(index)}
+                                                        >
+                                                            {index + 1}
+                                                        </Box>
+                                                    ))}
+                                                </Box>
+                                            )}
+
+                                            {/* Diagram Display */}
+                                            <Box sx={{
+                                                flex: 1,
                                                 display: 'flex',
                                                 justifyContent: 'center',
-                                                alignItems: 'center'
-                                            }}
-                                        />
+                                                alignItems: 'center',
+                                                overflow: 'auto',
+                                                padding: 1
+                                            }}>
+                                                <div
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: renderGeoGebraDiagram(solutionDiagrams[selectedDiagramIndex])
+                                                    }}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center'
+                                                    }}
+                                                />
+                                            </Box>
+                                        </>
                                     ) : (
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
                                             No diagram available for this solution.
                                         </Typography>
                                     )
@@ -333,10 +451,12 @@ const QuestionDisplay = ({ question }) => {
                                             writingMode: 'vertical-rl',
                                             textOrientation: 'mixed',
                                             transform: 'rotate(180deg)',
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
+                                            alignSelf: 'center',
+                                            justifySelf: 'center'
                                         }}
                                     >
-                                        Diagram
+                                        {solutionDiagrams.length > 1 ? `${solutionDiagrams.length} Diagrams` : 'Diagram'}
                                     </Typography>
                                 )}
                             </Box>
