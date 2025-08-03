@@ -113,18 +113,18 @@ const QuestionDisplay = ({ question }) => {
         if (content.includes('.html') || (content.includes('http') && !content.includes('geogebra.org') && !content.includes('replit'))) {
             // Special handling for JSXGraph URLs
             if (content.includes('jsxgraphdemo.netlify.app')) {
-                return `<div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                return `<div style="background: transparent; padding: 0; border-radius: 0; box-shadow: none;">
                     <iframe src="${content}"
                             width="100%"
                             height="500px"
-                            style="border: none; background: white; overflow: hidden;"
+                            style="border: none; background: transparent; overflow: hidden;"
                             title="JSXGraph Diagram"
                             scrolling="no"
                             allowfullscreen>
                     </iframe>
                 </div>`;
             }
-            return `<iframe src="${content}" width="100%" height="100%" style="border: none; overflow: hidden;" title="HTML Diagram" scrolling="no" allowfullscreen></iframe>`;
+            return `<iframe src="${content}" width="100%" height="100%" style="border: none; background: transparent; overflow: hidden;" title="HTML Diagram" scrolling="no" allowfullscreen></iframe>`;
         }
 
         // Convert GeoGebra URL to iframe
@@ -136,12 +136,12 @@ const QuestionDisplay = ({ question }) => {
 
         // Convert Replit URL to iframe
         if (content.includes('replit.dev') || content.includes('replit.com') || content.includes('replit.app')) {
-            const iframeHtml = `<iframe src="${content}" width="100%" height="100%" style="border:0px;" title="Replit Diagram" allowfullscreen></iframe>`;
+            const iframeHtml = `<iframe src="${content}" width="100%" height="100%" style="border:0px; background: transparent;" title="Replit Diagram" allowfullscreen></iframe>`;
             return iframeHtml;
         }
 
         // If it's plain text, wrap it in a div
-        return `<div style="padding: 20px; text-align: center;">${content}</div>`;
+        return `<div style="padding: 0; text-align: center; background: transparent;">${content}</div>`;
     };
 
     return (
@@ -304,7 +304,7 @@ const QuestionDisplay = ({ question }) => {
                 </Box>
                 <Divider sx={{ mb: 2 }} />
 
-                <Box sx={{ display: 'flex', gap: 3, position: 'relative', minHeight: '300px' }}>
+                <Box sx={{ display: 'flex', gap: 3, position: 'relative', minHeight: '500px' }}>
                     {/* Solution Text - Full width when diagram collapsed, 50% when expanded */}
                     <Box sx={{
                         flex: solutionDiagramExpanded ? '0 0 50%' : '1 1 100%',
@@ -421,8 +421,8 @@ const QuestionDisplay = ({ question }) => {
                                                 display: 'flex',
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
-                                                overflow: 'auto',
-                                                padding: 1
+                                                overflow: 'hidden',
+                                                padding: 0
                                             }}>
                                                 <div
                                                     dangerouslySetInnerHTML={{
@@ -453,7 +453,8 @@ const QuestionDisplay = ({ question }) => {
                                             transform: 'rotate(180deg)',
                                             fontWeight: 'bold',
                                             alignSelf: 'center',
-                                            justifySelf: 'center'
+                                            justifySelf: 'center',
+                                            padding: '16px 8px'
                                         }}
                                     >
                                         {solutionDiagrams.length > 1 ? `${solutionDiagrams.length} Diagrams` : 'Diagram'}
