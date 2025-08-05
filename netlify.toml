@@ -61,8 +61,3 @@
 #   path = "/api/*"
 #   function = "api"
 
-# Environment variables to configure secrets scanning
-[build.environment]
-  NODE_VERSION = "18"
-  NPM_VERSION = "9"
-  SECRETS_SCAN_OMIT_KEYS = "REACT_APP_SUPABASE_ANON_KEY,REACT_APP_SUPABASE_URL"
