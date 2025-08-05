@@ -10,8 +10,7 @@ import {
     Toolbar,
     Card,
     CardContent,
-    CardActions,
-    Chip
+    CardActions
 } from '@mui/material'
 import {
     School,
@@ -19,9 +18,7 @@ import {
     Forum,
     Favorite,
     ArrowForward,
-    TrendingUp,
-    People,
-    Star
+    People
 } from '@mui/icons-material'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'

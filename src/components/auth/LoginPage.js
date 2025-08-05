@@ -51,7 +51,7 @@ const LoginPage = () => {
     useEffect(() => {
         const checkConnection = async () => {
             try {
-                const { data, error } = await supabase.auth.getSession()
+                const { error } = await supabase.auth.getSession()
                 if (error) {
                     console.error('Supabase connection error:', error)
                     setConnectionError('Unable to connect to authentication service. Please check your internet connection.')

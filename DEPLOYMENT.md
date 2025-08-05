@@ -187,4 +187,4 @@ For deployment issues:
 1. Check the logs in Docker/Netlify
 2. Verify environment variables
 3. Test locally first
-4. Check network connectivity for external services 
+4. Check network connectivity for external services

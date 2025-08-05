@@ -39,22 +39,7 @@ const MathPaperPage = () => {
     const navigate = useNavigate();
     const questionDetailsRef = React.useRef(null);
 
-    // Helper function to render LaTeX content
-    const renderLatexContent = (content) => {
-        if (!content) return null;
 
-        // Split content by LaTeX delimiters
-        const parts = content.split(/(\$[^$]+\$)/);
-
-        return parts.map((part, index) => {
-            if (part.startsWith('$') && part.endsWith('$')) {
-                // Remove the $ delimiters and render as LaTeX
-                const latex = part.slice(1, -1);
-                return <InlineMath key={index} math={latex} />;
-            }
-            return <span key={index}>{part}</span>;
-        });
-    };
 
     // Filter states
     const [selectedYear, setSelectedYear] = useState('');
