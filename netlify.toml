@@ -9,6 +9,7 @@
   [build.environment]
     NODE_VERSION = "18"
     NPM_VERSION = "9"
+    SECRETS_SCAN_OMIT_KEYS = "REACT_APP_SUPABASE_ANON_KEY,REACT_APP_SUPABASE_URL"
 
 # Redirects for React Router
 [[redirects]]
@@ -60,10 +61,8 @@
 #   path = "/api/*"
 #   function = "api"
 
-# Secrets scanning configuration
-[secrets_scanning]
-  # These are expected environment variables for React apps
-  omit_keys = [
-    "REACT_APP_SUPABASE_ANON_KEY",
-    "REACT_APP_SUPABASE_URL"
-  ]
+# Environment variables to configure secrets scanning
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+  SECRETS_SCAN_OMIT_KEYS = "REACT_APP_SUPABASE_ANON_KEY,REACT_APP_SUPABASE_URL"
