@@ -59,3 +59,11 @@
 # [[edge_functions]]
 #   path = "/api/*"
 #   function = "api"
+
+# Secrets scanning configuration
+[secrets_scanning]
+  # These are expected environment variables for React apps
+  omit_keys = [
+    "REACT_APP_SUPABASE_ANON_KEY",
+    "REACT_APP_SUPABASE_URL"
+  ]
