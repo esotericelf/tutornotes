@@ -88,112 +88,166 @@ const QuestionDisplay = ({ question }) => {
                 return <Box key={index} sx={{ height: '1rem' }} />;
             }
             return (
-                <Typography key={index} variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 1 }}>
+                <Typography key={index} variant="body1" sx={{
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                    lineHeight: 1.6,
+                    mb: 1,
+                    wordBreak: 'break-word'
+                }}>
                     {renderWithLaTeX(line)}
                 </Typography>
             );
         });
     };
 
-    // Helper function to render various diagram types including HTML
-    const renderGeoGebraDiagram = (content) => {
+
+
+    // Helper function to check if content is iframe or HTML
+    const isIframeContent = (content) => {
+        if (!content) return false;
+
+        // Check if it's already an iframe (most common case for GeoGebra)
+        if (content.includes('<iframe')) return true;
+
+        // Check if it's a URL that will be converted to iframe
+        if (content.includes('geogebra.org/m/') ||
+            (content.includes('http') && !content.includes('geogebra.org') && !content.includes('jsxgraphdemo.netlify.app'))) {
+            return true;
+        }
+
+        // If it's HTML content (starts with < and contains HTML tags), it's not iframe
+        if (content.trim().startsWith('<') && (content.includes('<div') || content.includes('<svg') || content.includes('<html'))) {
+            return false;
+        }
+
+        // Plain text is not iframe
+        return false;
+    };
+
+    // Helper function to render iframe content directly
+    const renderIframeContent = (content) => {
         if (!content) return null;
 
-        // Check if it's already an iframe
+        // Check if it's already an iframe (most common case for GeoGebra)
         if (content.includes('<iframe')) {
-            return content;
+            return <div dangerouslySetInnerHTML={{ __html: content }} />;
         }
 
         // Check if it's HTML content (starts with < and contains HTML tags)
         if (content.trim().startsWith('<') && (content.includes('<div') || content.includes('<svg') || content.includes('<html'))) {
-            return content; // Return HTML content as-is
+            return <div dangerouslySetInnerHTML={{ __html: content }} />;
         }
 
         // Check if it's a URL to an HTML file or JSXGraph
-        if (content.includes('.html') || (content.includes('http') && !content.includes('geogebra.org') && !content.includes('replit'))) {
+        if (content.includes('.html') || (content.includes('http') && !content.includes('geogebra.org'))) {
             // Special handling for JSXGraph URLs
             if (content.includes('jsxgraphdemo.netlify.app')) {
-                return `<div style="background: transparent; padding: 0; border-radius: 0; box-shadow: none;">
-                    <iframe src="${content}"
+                return (
+                    <div style={{ background: 'transparent', padding: 0, borderRadius: 0, boxShadow: 'none' }}>
+                        <iframe
+                            src={content}
                             width="100%"
                             height="500px"
-                            style="border: none; background: transparent; overflow: hidden;"
+                            style={{ border: 'none', background: 'transparent', overflow: 'hidden' }}
                             title="JSXGraph Diagram"
                             scrolling="no"
-                            allowfullscreen>
-                    </iframe>
-                </div>`;
+                            allowFullScreen
+                        />
+                    </div>
+                );
             }
-            return `<iframe src="${content}" width="100%" height="100%" style="border: none; background: transparent; overflow: hidden;" title="HTML Diagram" scrolling="no" allowfullscreen></iframe>`;
+            return (
+                <iframe
+                    src={content}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 'none', background: 'transparent', overflow: 'hidden' }}
+                    title="HTML Diagram"
+                    scrolling="no"
+                    allowFullScreen
+                />
+            );
         }
 
-        // Convert GeoGebra URL to iframe
-        if (content.includes('geogebra.org/m/')) {
+        // Convert GeoGebra URL to iframe (for base URLs, not iframe HTML)
+        if (content.includes('geogebra.org/m/') && !content.includes('<iframe')) {
             const materialId = content.split('/m/')[1];
-            const iframeHtml = `<iframe scrolling="no" title="GeoGebra Diagram" src="https://www.geogebra.org/material/iframe/id/${materialId}/width/100%/height/100%/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="100%" height="100%" style="border:0px;"></iframe>`;
-            return iframeHtml;
-        }
-
-        // Convert Replit URL to iframe
-        if (content.includes('replit.dev') || content.includes('replit.com') || content.includes('replit.app')) {
-            const iframeHtml = `<iframe src="${content}" width="100%" height="100%" style="border:0px; background: transparent;" title="Replit Diagram" allowfullscreen></iframe>`;
-            return iframeHtml;
+            return (
+                <iframe
+                    scrolling="no"
+                    title="GeoGebra Diagram"
+                    src={`https://www.geogebra.org/material/iframe/id/${materialId}/width/100%/height/100%/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: '0px' }}
+                />
+            );
         }
 
         // If it's plain text, wrap it in a div
-        return `<div style="padding: 0; text-align: center; background: transparent;">${content}</div>`;
+        return <div style={{ padding: 0, textAlign: 'center', background: 'transparent' }}>{content}</div>;
     };
 
     return (
-        <Box sx={{ maxWidth: 1200, margin: '0 auto', padding: 3 }}>
+        <Box sx={{
+            maxWidth: 1200,
+            margin: '0 auto',
+            padding: { xs: 1, sm: 2, md: 3 },
+            overflow: 'hidden'
+        }}>
             {/* Metadata Row */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Box sx={{
+                display: 'flex',
+                gap: { xs: 1, sm: 2 },
+                mb: { xs: 2, sm: 3 },
+                flexDirection: { xs: 'column', sm: 'row' }
+            }}>
                 <Paper
                     elevation={2}
                     sx={{
-                        padding: 2,
+                        padding: { xs: 1, sm: 2 },
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         color: 'white',
-                        minWidth: 120,
+                        minWidth: { xs: '100%', sm: 120 },
                         textAlign: 'center'
                     }}
                 >
-                    <Typography variant="h6" fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
                         {question.year}
                     </Typography>
-                    <Typography variant="body2">Year</Typography>
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Year</Typography>
                 </Paper>
 
                 <Paper
                     elevation={2}
                     sx={{
-                        padding: 2,
+                        padding: { xs: 1, sm: 2 },
                         background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                         color: 'white',
-                        minWidth: 120,
+                        minWidth: { xs: '100%', sm: 120 },
                         textAlign: 'center'
                     }}
                 >
-                    <Typography variant="h6" fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
                         {question.paper}
                     </Typography>
-                    <Typography variant="body2">Paper</Typography>
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Paper</Typography>
                 </Paper>
 
                 <Paper
                     elevation={2}
                     sx={{
-                        padding: 2,
+                        padding: { xs: 1, sm: 2 },
                         background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                         color: 'white',
-                        minWidth: 120,
+                        minWidth: { xs: '100%', sm: 120 },
                         textAlign: 'center'
                     }}
                 >
-                    <Typography variant="h6" fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
                         {question.question_no}
                     </Typography>
-                    <Typography variant="body2">Question</Typography>
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Question</Typography>
                 </Paper>
             </Box>
 
@@ -202,41 +256,62 @@ const QuestionDisplay = ({ question }) => {
                 <Paper
                     elevation={3}
                     sx={{
-                        padding: 4,
-                        mb: 3,
+                        padding: { xs: 2, sm: 3, md: 4 },
+                        mb: { xs: 2, sm: 3 },
                         background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                        borderRadius: 3
+                        borderRadius: { xs: 2, sm: 3 }
                     }}
                 >
-                    <Divider sx={{ mb: 2 }} />
+                    <Divider sx={{ mb: { xs: 1, sm: 2 } }} />
 
                     {/* Question Content with optional diagram */}
-                    <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                    <Box sx={{
+                        display: 'flex',
+                        gap: { xs: 2, sm: 3 },
+                        flexDirection: { xs: 'column', md: 'row' }
+                    }}>
                         {/* Question Text - 70% width or full width if no diagram */}
-                        <Box sx={{ flex: question.question_diagram ? '0 0 70%' : '1 1 100%' }}>
+                        <Box sx={{
+                            flex: question.question_diagram ? { xs: '1 1 100%', md: '0 0 70%' } : '1 1 100%'
+                        }}>
                             {question.question && (
-                                <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.6, mb: 3 }}>
+                                <Typography variant="body1" sx={{
+                                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                                    lineHeight: 1.6,
+                                    mb: { xs: 2, sm: 3 },
+                                    wordBreak: 'break-word'
+                                }}>
                                     {renderWithLaTeX(question.question)}
                                 </Typography>
                             )}
 
                             {/* Multiple Choice Options */}
                             {question.options && (
-                                <Box sx={{ mt: 3 }}>
-                                    <Box sx={{ display: 'grid', gap: 1 }}>
+                                <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+                                    <Box sx={{ display: 'grid', gap: { xs: 0.5, sm: 1 } }}>
                                         {question.options.map((option, index) => (
                                             <Box key={index} sx={{
                                                 display: 'flex',
-                                                alignItems: 'center',
-                                                p: 2,
+                                                alignItems: 'flex-start',
+                                                p: { xs: 1.5, sm: 2 },
                                                 bgcolor: 'rgba(255,255,255,0.7)',
                                                 borderRadius: 1,
-                                                border: '1px solid rgba(0,0,0,0.1)'
+                                                border: '1px solid rgba(0,0,0,0.1)',
+                                                flexDirection: { xs: 'column', sm: 'row' }
                                             }}>
-                                                <Typography variant="body1" sx={{ fontWeight: 'bold', mr: 2, minWidth: '30px' }}>
+                                                <Typography variant="body1" sx={{
+                                                    fontWeight: 'bold',
+                                                    mr: { xs: 0, sm: 2 },
+                                                    mb: { xs: 0.5, sm: 0 },
+                                                    minWidth: { xs: 'auto', sm: '30px' },
+                                                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                                                }}>
                                                     {String.fromCharCode(65 + index)})
                                                 </Typography>
-                                                <Typography variant="body1">
+                                                <Typography variant="body1" sx={{
+                                                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                                                    wordBreak: 'break-word'
+                                                }}>
                                                     {renderWithLaTeX(option)}
                                                 </Typography>
                                             </Box>
@@ -248,20 +323,26 @@ const QuestionDisplay = ({ question }) => {
 
                         {/* Question Diagram - 30% width, only if exists */}
                         {question.question_diagram && (
-                            <Box sx={{ flex: '0 0 30%' }}>
+                            <Box sx={{
+                                flex: { xs: '1 1 100%', md: '0 0 30%' },
+                                minHeight: { xs: '200px', sm: '250px' }
+                            }}>
                                 <Paper
                                     elevation={2}
                                     sx={{
-                                        padding: 2,
+                                        padding: { xs: 1.5, sm: 2 },
                                         background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
                                         borderRadius: 2,
                                         height: '100%'
                                     }}
                                 >
-                                    <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" align="center">
+                                    <Typography variant="h6" fontWeight="bold" gutterBottom color="primary" align="center" sx={{
+                                        fontSize: { xs: '1rem', sm: '1.25rem' },
+                                        mb: { xs: 1, sm: 2 }
+                                    }}>
                                         Diagram
                                     </Typography>
-                                    <div dangerouslySetInnerHTML={{ __html: renderGeoGebraDiagram(question.question_diagram) }} />
+                                    {renderIframeContent(question.question_diagram)}
                                 </Paper>
                             </Box>
                         )}
@@ -273,13 +354,22 @@ const QuestionDisplay = ({ question }) => {
             <Paper
                 elevation={3}
                 sx={{
-                    padding: 4,
+                    padding: { xs: 2, sm: 3, md: 4 },
                     background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-                    borderRadius: 3
+                    borderRadius: { xs: 2, sm: 3 }
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h5" fontWeight="bold" color="primary">
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: { xs: 1, sm: 2 },
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 1, sm: 0 }
+                }}>
+                    <Typography variant="h5" fontWeight="bold" color="primary" sx={{
+                        fontSize: { xs: '1.3rem', sm: '1.5rem' }
+                    }}>
                         Solution
                     </Typography>
 
@@ -288,41 +378,49 @@ const QuestionDisplay = ({ question }) => {
                         <Paper
                             elevation={2}
                             sx={{
-                                padding: 2,
+                                padding: { xs: 1, sm: 2 },
                                 background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
                                 color: 'white',
-                                minWidth: 120,
+                                minWidth: { xs: '100%', sm: 120 },
                                 textAlign: 'center'
                             }}
                         >
-                            <Typography variant="h6" fontWeight="bold">
+                            <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                                 {question.correct_answer}
                             </Typography>
-                            <Typography variant="body2">Correct Answer</Typography>
+                            <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Correct Answer</Typography>
                         </Paper>
                     )}
                 </Box>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={{ mb: { xs: 1, sm: 2 } }} />
 
-                <Box sx={{ display: 'flex', gap: 3, position: 'relative', minHeight: '500px' }}>
+                <Box sx={{
+                    display: 'flex',
+                    gap: { xs: 2, sm: 3 },
+                    position: 'relative',
+                    minHeight: { xs: '400px', sm: '500px' },
+                    flexDirection: { xs: 'column', lg: 'row' }
+                }}>
                     {/* Solution Text - Full width when diagram collapsed, 50% when expanded */}
                     <Box sx={{
-                        flex: solutionDiagramExpanded ? '0 0 50%' : '1 1 100%',
+                        flex: solutionDiagramExpanded ? { xs: '1 1 100%', lg: '0 0 50%' } : '1 1 100%',
                         transition: 'flex 0.3s ease-in-out',
-                        paddingRight: solutionDiagramExpanded ? 0 : '70px'
+                        paddingRight: solutionDiagramExpanded ? { xs: 0, lg: 0 } : { xs: 0, lg: '70px' }
                     }}>
                         {renderSolution(question.solution)}
                     </Box>
 
                     {/* Solution Diagram Sidebar - 50% width, full height, collapsible */}
                     <Box sx={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: solutionDiagramExpanded ? '50%' : '60px',
-                        transition: 'width 0.3s ease-in-out',
-                        zIndex: 1
+                        position: { xs: 'relative', lg: 'absolute' },
+                        right: { xs: 0, lg: 0 },
+                        top: { xs: 0, lg: 0 },
+                        bottom: { xs: 'auto', lg: 0 },
+                        width: solutionDiagramExpanded ? { xs: '100%', lg: '50%' } : { xs: '100%', lg: '60px' },
+                        height: { xs: solutionDiagramExpanded ? '400px' : '60px', lg: '100%' },
+                        transition: 'all 0.3s ease-in-out',
+                        zIndex: 1,
+                        mt: { xs: 2, lg: 0 }
                     }}>
                         <Paper
                             elevation={3}
@@ -339,24 +437,30 @@ const QuestionDisplay = ({ question }) => {
                             {/* Toggle Button */}
                             <Box
                                 sx={{
-                                    padding: 1,
+                                    padding: { xs: 0.5, sm: 1 },
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'center',
                                     cursor: 'pointer',
                                     borderBottom: '1px solid rgba(0,0,0,0.1)',
                                     backgroundColor: 'rgba(255,255,255,0.1)',
+                                    minHeight: { xs: '50px', sm: '60px' },
                                     '&:hover': {
                                         backgroundColor: 'rgba(255,255,255,0.2)'
                                     }
                                 }}
                                 onClick={handleSolutionDiagramToggle}
                             >
-                                <IconButton size="small" color="primary">
+                                <IconButton size="small" color="primary" sx={{
+                                    transform: { xs: solutionDiagramExpanded ? 'rotate(180deg)' : 'rotate(0deg)', lg: 'none' }
+                                }}>
                                     {solutionDiagramExpanded ? <ExpandLess /> : <ExpandMore />}
                                 </IconButton>
                                 {solutionDiagramExpanded && (
-                                    <Typography variant="body2" fontWeight="bold" color="primary" sx={{ ml: 1 }}>
+                                    <Typography variant="body2" fontWeight="bold" color="primary" sx={{
+                                        ml: 1,
+                                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                                    }}>
                                         Solution Diagram
                                     </Typography>
                                 )}
@@ -368,18 +472,61 @@ const QuestionDisplay = ({ question }) => {
                                 padding: 0,
                                 display: 'flex',
                                 flexDirection: 'column',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                minHeight: 0 // Ensure proper flex shrinking
                             }}>
                                 {solutionDiagramExpanded ? (
                                     solutionDiagrams.length > 0 ? (
                                         <>
-                                            {/* Diagram Tabs - Only show if multiple diagrams */}
+                                            {/* Diagram Display */}
+                                            <Box sx={{
+                                                flex: 1,
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                overflow: 'hidden',
+                                                padding: isIframeContent(solutionDiagrams[selectedDiagramIndex]) ? 0 : {
+                                                    xs: solutionDiagrams.length > 1 ? '85px 0 0 0' : '50px 0 0 0',
+                                                    sm: '60px 0 0 0'
+                                                }, // Responsive padding for HTML content: 50px (toggle) + 35px (tabs) = 85px on mobile
+                                                minHeight: 0, // Allow proper flex shrinking
+                                                // Mobile-only iframe scaling
+                                                '& iframe': {
+                                                    '@media (max-width: 600px)': {
+                                                        width: '100% !important',
+                                                        height: 'auto !important',
+                                                        maxWidth: '100% !important',
+                                                        aspectRatio: '490/420'
+                                                    }
+                                                },
+                                                // Mobile-specific JSXGraph handling
+                                                '& iframe[title="JSXGraph Diagram"]': {
+                                                    '@media (max-width: 600px)': {
+                                                        height: '400px !important',
+                                                        maxHeight: 'calc(100% - 35px) !important'
+                                                    }
+                                                }
+                                            }}>
+                                                <div style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    {renderIframeContent(solutionDiagrams[selectedDiagramIndex])}
+                                                </div>
+                                            </Box>
+
+                                            {/* Diagram Tabs - Only show if multiple diagrams, positioned at bottom */}
                                             {solutionDiagrams.length > 1 && (
                                                 <Box sx={{
                                                     display: 'flex',
-                                                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                                                    borderTop: '1px solid rgba(0,0,0,0.1)',
                                                     backgroundColor: 'rgba(255,255,255,0.1)',
                                                     overflowX: 'auto',
+                                                    flexShrink: 0, // Prevent tabs from shrinking
+                                                    height: { xs: '35px', sm: '40px' }, // Responsive height for tabs
                                                     '&::-webkit-scrollbar': {
                                                         height: '4px'
                                                     },
@@ -395,14 +542,17 @@ const QuestionDisplay = ({ question }) => {
                                                         <Box
                                                             key={index}
                                                             sx={{
-                                                                padding: '8px 16px',
+                                                                padding: { xs: '6px 12px', sm: '8px 16px' },
                                                                 cursor: 'pointer',
-                                                                borderBottom: selectedDiagramIndex === index ? '2px solid #1976d2' : 'none',
+                                                                borderTop: selectedDiagramIndex === index ? '2px solid #1976d2' : 'none',
                                                                 backgroundColor: selectedDiagramIndex === index ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
                                                                 color: selectedDiagramIndex === index ? '#1976d2' : 'inherit',
                                                                 fontWeight: selectedDiagramIndex === index ? 'bold' : 'normal',
                                                                 whiteSpace: 'nowrap',
                                                                 minWidth: 'fit-content',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                fontSize: { xs: '0.8rem', sm: '1rem' },
                                                                 '&:hover': {
                                                                     backgroundColor: 'rgba(25, 118, 210, 0.05)'
                                                                 }
@@ -414,32 +564,13 @@ const QuestionDisplay = ({ question }) => {
                                                     ))}
                                                 </Box>
                                             )}
-
-                                            {/* Diagram Display */}
-                                            <Box sx={{
-                                                flex: 1,
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                overflow: 'hidden',
-                                                padding: 0
-                                            }}>
-                                                <div
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: renderGeoGebraDiagram(solutionDiagrams[selectedDiagramIndex])
-                                                    }}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        display: 'flex',
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center'
-                                                    }}
-                                                />
-                                            </Box>
                                         </>
                                     ) : (
-                                        <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{
+                                            p: { xs: 1.5, sm: 2 },
+                                            textAlign: 'center',
+                                            fontSize: { xs: '0.9rem', sm: '1rem' }
+                                        }}>
                                             No diagram available for this solution.
                                         </Typography>
                                     )
@@ -448,13 +579,14 @@ const QuestionDisplay = ({ question }) => {
                                         variant="body2"
                                         color="primary"
                                         sx={{
-                                            writingMode: 'vertical-rl',
-                                            textOrientation: 'mixed',
-                                            transform: 'rotate(180deg)',
+                                            writingMode: { xs: 'horizontal-tb', lg: 'vertical-rl' },
+                                            textOrientation: { xs: 'mixed', lg: 'mixed' },
+                                            transform: { xs: 'none', lg: 'rotate(180deg)' },
                                             fontWeight: 'bold',
                                             alignSelf: 'center',
                                             justifySelf: 'center',
-                                            padding: '16px 8px'
+                                            padding: { xs: '8px 4px', sm: '16px 8px' },
+                                            fontSize: { xs: '0.8rem', sm: '1rem' }
                                         }}
                                     >
                                         {solutionDiagrams.length > 1 ? `${solutionDiagrams.length} Diagrams` : 'Diagram'}
