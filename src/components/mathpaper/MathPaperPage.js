@@ -65,7 +65,7 @@ const MathPaperPage = () => {
     // Question number options based on paper type
     const getQuestionNumberOptions = (paper) => {
         if (paper === 'I') {
-            return Array.from({ length: 16 }, (_, i) => i + 1);
+            return Array.from({ length: 20 }, (_, i) => i + 1);
         } else if (paper === 'II') {
             return Array.from({ length: 45 }, (_, i) => i + 1);
         }
