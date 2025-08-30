@@ -186,7 +186,7 @@ const HomePage = () => {
                     Features
                 </Typography>
                 <Grid container spacing={4} sx={{ mt: 4 }}>
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <CardContent sx={{ flexGrow: 1 }}>
                                 <School sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
@@ -209,7 +209,7 @@ const HomePage = () => {
                         </Card>
                     </Grid>
                     {features.map((feature, index) => (
-                        <Grid item xs={12} sm={6} md={3} key={index}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                             <Card
                                 sx={{
                                     height: '100%',
@@ -261,7 +261,7 @@ const HomePage = () => {
                 <Container maxWidth="lg">
                     <Grid container spacing={4}>
                         {stats.map((stat, index) => (
-                            <Grid item xs={6} md={3} key={index}>
+                            <Grid size={{ xs: 6, md: 3 }} key={index}>
                                 <Box sx={{ textAlign: 'center' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
                                         {React.cloneElement(stat.icon, {

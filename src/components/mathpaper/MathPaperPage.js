@@ -33,6 +33,7 @@ import {
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import QuestionDisplay from './QuestionDisplay';
+import { DiscussionSection } from '../discussion';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
@@ -250,10 +251,12 @@ const MathPaperPage = () => {
                     </Typography>
 
                     <Grid container spacing={3} alignItems="center">
-                        <Grid item xs={12} sm={6} md={2}>
+                        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                             <FormControl fullWidth>
-                                <InputLabel>Year</InputLabel>
+                                <InputLabel id="year-select-label">Year</InputLabel>
                                 <Select
+                                    labelId="year-select-label"
+                                    id="year-select"
                                     value={selectedYear}
                                     label="Year"
                                     onChange={(e) => setSelectedYear(e.target.value)}
@@ -273,10 +276,12 @@ const MathPaperPage = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={2}>
+                        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                             <FormControl fullWidth>
-                                <InputLabel>Paper</InputLabel>
+                                <InputLabel id="paper-select-label">Paper</InputLabel>
                                 <Select
+                                    labelId="paper-select-label"
+                                    id="paper-select"
                                     value={selectedPaper}
                                     label="Paper"
                                     onChange={(e) => {
@@ -299,10 +304,12 @@ const MathPaperPage = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={2}>
+                        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                             <FormControl fullWidth>
-                                <InputLabel>Question Number</InputLabel>
+                                <InputLabel id="question-select-label">Question Number</InputLabel>
                                 <Select
+                                    labelId="question-select-label"
+                                    id="question-select"
                                     value={selectedQuestionNo}
                                     label="Question Number"
                                     onChange={(e) => setSelectedQuestionNo(e.target.value)}
@@ -323,7 +330,7 @@ const MathPaperPage = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={4}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <Autocomplete
                                 multiple
                                 options={availableTags}
@@ -334,6 +341,7 @@ const MathPaperPage = () => {
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
+                                        id="tags-autocomplete"
                                         label="Search by tags"
                                         placeholder="Type to search tags..."
                                         helperText=""
@@ -366,7 +374,7 @@ const MathPaperPage = () => {
                             />
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={1}>
+                        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
                             <Button
                                 variant="contained"
                                 fullWidth
@@ -378,7 +386,7 @@ const MathPaperPage = () => {
                             </Button>
                         </Grid>
 
-                        <Grid item xs={12} sm={6} md={1}>
+                        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
                             <Button
                                 variant="outlined"
                                 fullWidth
@@ -504,6 +512,11 @@ const MathPaperPage = () => {
                             </Box>
                         )}
                         <QuestionDisplay question={selectedQuestion} />
+
+                        {/* Discussion Section */}
+                        <Box sx={{ mt: 4 }}>
+                            <DiscussionSection questionId={selectedQuestion.id} />
+                        </Box>
                     </Box>
                 )}
 

@@ -446,6 +446,51 @@ describe('QuestionDisplay Component', () => {
             );
             expect(hasTabStyling).toBe(false);
         });
+
+        test('shows GeoGebra iframe tabs with proper titles', () => {
+            const questionWithGeoGebraDiagrams = {
+                ...mockQuestion,
+                solution_diagram: [
+                    '<iframe scrolling="no" title="2022 II 40 b" src="https://www.geogebra.org/material/iframe/id/zfca7f9w/width/490/height/420/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="490px" height="420px" style="border:0px;"></iframe>',
+                    '<iframe scrolling="no" title="2022 II 40 a" src="https://www.geogebra.org/material/iframe/id/gjswuyg8/width/490/height/420/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/true/ctl/false" width="490px" height="420px" style="border:0px;"></iframe>'
+                ]
+            };
+
+            render(
+                <TestWrapper>
+                    <QuestionDisplay question={questionWithGeoGebraDiagrams} />
+                </TestWrapper>
+            );
+
+            const toggleButton = screen.getByRole('button');
+            fireEvent.click(toggleButton);
+
+            // Should show GeoGebra diagram titles in tabs
+            expect(screen.getByText('2022 II 40 b')).toBeInTheDocument();
+            expect(screen.getByText('2022 II 40 a')).toBeInTheDocument();
+        });
+
+        test('handles PostgreSQL array format for GeoGebra diagrams', () => {
+            const questionWithPostgreSQLArray = {
+                ...mockQuestion,
+                solution_diagram: '{iframe1,iframe2}'
+            };
+
+            render(
+                <TestWrapper>
+                    <QuestionDisplay question={questionWithPostgreSQLArray} />
+                </TestWrapper>
+            );
+
+            const toggleButton = screen.getByRole('button');
+            fireEvent.click(toggleButton);
+
+            // Should show numbered tabs for PostgreSQL array format
+            const tab1Elements = screen.getAllByText('1');
+            const tab2Elements = screen.getAllByText('2');
+            expect(tab1Elements.length).toBeGreaterThan(0);
+            expect(tab2Elements.length).toBeGreaterThan(0);
+        });
     });
 
     // Tests for collapsed state

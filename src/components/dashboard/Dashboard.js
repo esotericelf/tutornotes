@@ -132,7 +132,7 @@ const Dashboard = () => {
 
                 {/* Quick Stats */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <TrendingUp sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                             <Typography variant="h4" component="div" fontWeight="bold" color="success.main">
@@ -143,7 +143,7 @@ const Dashboard = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Book sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
                             <Typography variant="h4" component="div" fontWeight="bold" color="primary.main">
@@ -154,7 +154,7 @@ const Dashboard = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Forum sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
                             <Typography variant="h4" component="div" fontWeight="bold" color="info.main">
@@ -165,7 +165,7 @@ const Dashboard = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Favorite sx={{ fontSize: 40, color: 'error.main', mb: 1 }} />
                             <Typography variant="h4" component="div" fontWeight="bold" color="error.main">
@@ -181,9 +181,9 @@ const Dashboard = () => {
                 {/* Main Dashboard Grid */}
                 <Grid container spacing={4}>
                     {/* Feature Cards */}
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <Card sx={{ height: '100%', cursor: 'pointer', transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 } }} onClick={() => navigate('/mathpaper')}>
                                     <CardContent>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -205,7 +205,7 @@ const Dashboard = () => {
                                 </Card>
                             </Grid>
                             {dashboardItems.map((item, index) => (
-                                <Grid item xs={12} sm={6} key={index}>
+                                <Grid size={{ xs: 12, sm: 6 }} key={index}>
                                     <Card
                                         sx={{
                                             height: '100%',
@@ -251,7 +251,7 @@ const Dashboard = () => {
                     </Grid>
 
                     {/* Sidebar */}
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <Box sx={{ position: 'sticky', top: 24 }}>
                             {/* Recent Activity */}
                             <Paper sx={{ p: 3, mb: 3 }}>

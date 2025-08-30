@@ -5,9 +5,9 @@ import QuestionDisplay from './QuestionDisplay';
 const QuestionDisplayDemo = () => {
     const demoQuestion = {
         id: 2,
-        year: 2023,
+        year: 2022,
         paper: 'II',
-        question_no: 8,
+        question_no: 40,
         question: "A quadratic function $f(x) = ax^2 + bx + c$ has the following properties: it passes through point $(1, 2)$ and has a minimum value of $-1$ at $x = 2$. Given that $a > 0$, which of the following could be the correct function?",
         options: [
             "$f(x) = x^2 - 4x + 3$",
@@ -49,7 +49,10 @@ However, looking at the diagram features:
 - The curve opens upward (a > 0)
 
 From the options, Option C is closest as it passes through $(1, 2)$ but has the wrong minimum value.`,
-        solution_diagram: '<iframe scrolling="no" title="2012 II 16" src="https://www.geogebra.org/material/iframe/id/m9dbbwjd/width/1440/height/783/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="1440px" height="783px" style="border:0px;"> </iframe>'
+        solution_diagram: [
+            '<iframe scrolling="no" title="2022 II 40 b" src="https://www.geogebra.org/material/iframe/id/zfca7f9w/width/490/height/420/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="490px" height="420px" style="border:0px;"> </iframe>',
+            '<iframe scrolling="no" title="2022 II 40 a" src="https://www.geogebra.org/material/iframe/id/gjswuyg8/width/490/height/420/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/true/ctl/false" width="490px" height="420px" style="border:0px;"> </iframe>'
+        ]
     };
 
     return (

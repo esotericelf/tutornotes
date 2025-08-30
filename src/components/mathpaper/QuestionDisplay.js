@@ -180,6 +180,10 @@ const QuestionDisplay = ({ question }) => {
                     width="100%"
                     height="100%"
                     style={{ border: '0px' }}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                    onError={(e) => {
+                        console.warn('GeoGebra iframe failed to load:', e);
+                    }}
                 />
             );
         }
