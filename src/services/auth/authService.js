@@ -37,9 +37,20 @@ export class AuthService {
     // Sign in with Google
     static async signInWithGoogle() {
         try {
-            const redirectUrl = `${window.location.origin}/dashboard`
+            // Ensure we have a proper redirect URL for production
+            let redirectUrl
+            if (process.env.NODE_ENV === 'production') {
+                // In production, use the current domain or fallback to a known URL
+                redirectUrl = window.location.origin ? `${window.location.origin}/dashboard` : '/dashboard'
+            } else {
+                // In development, use localhost
+                redirectUrl = 'http://localhost:3000/dashboard'
+            }
+
             console.log('AuthService: Google OAuth redirect URL:', redirectUrl)
-            
+            console.log('AuthService: Current environment:', process.env.NODE_ENV)
+            console.log('AuthService: Current origin:', window.location.origin)
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -61,10 +72,20 @@ export class AuthService {
     // Sign in with Apple
     static async signInWithApple() {
         try {
-            const redirectUrl = `${window.location.origin}/dashboard`
-            
+            // Ensure we have a proper redirect URL for production
+            let redirectUrl
+            if (process.env.NODE_ENV === 'production') {
+                // In production, use the current domain or fallback to a known URL
+                redirectUrl = window.location.origin ? `${window.location.origin}/dashboard` : '/dashboard'
+            } else {
+                // In development, use localhost
+                redirectUrl = 'http://localhost:3000/dashboard'
+            }
+
             console.log('AuthService: Apple OAuth redirect URL:', redirectUrl)
-            
+            console.log('AuthService: Current environment:', process.env.NODE_ENV)
+            console.log('AuthService: Current origin:', window.location.origin)
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'apple',
                 options: {
