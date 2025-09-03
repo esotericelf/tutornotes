@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../services/supabase'
 import AuthService from '../services/auth/authService'
 
@@ -16,6 +16,12 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [session, setSession] = useState(null)
     const [loading, setLoading] = useState(true)
+    const loadingRef = useRef(loading)
+
+    // Update loading ref whenever loading state changes
+    useEffect(() => {
+        loadingRef.current = loading
+    }, [loading])
 
     // Simple, single useEffect for auth management
     useEffect(() => {
@@ -89,7 +95,7 @@ export const AuthProvider = ({ children }) => {
 
         // Safety fallback - ensure loading is never stuck
         const safetyTimer = setTimeout(() => {
-            if (mounted && loading) {
+            if (mounted && loadingRef.current) {
                 setLoading(false)
             }
         }, 10000) // 10 second safety net
