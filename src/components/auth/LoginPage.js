@@ -15,7 +15,8 @@ import {
     AppBar,
     Toolbar,
     Breadcrumbs,
-    Link
+    Link,
+    Divider
 } from '@mui/material'
 import {
     Visibility,
@@ -24,8 +25,10 @@ import {
     Lock,
     School,
     Home,
-    ArrowBack
+    ArrowBack,
+    Google
 } from '@mui/icons-material'
+import AppleIcon from '@mui/icons-material/Apple'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
@@ -40,12 +43,20 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [googleLoading, setGoogleLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
     const [connectionError, setConnectionError] = useState('')
 
-    const { signIn, signUp } = useContext(AuthContext)
+    const { signIn, signUp, signInWithGoogle, signInWithApple, user, loading: authLoading } = useContext(AuthContext)
     const navigate = useNavigate()
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (user && !authLoading) {
+            navigate('/dashboard')
+        }
+    }, [user, authLoading, navigate])
 
     // Check Supabase connection on component mount
     useEffect(() => {
@@ -64,6 +75,44 @@ const LoginPage = () => {
 
         checkConnection()
     }, [])
+
+    // Handle OAuth callbacks and redirects
+    useEffect(() => {
+        const handleOAuthCallback = async () => {
+            try {
+                // Check if we're returning from an OAuth flow
+                const { data: { session }, error } = await supabase.auth.getSession()
+
+                if (session && !error) {
+                    // User is authenticated, redirect to dashboard
+                    console.log('OAuth callback: User authenticated, redirecting to dashboard')
+                    navigate('/dashboard')
+                }
+            } catch (err) {
+                console.error('OAuth callback error:', err)
+            }
+        }
+
+        // Check for OAuth callback on mount
+        handleOAuthCallback()
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth state change:', event, session ? 'User authenticated' : 'No user')
+
+            if (event === 'SIGNED_IN' && session) {
+                // User signed in via OAuth, redirect to dashboard
+                console.log('OAuth sign-in detected, redirecting to dashboard')
+
+                // Profile creation is now handled centrally in AuthContext
+                console.log('OAuth sign-in detected, profile creation will be handled automatically')
+
+                navigate('/dashboard')
+            }
+        })
+
+        return () => subscription.unsubscribe()
+    }, [navigate])
 
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue)
@@ -85,6 +134,60 @@ const LoginPage = () => {
         setError('')
     }
 
+    const handleGoogleLogin = async () => {
+        setGoogleLoading(true)
+        setError('')
+        setSuccess('')
+
+        try {
+            const result = await signInWithGoogle()
+
+            if (result.error) {
+                console.error('Google login error:', result.error)
+                setError(result.error.message || 'Google login failed. Please try again.')
+            } else {
+                setSuccess('Successfully signed in with Google!')
+                // Profile creation will be handled by the auth state change listener
+                setTimeout(() => {
+                    navigate('/dashboard')
+                }, 1000)
+            }
+        } catch (err) {
+            console.error('Google login error:', err)
+            setError('Google login failed. Please try again.')
+        } finally {
+            setGoogleLoading(false)
+        }
+    }
+
+    const handleAppleLogin = async () => {
+        setGoogleLoading(true) // Reuse the same loading state
+        setError('')
+        setSuccess('')
+
+        try {
+            const result = await signInWithApple()
+
+            if (result.error) {
+                console.error('Apple login error:', result.error)
+                setError(result.error.message || 'Apple login failed. Please try again.')
+            } else {
+                setSuccess('Successfully signed in with Apple!')
+                // Profile creation will be handled by the auth state change listener
+                setTimeout(() => {
+                    navigate('/dashboard')
+                }, 1000)
+            }
+        } catch (err) {
+            console.error('Apple login error:', err)
+            setError('Apple login failed. Please try again.')
+        } finally {
+            setGoogleLoading(false)
+        }
+    }
+
+
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
@@ -95,54 +198,41 @@ const LoginPage = () => {
             if (activeTab === 0) {
                 // Login
                 const result = await signIn(formData.email, formData.password)
+
                 if (result.error) {
                     console.error('Login error:', result.error)
                     setError(result.error.message || 'Login failed. Please check your credentials.')
                 } else {
-                    setSuccess('Login successful! Redirecting...')
-                    setTimeout(() => navigate('/dashboard'), 1000)
+                    setSuccess('Successfully logged in!')
+                    setTimeout(() => {
+                        navigate('/dashboard')
+                    }, 1000)
                 }
             } else {
                 // Registration
                 if (formData.password !== formData.confirmPassword) {
-                    setError('Passwords do not match')
+                    setError('Passwords do not match.')
                     setLoading(false)
                     return
                 }
 
                 if (formData.password.length < 6) {
-                    setError('Password must be at least 6 characters long')
+                    setError('Password must be at least 6 characters long.')
                     setLoading(false)
                     return
                 }
 
                 const result = await signUp(formData.email, formData.password)
+
                 if (result.error) {
                     console.error('Registration error:', result.error)
-                    let errorMessage = 'Registration failed. '
-
-                    if (result.error.message) {
-                        errorMessage += result.error.message
-                    } else if (result.error.status === 422) {
-                        errorMessage += 'Please check your email format and password strength.'
-                    } else if (result.error.status === 429) {
-                        errorMessage += 'Too many requests. Please try again later.'
-                    } else {
-                        errorMessage += 'Please try again or contact support.'
-                    }
-
-                    setError(errorMessage)
+                    setError(result.error.message || 'Registration failed. Please try again.')
                 } else {
                     setSuccess('Registration successful! Please check your email to verify your account.')
-                    setFormData({
-                        email: '',
-                        password: '',
-                        confirmPassword: ''
-                    })
                 }
             }
         } catch (err) {
-            console.error('Unexpected error:', err)
+            console.error('Authentication error:', err)
             setError('An unexpected error occurred. Please try again.')
         } finally {
             setLoading(false)
@@ -157,303 +247,293 @@ const LoginPage = () => {
         setShowConfirmPassword(!showConfirmPassword)
     }
 
+    // Show loading while authentication is being determined
+    if (authLoading) {
+        return (
+            <Container maxWidth="sm" sx={{ mt: 8, textAlign: 'center' }}>
+                <CircularProgress size={60} sx={{ mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                    Checking authentication...
+                </Typography>
+            </Container>
+        )
+    }
+
+    if (connectionError) {
+        return (
+            <Container maxWidth="sm" sx={{ mt: 8 }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {connectionError}
+                </Alert>
+                <Button
+                    variant="contained"
+                    onClick={() => window.location.reload()}
+                    fullWidth
+                >
+                    Retry Connection
+                </Button>
+            </Container>
+        )
+    }
+
     return (
-        <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
-            {/* Navigation Bar */}
-            <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="primary"
-                        onClick={() => navigate('/')}
-                        sx={{ mr: 2 }}
-                    >
-                        <ArrowBack />
-                    </IconButton>
-                    <Breadcrumbs aria-label="breadcrumb" sx={{ flexGrow: 1 }}>
-                        <Link
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
+            <Container maxWidth="sm">
+                {/* Navigation */}
+                <AppBar position="static" sx={{ mb: 3, borderRadius: 2 }}>
+                    <Toolbar>
+                        <IconButton
+                            edge="start"
+                            color="inherit"
                             component={RouterLink}
                             to="/"
-                            color="inherit"
-                            underline="hover"
-                            sx={{ display: 'flex', alignItems: 'center' }}
+                            sx={{ mr: 2 }}
                         >
-                            <Home sx={{ mr: 0.5 }} fontSize="small" />
-                            Home
-                        </Link>
-                        <Typography color="text.primary">Authentication</Typography>
-                    </Breadcrumbs>
-                </Toolbar>
-            </AppBar>
+                            <ArrowBack />
+                        </IconButton>
+                        <Breadcrumbs aria-label="breadcrumb" sx={{ color: 'white' }}>
+                            <Link
+                                component={RouterLink}
+                                to="/"
+                                color="inherit"
+                                underline="hover"
+                                sx={{ display: 'flex', alignItems: 'center' }}
+                            >
+                                <Home sx={{ mr: 0.5 }} />
+                                Home
+                            </Link>
+                            <Typography color="inherit" sx={{ display: 'flex', alignItems: 'center' }}>
+                                <School sx={{ mr: 0.5 }} />
+                                {activeTab === 0 ? 'Login' : 'Register'}
+                            </Typography>
+                        </Breadcrumbs>
+                    </Toolbar>
+                </AppBar>
 
-            {/* Main Content */}
-            <Container maxWidth="sm" sx={{ py: 8 }}>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: 'calc(100vh - 200px)'
-                    }}
-                >
-                    {/* Logo Section */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            mb: 4
-                        }}
-                    >
-                        <Box
+                {/* Main Content */}
+                <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+                    <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 3 }}>
+                        <School sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Tutor Notes
+                    </Typography>
+
+                    {/* OAuth Login Buttons */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                        {/* Google Login Button */}
+                        <Button
+                            variant="outlined"
+                            fullWidth
+                            size="large"
+                            id="google-login"
+                            startIcon={googleLoading ? <CircularProgress size={20} /> : <Google />}
+                            onClick={handleGoogleLogin}
+                            disabled={googleLoading}
+                            aria-label="Sign in with Google"
                             sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                mb: 2
+                                py: 1.5,
+                                borderColor: '#4285f4',
+                                color: '#4285f4',
+                                '&:hover': {
+                                    borderColor: '#3367d6',
+                                    backgroundColor: 'rgba(66, 133, 244, 0.04)'
+                                }
                             }}
                         >
-                            <School
-                                sx={{
-                                    fontSize: 48,
-                                    color: 'primary.main',
-                                    mr: 2
+                            {googleLoading ? 'Signing in...' : 'Google'}
+                        </Button>
+
+                        {/* Apple Login Button */}
+                        <Button
+                            variant="outlined"
+                            fullWidth
+                            size="large"
+                            id="apple-login"
+                            startIcon={googleLoading ? <CircularProgress size={20} /> : <AppleIcon />}
+                            onClick={handleAppleLogin}
+                            disabled={googleLoading}
+                            aria-label="Sign in with Apple"
+                            sx={{
+                                py: 1.5,
+                                borderColor: '#000000',
+                                color: '#000000',
+                                '&:hover': {
+                                    borderColor: '#333333',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                            }}
+                        >
+                            {googleLoading ? 'Signing in...' : 'Apple'}
+                        </Button>
+                    </Box>
+
+
+
+                    <Divider sx={{ my: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            OR
+                        </Typography>
+                    </Divider>
+
+                    {/* Tabs */}
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                        <Tabs
+                            value={activeTab}
+                            onChange={handleTabChange}
+                            centered
+                            aria-label="Authentication tabs"
+                        >
+                            <Tab
+                                label="Login"
+                                id="login-tab"
+                                aria-controls="login-panel"
+                            />
+                            <Tab
+                                label="Register"
+                                id="register-tab"
+                                aria-controls="register-panel"
+                            />
+                        </Tabs>
+                    </Box>
+
+                    {/* Error/Success Messages */}
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+                    {success && (
+                        <Alert severity="success" sx={{ mb: 2 }}>
+                            {success}
+                        </Alert>
+                    )}
+
+                    {/* Form */}
+                    <Box
+                        component="form"
+                        onSubmit={handleSubmit}
+                        role="tabpanel"
+                        id={activeTab === 0 ? "login-panel" : "register-panel"}
+                        aria-labelledby={activeTab === 0 ? "login-tab" : "register-tab"}
+                    >
+                        <TextField
+                            fullWidth
+                            id="email"
+                            label="Email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            margin="normal"
+                            required
+                            autoComplete="email"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Email />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+
+                        <TextField
+                            fullWidth
+                            id="password"
+                            label="Password"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            margin="normal"
+                            required
+                            autoComplete="current-password"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Lock />
+                                    </InputAdornment>
+                                ),
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={handleTogglePasswordVisibility}
+                                            edge="end"
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+
+                        {activeTab === 1 && (
+                            <TextField
+                                fullWidth
+                                id="confirmPassword"
+                                label="Confirm Password"
+                                name="confirmPassword"
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                value={formData.confirmPassword}
+                                onChange={handleInputChange}
+                                margin="normal"
+                                required
+                                autoComplete="new-password"
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Lock />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={handleToggleConfirmPasswordVisibility}
+                                                edge="end"
+                                                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                                            >
+                                                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
                                 }}
                             />
-                            <Typography
-                                component="h1"
-                                variant="h3"
-                                color="primary"
-                                fontWeight="bold"
-                            >
-                                Tutor Notes
-                            </Typography>
-                        </Box>
-                        <Typography
-                            variant="h6"
-                            color="text.secondary"
-                            textAlign="center"
-                            sx={{ maxWidth: 400 }}
+                        )}
+
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            size="large"
+                            id="submit-button"
+                            disabled={loading}
+                            aria-label={activeTab === 0 ? 'Sign in to account' : 'Create new account'}
+                            sx={{ mt: 3, mb: 2, py: 1.5 }}
                         >
-                            Access your learning resources and join the community
-                        </Typography>
+                            {loading ? (
+                                <CircularProgress size={24} />
+                            ) : (
+                                activeTab === 0 ? 'Login' : 'Register'
+                            )}
+                        </Button>
                     </Box>
 
-                    {/* Authentication Card */}
-                    <Paper
-                        elevation={8}
-                        sx={{
-                            width: '100%',
-                            maxWidth: 450,
-                            borderRadius: 3,
-                            overflow: 'hidden'
-                        }}
-                    >
-                        {/* Tabs */}
-                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <Tabs
-                                value={activeTab}
-                                onChange={handleTabChange}
-                                variant="fullWidth"
-                                sx={{
-                                    '& .MuiTab-root': {
-                                        py: 2,
-                                        fontSize: '1rem',
-                                        fontWeight: 500
-                                    }
-                                }}
-                            >
-                                <Tab label="Sign In" />
-                                <Tab label="Create Account" />
-                            </Tabs>
-                        </Box>
-
-                        {/* Form Content */}
-                        <Box sx={{ p: 4 }}>
-                            {/* Error/Success Messages */}
-                            {error && (
-                                <Alert
-                                    severity="error"
-                                    sx={{
-                                        mb: 3,
-                                        borderRadius: 2
-                                    }}
-                                >
-                                    {error}
-                                </Alert>
-                            )}
-                            {success && (
-                                <Alert
-                                    severity="success"
-                                    sx={{
-                                        mb: 3,
-                                        borderRadius: 2
-                                    }}
-                                >
-                                    {success}
-                                </Alert>
-                            )}
-                            {connectionError && (
-                                <Alert
-                                    severity="warning"
-                                    sx={{
-                                        mb: 3,
-                                        borderRadius: 2
-                                    }}
-                                >
-                                    {connectionError}
-                                </Alert>
-                            )}
-
-                            {/* Form */}
-                            <Box component="form" onSubmit={handleSubmit}>
-                                {/* Email Field */}
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="email"
-                                    label="Email Address"
-                                    name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    autoFocus
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    sx={{ mb: 2 }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Email color="action" />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-
-                                {/* Password Field */}
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    name="password"
-                                    label="Password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    autoComplete={activeTab === 0 ? 'current-password' : 'new-password'}
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    sx={{ mb: 2 }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Lock color="action" />
-                                            </InputAdornment>
-                                        ),
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    aria-label="toggle password visibility"
-                                                    onClick={handleTogglePasswordVisibility}
-                                                    edge="end"
-                                                >
-                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-
-                                {/* Confirm Password Field (Registration only) */}
-                                {activeTab === 1 && (
-                                    <TextField
-                                        margin="normal"
-                                        required
-                                        fullWidth
-                                        name="confirmPassword"
-                                        label="Confirm Password"
-                                        type={showConfirmPassword ? 'text' : 'password'}
-                                        id="confirmPassword"
-                                        autoComplete="new-password"
-                                        value={formData.confirmPassword}
-                                        onChange={handleInputChange}
-                                        sx={{ mb: 3 }}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Lock color="action" />
-                                                </InputAdornment>
-                                            ),
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        aria-label="toggle confirm password visibility"
-                                                        onClick={handleToggleConfirmPasswordVisibility}
-                                                        edge="end"
-                                                    >
-                                                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                )}
-
-                                {/* Submit Button */}
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    size="large"
-                                    disabled={loading}
-                                    sx={{
-                                        py: 1.5,
-                                        mt: activeTab === 0 ? 2 : 0,
-                                        mb: 3,
-                                        fontSize: '1.1rem',
-                                        fontWeight: 600,
-                                        borderRadius: 2
-                                    }}
-                                >
-                                    {loading ? (
-                                        <CircularProgress size={24} color="inherit" />
-                                    ) : (
-                                        activeTab === 0 ? 'Sign In' : 'Create Account'
-                                    )}
-                                </Button>
-
-                                {/* Additional Info */}
-                                <Box sx={{ textAlign: 'center' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {activeTab === 0 ? (
-                                            "Don't have an account? "
-                                        ) : (
-                                            "Already have an account? "
-                                        )}
-                                        <Button
-                                            variant="text"
-                                            onClick={() => setActiveTab(activeTab === 0 ? 1 : 0)}
-                                            sx={{
-                                                textTransform: 'none',
-                                                fontWeight: 600,
-                                                p: 0,
-                                                minWidth: 'auto'
-                                            }}
-                                        >
-                                            {activeTab === 0 ? 'Sign Up' : 'Sign In'}
-                                        </Button>
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Box>
-                    </Paper>
-
-                    {/* Footer */}
-                    <Box sx={{ mt: 4, textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">
-                            By continuing, you agree to our Terms of Service and Privacy Policy
-                        </Typography>
-                    </Box>
-                </Box>
+                    {/* Additional Info */}
+                    <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+                        {activeTab === 0 ? (
+                            "Don't have an account? "
+                        ) : (
+                            "Already have an account? "
+                        )}
+                        <Link
+                            component="button"
+                            variant="body2"
+                            onClick={() => setActiveTab(activeTab === 0 ? 1 : 0)}
+                            sx={{ cursor: 'pointer' }}
+                        >
+                            {activeTab === 0 ? 'Register here' : 'Login here'}
+                        </Link>
+                    </Typography>
+                </Paper>
             </Container>
         </Box>
     )

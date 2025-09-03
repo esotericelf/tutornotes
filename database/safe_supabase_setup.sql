@@ -21,7 +21,7 @@ SELECT
     rowsecurity as rls_enabled
 FROM pg_tables
 WHERE schemaname = 'public'
-AND tablename IN ('Math_Past_Paper', 'discussions', 'tutor_notes', 'user_favorites');
+AND tablename IN ('Math_Past_Paper', 'profiles', 'discussions', 'tutor_notes', 'user_favorites');
 
 -- Check existing policies
 SELECT
@@ -51,6 +51,17 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Enable RLS on main tables (safe - only adds security layer)
 ALTER TABLE "Math_Past_Paper" ENABLE ROW LEVEL SECURITY;
+
+-- Only enable RLS on profiles if the table exists
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'profiles') THEN
+        ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+        RAISE NOTICE 'RLS enabled on profiles table';
+    ELSE
+        RAISE NOTICE 'profiles table does not exist yet - skipping RLS setup';
+    END IF;
+END $$;
 
 -- Only enable RLS on discussions if the table exists
 DO $$
@@ -94,6 +105,17 @@ END $$;
 DROP POLICY IF EXISTS "Allow authenticated users to read math papers" ON "Math_Past_Paper";
 CREATE POLICY "Allow authenticated users to read math papers" ON "Math_Past_Paper"
 FOR SELECT TO authenticated USING (true);
+
+-- Policy for profiles (only if table exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'profiles') THEN
+        DROP POLICY IF EXISTS "Allow users to read their own profile" ON profiles;
+        CREATE POLICY "Allow users to read their own profile" ON profiles
+        FOR SELECT TO authenticated USING (auth.uid() = id);
+        RAISE NOTICE 'Created RLS policy for profiles table';
+    END IF;
+END $$;
 
 -- Policy for discussions (only if table exists)
 DO $$
@@ -205,7 +227,7 @@ SELECT
     rowsecurity as rls_enabled
 FROM pg_tables
 WHERE schemaname = 'public'
-AND tablename IN ('Math_Past_Paper', 'discussions', 'tutor_notes', 'user_favorites');
+AND tablename IN ('Math_Past_Paper', 'profiles', 'discussions', 'tutor_notes', 'user_favorites');
 
 -- Check policies
 SELECT

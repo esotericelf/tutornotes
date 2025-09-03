@@ -51,8 +51,17 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Step 3: Discussions table
-echo "📄 Step 3: Creating discussions table..."
+# Step 3: Profiles table
+echo "📄 Step 3: Creating profiles table..."
+cat database/migrations/create_profiles_table.sql | supabase db push
+
+if [ $? -ne 0 ]; then
+    echo "❌ Profiles table creation failed"
+    exit 1
+fi
+
+# Step 4: Discussions table
+echo "📄 Step 4: Creating discussions table..."
 cat database/migrations/create_discussions_table.sql | supabase db push
 
 if [ $? -ne 0 ]; then
@@ -60,8 +69,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Step 4: Database indexes and optimizations
-echo "📄 Step 4: Setting up database indexes and optimizations..."
+# Step 5: Database indexes and optimizations
+echo "📄 Step 5: Setting up database indexes and optimizations..."
 cat database/database_indexes_optimization.sql | supabase db push
 
 if [ $? -ne 0 ]; then
@@ -69,8 +78,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Step 5: Search functions
-echo "📄 Step 5: Setting up search functions..."
+# Step 6: Search functions
+echo "📄 Step 6: Setting up search functions..."
 cat database/optimized_search_functions.sql | supabase db push
 
 if [ $? -ne 0 ]; then
@@ -83,12 +92,14 @@ echo "✅ Database setup completed successfully!"
 echo ""
 echo "📊 Database structure created:"
 echo "   - Math_Past_Paper table with enhanced schema"
+echo "   - profiles table for user management"
 echo "   - discussions table with nested replies"
 echo "   - Optimized indexes for performance"
 echo "   - Search functions for content discovery"
 echo "   - Row Level Security (RLS) policies"
 echo ""
 echo "🔧 Features available:"
+echo "   - User registration and profile management"
 echo "   - Full-text search on math papers"
 echo "   - Nested discussion threads"
 echo "   - User authentication integration"

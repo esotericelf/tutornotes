@@ -14,7 +14,8 @@ import {
     Avatar,
     Divider,
     Chip,
-    IconButton
+    IconButton,
+    CircularProgress
 } from '@mui/material'
 import {
     School,
@@ -28,14 +29,52 @@ import {
 } from '@mui/icons-material'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import ProfileDisplay from '../user/ProfileDisplay'
+import useProfile from '../../hooks/useProfile'
 
 const Dashboard = () => {
-    const { user, signOut } = useContext(AuthContext)
+    const { user, signOut, loading } = useContext(AuthContext)
     const navigate = useNavigate()
+    const { profile } = useProfile()
+
+    // Show loading while authentication is being determined
+    if (loading) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh'
+            }}>
+                <CircularProgress />
+                <Typography variant="h6" sx={{ ml: 2 }}>
+                    Checking authentication...
+                </Typography>
+            </Box>
+        )
+    }
+
+    // Note: We don't block the Dashboard for profile loading
+    // The profile will load in the background and update the UI when ready
+
+    // Redirect if no user
+    if (!user) {
+        navigate('/login')
+        return null
+    }
 
     const handleLogout = async () => {
-        await signOut()
-        navigate('/')
+        try {
+            const result = await signOut()
+            if (result.error) {
+                console.error('Logout error:', result.error)
+                // Still navigate to home even if there's an error
+            }
+            navigate('/')
+        } catch (err) {
+            console.error('Logout error:', err)
+            navigate('/')
+        }
     }
 
     const dashboardItems = [
@@ -95,15 +134,24 @@ const Dashboard = () => {
                         <IconButton color="primary">
                             <Notifications />
                         </IconButton>
-                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                            <Person />
+                        <Avatar
+                            src={profile?.avatar_url}
+                            alt={profile?.full_name || user?.email || 'User'}
+                            sx={{
+                                bgcolor: profile?.avatar_url ? 'transparent' : 'primary.main',
+                                width: 40,
+                                height: 40
+                            }}
+                        >
+                            {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() :
+                                user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
                         </Avatar>
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             <Typography variant="body2" color="text.secondary">
                                 Welcome back,
                             </Typography>
                             <Typography variant="body1" fontWeight="500">
-                                {user?.email || 'User'}
+                                {profile?.full_name || user?.email || 'User'}
                             </Typography>
                         </Box>
                         <Button
@@ -123,7 +171,7 @@ const Dashboard = () => {
                 {/* Welcome Section */}
                 <Box sx={{ mb: 4 }}>
                     <Typography variant="h4" component="h2" fontWeight="bold" sx={{ mb: 1 }}>
-                        Welcome to Your Dashboard
+                        Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!
                     </Typography>
                     <Typography variant="h6" color="text.secondary">
                         Continue your learning journey with our comprehensive resources
@@ -253,6 +301,16 @@ const Dashboard = () => {
                     {/* Sidebar */}
                     <Grid size={{ xs: 12, md: 4 }}>
                         <Box sx={{ position: 'sticky', top: 24 }}>
+                            {/* User Profile */}
+                            <Paper sx={{ p: 3, mb: 3 }}>
+                                <Typography variant="h6" component="h3" fontWeight="600" sx={{ mb: 2 }}>
+                                    Your Profile
+                                </Typography>
+                                <ProfileDisplay showEmail={true} />
+                            </Paper>
+
+
+
                             {/* Recent Activity */}
                             <Paper sx={{ p: 3, mb: 3 }}>
                                 <Typography variant="h6" component="h3" fontWeight="600" sx={{ mb: 2 }}>

@@ -18,14 +18,28 @@ import {
     Forum,
     Favorite,
     ArrowForward,
-    People
+    People,
+    Logout
 } from '@mui/icons-material'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const HomePage = () => {
-    const { user } = useContext(AuthContext)
+    const { user, signOut } = useContext(AuthContext)
     const navigate = useNavigate()
+
+    const handleLogout = async () => {
+        try {
+            const result = await signOut()
+            if (result.error) {
+                console.error('Logout error:', result.error)
+            }
+            navigate('/')
+        } catch (err) {
+            console.error('Logout error:', err)
+            navigate('/')
+        }
+    }
 
     const features = [
         {
@@ -94,6 +108,14 @@ const HomePage = () => {
                                     onClick={() => navigate('/dashboard')}
                                 >
                                     Continue Learning
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<Logout />}
+                                    onClick={handleLogout}
+                                >
+                                    Logout
                                 </Button>
                             </>
                         ) : (

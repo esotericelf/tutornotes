@@ -9,6 +9,7 @@ import Dashboard from './components/dashboard/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import MathPaperPage from './components/mathpaper/MathPaperPage'
 import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
+
 import './App.css'
 
 // Create Material-UI theme with light color scheme
@@ -125,6 +126,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/mathpaper" element={<MathPaperPage />} />
               <Route path="/question-demo" element={<QuestionDisplayDemo />} />
+
               <Route
                 path="/dashboard"
                 element={

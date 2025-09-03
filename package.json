@@ -8,19 +8,14 @@
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@supabase/supabase-js": "^2.39.0",
-    "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
     "katex": "^0.16.22",
-    "konva": "^9.3.22",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-katex": "^3.1.0",
-    "react-konva": "^19.0.7",
-    "react-router-dom": "^7.7.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-router-dom": "^7.8.2",
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -53,8 +48,7 @@
     "collectCoverageFrom": [
       "src/**/*.{js,jsx}",
       "!src/index.js",
-      "!src/setupTests.js",
-      "!src/reportWebVitals.js"
+      "!src/setupTests.js"
     ],
     "coverageThreshold": {
       "global": {
