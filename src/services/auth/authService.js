@@ -74,10 +74,6 @@ export class AuthService {
             // Use the robust production URL method
             const redirectUrl = AuthService.getProductionRedirectUrl()
 
-            console.log('AuthService: Google OAuth redirect URL:', redirectUrl)
-            console.log('AuthService: Current environment:', process.env.NODE_ENV)
-            console.log('AuthService: Production URL method result:', redirectUrl)
-
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -96,22 +92,18 @@ export class AuthService {
         }
     }
 
-    // Sign in with Apple
-    static async signInWithApple() {
+    // Sign in with Discord
+    static async signInWithDiscord() {
         try {
             // Use the robust production URL method
             const redirectUrl = AuthService.getProductionRedirectUrl()
 
-            console.log('AuthService: Apple OAuth redirect URL:', redirectUrl)
-            console.log('AuthService: Current environment:', process.env.NODE_ENV)
-            console.log('AuthService: Production URL method result:', redirectUrl)
-
             const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: 'apple',
+                provider: 'discord',
                 options: {
                     redirectTo: redirectUrl,
                     queryParams: {
-                        response_mode: 'form_post'
+                        scope: 'identify email'
                     }
                 }
             })
@@ -126,18 +118,13 @@ export class AuthService {
     // Handle OAuth callback and profile creation
     static async handleOAuthCallback() {
         try {
-            console.log('AuthService: Handling OAuth callback...')
-
             const { data: { session }, error } = await supabase.auth.getSession()
 
             if (error) {
-                console.error('AuthService: Error getting session:', error)
                 throw error
             }
 
             if (session?.user) {
-                console.log('AuthService: User authenticated, creating profile...')
-
                 // Import ProfileService here to avoid circular dependencies
                 const { ProfileService } = await import('../user/profileService')
 
@@ -145,10 +132,7 @@ export class AuthService {
                 const profileResult = await ProfileService.createProfileFromGoogle(session.user)
 
                 if (profileResult.error) {
-                    console.warn('AuthService: Profile creation warning:', profileResult.error)
                     // Don't fail the auth flow if profile creation fails
-                } else {
-                    console.log('AuthService: Profile creation completed successfully')
                 }
 
                 return { data: { session, profile: profileResult.data }, error: null }
@@ -156,7 +140,6 @@ export class AuthService {
 
             return { data: { session: null, profile: null }, error: null }
         } catch (error) {
-            console.error('AuthService: OAuth callback error:', error)
             return { data: null, error }
         }
     }

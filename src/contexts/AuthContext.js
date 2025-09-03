@@ -21,14 +21,32 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let mounted = true
 
-        // Get initial session
+        // Quick environment check
+        const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+        const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY
+
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing Supabase environment variables:', {
+                url: !!supabaseUrl,
+                key: !!supabaseKey
+            })
+            // Set loading to false immediately if credentials are missing
+            setLoading(false)
+            return
+        }
+
+        // Get initial session - with fallback to prevent infinite loading
         const getInitialSession = async () => {
             try {
-                console.log('AuthContext: Getting initial session...')
-                const { session, error } = await AuthService.getCurrentSession()
+                // Add timeout to prevent infinite hanging
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Session fetch timeout')), 5000)
+                })
+
+                const sessionPromise = AuthService.getCurrentSession()
+                const { session, error } = await Promise.race([sessionPromise, timeoutPromise])
 
                 if (error) {
-                    console.error('AuthContext: Error getting initial session:', error)
                     if (mounted) {
                         setSession(null)
                         setUser(null)
@@ -41,10 +59,9 @@ export const AuthProvider = ({ children }) => {
                     setSession(session)
                     setUser(session?.user ?? null)
                     setLoading(false)
-                    console.log('AuthContext: Initial session loaded, user:', session?.user?.email)
                 }
             } catch (error) {
-                console.error('AuthContext: Unexpected error getting initial session:', error)
+                // If there's any error (including timeout), set loading to false
                 if (mounted) {
                     setSession(null)
                     setUser(null)
@@ -55,30 +72,10 @@ export const AuthProvider = ({ children }) => {
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
+            (event, session) => {
                 if (!mounted) return
 
-                console.log('AuthContext: Auth state change:', event, session?.user?.email || 'No user')
-
-                if (event === 'SIGNED_IN' && session?.user) {
-                    // User just signed in - create/update profile
-                    try {
-                        console.log('AuthContext: User signed in, handling profile...')
-                        await AuthService.handleOAuthCallback()
-
-                        // Note: Navigation will be handled by the OAuth redirect URL
-                        // or by the component that uses this context
-                        console.log('AuthContext: Profile creation completed, user should be redirected by OAuth')
-                    } catch (error) {
-                        console.error('AuthContext: Profile creation error:', error)
-                        // Don't fail auth if profile creation fails
-                    }
-                } else if (event === 'SIGNED_OUT') {
-                    console.log('AuthContext: User signed out')
-                    // Note: Navigation will be handled by the component that uses this context
-                }
-
-                // Update state
+                // Update state immediately
                 if (mounted) {
                     setSession(session)
                     setUser(session?.user ?? null)
@@ -90,9 +87,17 @@ export const AuthProvider = ({ children }) => {
         // Get initial session
         getInitialSession()
 
+        // Safety fallback - ensure loading is never stuck
+        const safetyTimer = setTimeout(() => {
+            if (mounted && loading) {
+                setLoading(false)
+            }
+        }, 10000) // 10 second safety net
+
         // Cleanup
         return () => {
             mounted = false
+            clearTimeout(safetyTimer)
             subscription.unsubscribe()
         }
     }, [])
@@ -112,8 +117,8 @@ export const AuthProvider = ({ children }) => {
         return { data, error }
     }
 
-    const signInWithApple = async () => {
-        const { data, error } = await AuthService.signInWithApple()
+    const signInWithDiscord = async () => {
+        const { data, error } = await AuthService.signInWithDiscord()
         return { data, error }
     }
 
@@ -139,7 +144,7 @@ export const AuthProvider = ({ children }) => {
         signUp,
         signIn,
         signInWithGoogle,
-        signInWithApple,
+        signInWithDiscord,
         signOut,
         resetPassword,
         updateProfile,

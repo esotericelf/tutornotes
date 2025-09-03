@@ -28,10 +28,16 @@ import {
     ArrowBack,
     Google
 } from '@mui/icons-material'
-import AppleIcon from '@mui/icons-material/Apple'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
+
+// Custom Discord icon component
+const DiscordIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
+    </svg>
+)
 
 const LoginPage = () => {
     const [activeTab, setActiveTab] = useState(0)
@@ -48,7 +54,7 @@ const LoginPage = () => {
     const [success, setSuccess] = useState('')
     const [connectionError, setConnectionError] = useState('')
 
-    const { signIn, signUp, signInWithGoogle, signInWithApple, user, loading: authLoading } = useContext(AuthContext)
+    const { signIn, signUp, signInWithGoogle, signInWithDiscord, user, loading: authLoading } = useContext(AuthContext)
     const navigate = useNavigate()
 
     // Redirect if already authenticated
@@ -76,43 +82,12 @@ const LoginPage = () => {
         checkConnection()
     }, [])
 
-    // Handle OAuth callbacks and redirects
+    // Navigation effect when user is authenticated
     useEffect(() => {
-        const handleOAuthCallback = async () => {
-            try {
-                // Check if we're returning from an OAuth flow
-                const { data: { session }, error } = await supabase.auth.getSession()
-
-                if (session && !error) {
-                    // User is authenticated, redirect to dashboard
-                    console.log('OAuth callback: User authenticated, redirecting to dashboard')
-                    navigate('/dashboard')
-                }
-            } catch (err) {
-                console.error('OAuth callback error:', err)
-            }
+        if (user && !authLoading) {
+            navigate('/dashboard')
         }
-
-        // Check for OAuth callback on mount
-        handleOAuthCallback()
-
-        // Listen for auth state changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state change:', event, session ? 'User authenticated' : 'No user')
-
-            if (event === 'SIGNED_IN' && session) {
-                // User signed in via OAuth, redirect to dashboard
-                console.log('OAuth sign-in detected, redirecting to dashboard')
-
-                // Profile creation is now handled centrally in AuthContext
-                console.log('OAuth sign-in detected, profile creation will be handled automatically')
-
-                navigate('/dashboard')
-            }
-        })
-
-        return () => subscription.unsubscribe()
-    }, [navigate])
+    }, [user, authLoading, navigate])
 
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue)
@@ -147,10 +122,7 @@ const LoginPage = () => {
                 setError(result.error.message || 'Google login failed. Please try again.')
             } else {
                 setSuccess('Successfully signed in with Google!')
-                // Profile creation will be handled by the auth state change listener
-                setTimeout(() => {
-                    navigate('/dashboard')
-                }, 1000)
+                // Navigation will be handled automatically by AuthContext
             }
         } catch (err) {
             console.error('Google login error:', err)
@@ -160,27 +132,24 @@ const LoginPage = () => {
         }
     }
 
-    const handleAppleLogin = async () => {
+    const handleDiscordLogin = async () => {
         setGoogleLoading(true) // Reuse the same loading state
         setError('')
         setSuccess('')
 
         try {
-            const result = await signInWithApple()
+            const result = await signInWithDiscord()
 
             if (result.error) {
-                console.error('Apple login error:', result.error)
-                setError(result.error.message || 'Apple login failed. Please try again.')
+                console.error('Discord login error:', result.error)
+                setError(result.error.message || 'Discord login failed. Please try again.')
             } else {
-                setSuccess('Successfully signed in with Apple!')
-                // Profile creation will be handled by the auth state change listener
-                setTimeout(() => {
-                    navigate('/dashboard')
-                }, 1000)
+                setSuccess('Successfully signed in with Discord!')
+                // Navigation will be handled automatically by AuthContext
             }
         } catch (err) {
-            console.error('Apple login error:', err)
-            setError('Apple login failed. Please try again.')
+            console.error('Discord login error:', err)
+            setError('Discord login failed. Please try again.')
         } finally {
             setGoogleLoading(false)
         }
@@ -342,27 +311,27 @@ const LoginPage = () => {
                             {googleLoading ? 'Signing in...' : 'Google'}
                         </Button>
 
-                        {/* Apple Login Button */}
+                        {/* Discord Login Button */}
                         <Button
                             variant="outlined"
                             fullWidth
                             size="large"
-                            id="apple-login"
-                            startIcon={googleLoading ? <CircularProgress size={20} /> : <AppleIcon />}
-                            onClick={handleAppleLogin}
+                            id="discord-login"
+                            startIcon={googleLoading ? <CircularProgress size={20} /> : <DiscordIcon />}
+                            onClick={handleDiscordLogin}
                             disabled={googleLoading}
-                            aria-label="Sign in with Apple"
+                            aria-label="Sign in with Discord"
                             sx={{
                                 py: 1.5,
-                                borderColor: '#000000',
-                                color: '#000000',
+                                borderColor: '#5865F2',
+                                color: '#5865F2',
                                 '&:hover': {
-                                    borderColor: '#333333',
-                                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                    borderColor: '#4752C4',
+                                    backgroundColor: 'rgba(88, 101, 242, 0.04)'
                                 }
                             }}
                         >
-                            {googleLoading ? 'Signing in...' : 'Apple'}
+                            {googleLoading ? 'Signing in...' : 'Discord'}
                         </Button>
                     </Box>
 

@@ -118,7 +118,7 @@ const MathPaperPage = () => {
                 }
 
                 setQuestions(filteredData);
-                console.log('Filtered questions:', filteredData);
+
 
                 // If exactly one result and all three filters are specified, show details directly
                 if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
@@ -172,7 +172,7 @@ const MathPaperPage = () => {
             );
 
             setQuestions(uniqueResults);
-            console.log('Tag search results:', uniqueResults);
+
         } catch (err) {
             console.error('Error searching by tags:', err);
             setError('Failed to search by tags');
