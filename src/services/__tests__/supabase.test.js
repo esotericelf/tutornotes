@@ -4,7 +4,8 @@ describe('Supabase Configuration', () => {
     test('should have correct environment variables', () => {
         expect(process.env.REACT_APP_SUPABASE_URL).toBeDefined()
         expect(process.env.REACT_APP_SUPABASE_ANON_KEY).toBeDefined()
-        expect(process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY).toBeDefined()
+        // Note: REACT_APP_SUPABASE_SERVICE_ROLE_KEY should NOT be in frontend code
+        // It's only for backend/server operations
     })
 
     test('should export supabase client', () => {
