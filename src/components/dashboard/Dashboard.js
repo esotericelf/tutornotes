@@ -24,7 +24,6 @@ import {
     Favorite,
     Logout,
     TrendingUp,
-    Person,
     Notifications
 } from '@mui/icons-material'
 import AuthContext from '../../contexts/AuthContext'
