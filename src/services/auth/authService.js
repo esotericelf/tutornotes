@@ -34,22 +34,49 @@ export class AuthService {
         }
     }
 
+    // Get the current production URL for OAuth redirects
+    static getProductionRedirectUrl() {
+        if (process.env.NODE_ENV !== 'production') {
+            return 'http://localhost:3000/dashboard'
+        }
+
+        // Priority 1: Use explicit production URL environment variable
+        if (process.env.REACT_APP_PRODUCTION_URL) {
+            return `${process.env.REACT_APP_PRODUCTION_URL}/dashboard`
+        }
+
+        // Priority 2: Extract from Supabase URL (most reliable)
+        const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+        if (supabaseUrl) {
+            try {
+                const url = new URL(supabaseUrl)
+                // Remove any auth-related paths and construct base URL
+                const baseUrl = `https://${url.hostname}`
+                return `${baseUrl}/dashboard`
+            } catch (error) {
+                console.warn('AuthService: Failed to parse Supabase URL:', error)
+            }
+        }
+
+        // Priority 3: Use window.location.origin if available
+        if (typeof window !== 'undefined' && window.location.origin) {
+            return `${window.location.origin}/dashboard`
+        }
+
+        // Priority 4: Hardcoded fallback (should be updated for your domain)
+        console.warn('AuthService: No production URL found, using fallback')
+        return 'https://pjcjnmqoaajtotqqqsxs.supabase.co/dashboard' // Using your Supabase domain as fallback
+    }
+
     // Sign in with Google
     static async signInWithGoogle() {
         try {
-            // Ensure we have a proper redirect URL for production
-            let redirectUrl
-            if (process.env.NODE_ENV === 'production') {
-                // In production, use the current domain or fallback to a known URL
-                redirectUrl = window.location.origin ? `${window.location.origin}/dashboard` : '/dashboard'
-            } else {
-                // In development, use localhost
-                redirectUrl = 'http://localhost:3000/dashboard'
-            }
+            // Use the robust production URL method
+            const redirectUrl = AuthService.getProductionRedirectUrl()
 
             console.log('AuthService: Google OAuth redirect URL:', redirectUrl)
             console.log('AuthService: Current environment:', process.env.NODE_ENV)
-            console.log('AuthService: Current origin:', window.location.origin)
+            console.log('AuthService: Production URL method result:', redirectUrl)
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -72,19 +99,12 @@ export class AuthService {
     // Sign in with Apple
     static async signInWithApple() {
         try {
-            // Ensure we have a proper redirect URL for production
-            let redirectUrl
-            if (process.env.NODE_ENV === 'production') {
-                // In production, use the current domain or fallback to a known URL
-                redirectUrl = window.location.origin ? `${window.location.origin}/dashboard` : '/dashboard'
-            } else {
-                // In development, use localhost
-                redirectUrl = 'http://localhost:3000/dashboard'
-            }
+            // Use the robust production URL method
+            const redirectUrl = AuthService.getProductionRedirectUrl()
 
             console.log('AuthService: Apple OAuth redirect URL:', redirectUrl)
             console.log('AuthService: Current environment:', process.env.NODE_ENV)
-            console.log('AuthService: Current origin:', window.location.origin)
+            console.log('AuthService: Production URL method result:', redirectUrl)
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'apple',
