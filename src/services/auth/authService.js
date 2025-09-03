@@ -37,10 +37,13 @@ export class AuthService {
     // Sign in with Google
     static async signInWithGoogle() {
         try {
+            const redirectUrl = `${window.location.origin}/dashboard`
+            console.log('AuthService: Google OAuth redirect URL:', redirectUrl)
+            
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/dashboard`,
+                    redirectTo: redirectUrl,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent'
@@ -58,10 +61,14 @@ export class AuthService {
     // Sign in with Apple
     static async signInWithApple() {
         try {
+            const redirectUrl = `${window.location.origin}/dashboard`
+            
+            console.log('AuthService: Apple OAuth redirect URL:', redirectUrl)
+            
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'apple',
                 options: {
-                    redirectTo: `${window.location.origin}/dashboard`,
+                    redirectTo: redirectUrl,
                     queryParams: {
                         response_mode: 'form_post'
                     }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../services/supabase'
 import AuthService from '../services/auth/authService'
+import { useNavigate } from 'react-router-dom'
 
 const AuthContext = createContext()
 
@@ -16,6 +17,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [session, setSession] = useState(null)
     const [loading, setLoading] = useState(true)
+    const navigate = useNavigate()
 
     // Simple, single useEffect for auth management
     useEffect(() => {
@@ -26,7 +28,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 console.log('AuthContext: Getting initial session...')
                 const { session, error } = await AuthService.getCurrentSession()
-
+                
                 if (error) {
                     console.error('AuthContext: Error getting initial session:', error)
                     if (mounted) {
@@ -65,12 +67,25 @@ export const AuthProvider = ({ children }) => {
                     try {
                         console.log('AuthContext: User signed in, handling profile...')
                         await AuthService.handleOAuthCallback()
+                        
+                        // Ensure user is redirected to dashboard after successful login
+                        if (mounted && window.location.pathname !== '/dashboard') {
+                            console.log('AuthContext: Redirecting to dashboard...')
+                            navigate('/dashboard')
+                        }
                     } catch (error) {
                         console.error('AuthContext: Profile creation error:', error)
-                        // Don't fail auth if profile creation fails
+                        // Don't fail auth if profile creation fails, but still redirect
+                        if (mounted && window.location.pathname !== '/dashboard') {
+                            console.log('AuthContext: Redirecting to dashboard despite profile error...')
+                            navigate('/dashboard')
+                        }
                     }
                 } else if (event === 'SIGNED_OUT') {
                     console.log('AuthContext: User signed out')
+                    if (mounted) {
+                        navigate('/')
+                    }
                 }
 
                 // Update state
@@ -90,7 +105,7 @@ export const AuthProvider = ({ children }) => {
             mounted = false
             subscription.unsubscribe()
         }
-    }, [])
+    }, [navigate])
 
     const signUp = async (email, password, userData = {}) => {
         const { data, error } = await AuthService.signUp(email, password, userData)
