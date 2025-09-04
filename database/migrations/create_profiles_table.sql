@@ -93,11 +93,13 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only create profile if profiles table exists
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'profiles' AND table_schema = 'public') THEN
-        INSERT INTO profiles (id, full_name, avatar_url)
+        INSERT INTO profiles (id, full_name, avatar_url, created_at, updated_at)
         VALUES (
             NEW.id,
             COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-            COALESCE(NEW.raw_user_meta_data->>'avatar_url', '')
+            COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+            NOW(),
+            NOW()
         );
     END IF;
     RETURN NEW;

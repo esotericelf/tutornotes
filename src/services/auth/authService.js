@@ -34,15 +34,40 @@ export class AuthService {
         }
     }
 
-    // Get the current production URL for OAuth redirects
-    static getProductionRedirectUrl() {
-        if (process.env.NODE_ENV !== 'production') {
-            return 'http://localhost:3000/dashboard'
+    // Get the current redirect URL based on environment
+    static getRedirectUrl() {
+        // Debug environment info
+        console.log('AuthService: Environment check:', {
+            NODE_ENV: process.env.NODE_ENV,
+            REACT_APP_PRODUCTION_URL: process.env.REACT_APP_PRODUCTION_URL,
+            REACT_APP_SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
+            windowLocation: typeof window !== 'undefined' ? window.location.href : 'undefined',
+            windowPort: typeof window !== 'undefined' ? window.location.port : 'undefined'
+        })
+
+        // Detect development environment by checking current URL
+        const isDevelopment = typeof window !== 'undefined' && (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname.includes('localhost') ||
+            process.env.NODE_ENV === 'development'
+        );
+
+        // Development environment - always use localhost
+        if (isDevelopment) {
+            // Check if we're on a different port than 3000
+            const currentPort = window.location.port || '3000'
+            const redirectUrl = `http://localhost:${currentPort}/dashboard`
+            console.log('AuthService: Development redirect URL:', redirectUrl)
+            return redirectUrl
         }
 
+        // Production environment
         // Priority 1: Use explicit production URL environment variable
         if (process.env.REACT_APP_PRODUCTION_URL) {
-            return `${process.env.REACT_APP_PRODUCTION_URL}/dashboard`
+            const redirectUrl = `${process.env.REACT_APP_PRODUCTION_URL}/dashboard`
+            console.log('AuthService: Production redirect URL (env var):', redirectUrl)
+            return redirectUrl
         }
 
         // Priority 2: Extract from Supabase URL (most reliable)
@@ -52,7 +77,9 @@ export class AuthService {
                 const url = new URL(supabaseUrl)
                 // Remove any auth-related paths and construct base URL
                 const baseUrl = `https://${url.hostname}`
-                return `${baseUrl}/dashboard`
+                const redirectUrl = `${baseUrl}/dashboard`
+                console.log('AuthService: Production redirect URL (Supabase):', redirectUrl)
+                return redirectUrl
             } catch (error) {
                 console.warn('AuthService: Failed to parse Supabase URL:', error)
             }
@@ -60,19 +87,38 @@ export class AuthService {
 
         // Priority 3: Use window.location.origin if available
         if (typeof window !== 'undefined' && window.location.origin) {
-            return `${window.location.origin}/dashboard`
+            const redirectUrl = `${window.location.origin}/dashboard`
+            console.log('AuthService: Production redirect URL (window.location):', redirectUrl)
+            return redirectUrl
         }
 
         // Priority 4: Hardcoded fallback (should be updated for your domain)
         console.warn('AuthService: No production URL found, using fallback')
-        return 'https://pjcjnmqoaajtotqqqsxs.supabase.co/dashboard' // Using your Supabase domain as fallback
+        const fallbackUrl = 'https://pjcjnmqoaajtotqqqsxs.supabase.co/dashboard'
+        console.log('AuthService: Fallback redirect URL:', fallbackUrl)
+        return fallbackUrl
     }
 
     // Sign in with Google
     static async signInWithGoogle() {
         try {
-            // Use the robust production URL method
-            const redirectUrl = AuthService.getProductionRedirectUrl()
+            // Use the robust redirect URL method
+            const redirectUrl = AuthService.getRedirectUrl()
+
+            // Add redirect interceptor for development
+            if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                // Store the intended redirect URL
+                localStorage.setItem('intendedRedirectUrl', redirectUrl)
+
+                // Add a listener for when we're redirected to the wrong domain
+                window.addEventListener('load', () => {
+                    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                        console.log('AuthService: Detected wrong redirect, redirecting back to localhost')
+                        const intendedUrl = localStorage.getItem('intendedRedirectUrl') || 'http://localhost:3001/dashboard'
+                        window.location.href = intendedUrl
+                    }
+                })
+            }
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -95,8 +141,8 @@ export class AuthService {
     // Sign in with Discord
     static async signInWithDiscord() {
         try {
-            // Use the robust production URL method
-            const redirectUrl = AuthService.getProductionRedirectUrl()
+            // Use the robust redirect URL method
+            const redirectUrl = AuthService.getRedirectUrl()
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'discord',
@@ -128,8 +174,18 @@ export class AuthService {
                 // Import ProfileService here to avoid circular dependencies
                 const { ProfileService } = await import('../user/profileService')
 
-                // Create/update profile
-                const profileResult = await ProfileService.createProfileFromGoogle(session.user)
+                // Determine OAuth provider and create appropriate profile
+                let profileResult
+                const provider = session.user.app_metadata?.provider
+
+                if (provider === 'discord') {
+                    profileResult = await ProfileService.createProfileFromDiscord(session.user)
+                } else if (provider === 'google') {
+                    profileResult = await ProfileService.createProfileFromGoogle(session.user)
+                } else {
+                    // Fallback for other providers or unknown providers
+                    profileResult = await ProfileService.createProfileFromGoogle(session.user)
+                }
 
                 if (profileResult.error) {
                     // Don't fail the auth flow if profile creation fails

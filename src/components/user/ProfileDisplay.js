@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import {
     Box,
     Card,
@@ -11,9 +11,11 @@ import {
 } from '@mui/material'
 import { Person, Email, CalendarToday, Update } from '@mui/icons-material'
 import useProfile from '../../hooks/useProfile'
+import AuthContext from '../../contexts/AuthContext'
 
-const ProfileDisplay = ({ userId = null, showEmail = false }) => {
+const ProfileDisplay = ({ userId = null, showEmail = false, userEmail = null }) => {
     const { profile, loading, error, isOwnProfile } = useProfile(userId)
+    const { user } = useContext(AuthContext)
 
     if (loading) {
         return (
@@ -94,14 +96,22 @@ const ProfileDisplay = ({ userId = null, showEmail = false }) => {
                     <Box display="flex" alignItems="center" gap={1}>
                         <CalendarToday fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                            Member since {new Date(profile.created_at).toLocaleDateString()}
+                            Member since {(() => {
+                                if (!profile.created_at) return 'Recently';
+                                const date = new Date(profile.created_at);
+                                return isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString();
+                            })()}
                         </Typography>
                     </Box>
 
                     <Box display="flex" alignItems="center" gap={1}>
                         <Update fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                            Last updated {new Date(profile.updated_at).toLocaleDateString()}
+                            Last updated {(() => {
+                                if (!profile.updated_at) return 'Recently';
+                                const date = new Date(profile.updated_at);
+                                return isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString();
+                            })()}
                         </Typography>
                     </Box>
 
@@ -109,7 +119,7 @@ const ProfileDisplay = ({ userId = null, showEmail = false }) => {
                         <Box display="flex" alignItems="center" gap={1}>
                             <Email fontSize="small" color="action" />
                             <Typography variant="body2" color="text.secondary">
-                                {profile.email || 'Email not available'}
+                                {profile.email || userEmail || user?.email || 'Email not available'}
                             </Typography>
                         </Box>
                     )}

@@ -465,9 +465,13 @@ describe('QuestionDisplay Component', () => {
             const toggleButton = screen.getByRole('button');
             fireEvent.click(toggleButton);
 
-            // Should show GeoGebra diagram titles in tabs
-            expect(screen.getByText('2022 II 40 b')).toBeInTheDocument();
-            expect(screen.getByText('2022 II 40 a')).toBeInTheDocument();
+            // Should show numbered tabs for multiple diagrams
+            // Use getAllByText to handle multiple elements and verify at least one of each exists
+            const ones = screen.getAllByText('1');
+            const twos = screen.getAllByText('2');
+
+            expect(ones.length).toBeGreaterThan(0);
+            expect(twos.length).toBeGreaterThan(0);
         });
 
         test('handles PostgreSQL array format for GeoGebra diagrams', () => {

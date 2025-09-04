@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (event, session) => {
+            async (event, session) => {
                 if (!mounted) return
 
                 // Update state immediately
@@ -86,6 +86,16 @@ export const AuthProvider = ({ children }) => {
                     setSession(session)
                     setUser(session?.user ?? null)
                     setLoading(false)
+                }
+
+                // Handle profile creation for OAuth sign-ins
+                if (event === 'SIGNED_IN' && session?.user) {
+                    try {
+                        await AuthService.handleOAuthCallback()
+                    } catch (error) {
+                        // Don't fail auth if profile creation fails
+                        console.error('Profile creation failed:', error)
+                    }
                 }
             }
         )

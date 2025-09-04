@@ -92,6 +92,46 @@ export class ProfileService {
         }
     }
 
+    // Create profile from Discord OAuth data
+    static async createProfileFromDiscord(user, discordData = {}) {
+        try {
+            if (!user?.id) {
+                throw new Error('User object must include ID')
+            }
+
+            const profileData = {
+                id: user.id,
+                full_name: discordData.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name || user.user_metadata?.username || '',
+                avatar_url: discordData.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || user.user_metadata?.photoURL || '',
+                username: discordData.username || (user.user_metadata?.username && user.user_metadata?.discriminator ? `${user.user_metadata.username}#${user.user_metadata.discriminator}` : user.user_metadata?.username) || user.user_metadata?.preferred_username || user.email?.split('@')[0] || '',
+                role: 'user',
+                updated_at: new Date().toISOString()
+            }
+
+            // Check if profile already exists
+            const existingProfile = await this.getProfile(user.id)
+
+            if (existingProfile.data) {
+                // Update existing profile with Discord data
+                const updatedData = {
+                    ...existingProfile.data,
+                    full_name: profileData.full_name || existingProfile.data.full_name,
+                    avatar_url: profileData.avatar_url || existingProfile.data.avatar_url,
+                    username: profileData.username || existingProfile.data.username,
+                    updated_at: new Date().toISOString()
+                }
+
+                return await this.upsertProfile(updatedData)
+            } else {
+                // Create new profile
+                return await this.upsertProfile(profileData)
+            }
+        } catch (error) {
+            console.error('ProfileService: Failed to create profile from Discord data:', error)
+            return { data: null, error }
+        }
+    }
+
     // Update profile
     static async updateProfile(userId, updates) {
         try {

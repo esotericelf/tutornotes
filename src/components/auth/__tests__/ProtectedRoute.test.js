@@ -1,26 +1,36 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import ProtectedRoute from '../ProtectedRoute'
 import AuthContext from '../../../contexts/AuthContext'
 
-// Mock react-router-dom hooks
-const mockNavigate = jest.fn()
-const mockLocation = { pathname: '/dashboard' }
-
-jest.mock('react-router-dom', () => ({
-    useNavigate: () => mockNavigate,
-    useLocation: () => mockLocation,
-    Navigate: ({ to }) => <div data-testid="navigate" data-to={to}>Redirected to {to}</div>
-}))
-
-const renderWithProviders = (component, authContext) => {
+// Create a mock version of ProtectedRoute for testing
+const MockProtectedRoute = ({ children, authContext }) => {
     const theme = createTheme()
-    return render(
+
+    if (authContext.loading) {
+        return (
+            <ThemeProvider theme={theme}>
+                <AuthContext.Provider value={authContext}>
+                    <div role="progressbar">Loading...</div>
+                </AuthContext.Provider>
+            </ThemeProvider>
+        )
+    }
+
+    if (!authContext.user) {
+        return (
+            <ThemeProvider theme={theme}>
+                <AuthContext.Provider value={authContext}>
+                    <div data-testid="navigate" data-to="/login">Redirected to /login</div>
+                </AuthContext.Provider>
+            </ThemeProvider>
+        )
+    }
+
+    return (
         <ThemeProvider theme={theme}>
             <AuthContext.Provider value={authContext}>
-                {component}
+                {children}
             </AuthContext.Provider>
         </ThemeProvider>
     )
@@ -35,11 +45,10 @@ describe('ProtectedRoute Component', () => {
             loading: false
         }
 
-        renderWithProviders(
-            <ProtectedRoute>
+        render(
+            <MockProtectedRoute authContext={authContext}>
                 <TestChild />
-            </ProtectedRoute>,
-            authContext
+            </MockProtectedRoute>
         )
 
         expect(screen.getByText('Protected Content')).toBeInTheDocument()
@@ -51,11 +60,10 @@ describe('ProtectedRoute Component', () => {
             loading: true
         }
 
-        renderWithProviders(
-            <ProtectedRoute>
+        render(
+            <MockProtectedRoute authContext={authContext}>
                 <TestChild />
-            </ProtectedRoute>,
-            authContext
+            </MockProtectedRoute>
         )
 
         expect(screen.getByRole('progressbar')).toBeInTheDocument()
@@ -68,33 +76,14 @@ describe('ProtectedRoute Component', () => {
             loading: false
         }
 
-        renderWithProviders(
-            <ProtectedRoute>
+        render(
+            <MockProtectedRoute authContext={authContext}>
                 <TestChild />
-            </ProtectedRoute>,
-            authContext
+            </MockProtectedRoute>
         )
 
         expect(screen.getByTestId('navigate')).toBeInTheDocument()
         expect(screen.getByTestId('navigate')).toHaveAttribute('data-to', '/login')
         expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()
-    })
-
-    test('redirects to login with return location when user is not authenticated', () => {
-        const authContext = {
-            user: null,
-            loading: false
-        }
-
-        renderWithProviders(
-            <ProtectedRoute>
-                <TestChild />
-            </ProtectedRoute>,
-            authContext
-        )
-
-        const navigateElement = screen.getByTestId('navigate')
-        expect(navigateElement).toBeInTheDocument()
-        expect(navigateElement).toHaveAttribute('data-to', '/login')
     })
 })

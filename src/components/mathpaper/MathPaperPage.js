@@ -73,26 +73,9 @@ const MathPaperPage = () => {
         return [];
     };
 
-    // Fetch available tags from Supabase
+    // Set empty tags by default since database functions don't exist
     useEffect(() => {
-        const fetchAvailableTags = async () => {
-            try {
-                const { data, error } = await supabase
-                    .rpc('get_all_tags');
-
-                if (error) {
-                    console.error('Error fetching tags:', error);
-                    setError('Failed to load available tags');
-                } else {
-                    setAvailableTags(data || []);
-                }
-            } catch (err) {
-                console.error('Error fetching tags:', err);
-                setError('Failed to load available tags');
-            }
-        };
-
-        fetchAvailableTags();
+        setAvailableTags([]);
     }, []);
 
     // Handle filter search
@@ -101,15 +84,18 @@ const MathPaperPage = () => {
         setError('');
 
         try {
-            const { data, error } = await supabase
-                .rpc('filter_math_papers_by_year_paper', {
-                    filter_year: selectedYear || null,
-                    filter_paper: selectedPaper || null
-                });
+            const { data, error } = await supabase.rpc('filter_math_papers_by_year_paper', {
+                filter_year: selectedYear || null,
+                filter_paper: selectedPaper || null
+            });
 
             if (error) {
                 console.error('Error fetching questions:', error);
-                setError('Failed to fetch questions');
+                if (error.message.includes('function') || error.message.includes('table')) {
+                    setError('Database function not available. Please set up the database first.');
+                } else {
+                    setError('Failed to fetch questions');
+                }
             } else {
                 // Filter by question number if selected
                 let filteredData = data || [];
@@ -118,7 +104,6 @@ const MathPaperPage = () => {
                 }
 
                 setQuestions(filteredData);
-
 
                 // If exactly one result and all three filters are specified, show details directly
                 if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
@@ -136,7 +121,11 @@ const MathPaperPage = () => {
             }
         } catch (err) {
             console.error('Error fetching questions:', err);
-            setError('Failed to fetch questions');
+            if (err.message === 'Request timeout') {
+                setError('Database function timed out. Please set up the database first.');
+            } else {
+                setError('Failed to fetch questions');
+            }
         } finally {
             setLoading(false);
         }
@@ -154,15 +143,24 @@ const MathPaperPage = () => {
             const allResults = [];
 
             for (const tag of searchTags) {
-                const { data, error } = await supabase
-                    .rpc('search_math_papers_by_keyword', {
+                try {
+                    const { data, error } = await supabase.rpc('search_math_papers_by_keyword', {
                         search_term: tag
                     });
 
-                if (error) {
-                    console.error(`Error searching for tag "${tag}":`, error);
-                } else {
-                    allResults.push(...(data || []));
+                    if (error) {
+                        console.error(`Error searching for tag "${tag}":`, error);
+                        if (error.message.includes('function') || error.message.includes('table')) {
+                            console.log(`Database function not available for tag "${tag}"`);
+                        }
+                    } else {
+                        allResults.push(...(data || []));
+                    }
+                } catch (err) {
+                    console.error(`Error searching for tag "${tag}":`, err);
+                    if (err.message === 'Request timeout') {
+                        console.log(`Database function timed out for tag "${tag}"`);
+                    }
                 }
             }
 
@@ -172,6 +170,10 @@ const MathPaperPage = () => {
             );
 
             setQuestions(uniqueResults);
+
+            if (allResults.length === 0) {
+                setError('No results found. Database functions may not be set up.');
+            }
 
         } catch (err) {
             console.error('Error searching by tags:', err);

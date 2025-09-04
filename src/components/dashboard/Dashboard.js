@@ -78,14 +78,6 @@ const Dashboard = () => {
 
     const dashboardItems = [
         {
-            title: 'Math Past Papers',
-            description: 'Access and practice with past exam questions',
-            icon: <Book sx={{ fontSize: 48, color: 'primary.main' }} />,
-            action: 'View Papers',
-            color: '#e3f2fd',
-            count: '150+'
-        },
-        {
             title: 'Tutor Notes',
             description: 'Browse educational notes and resources',
             icon: <School sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -236,7 +228,7 @@ const Dashboard = () => {
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                             <School sx={{ fontSize: 32, color: 'primary.main', mr: 1 }} />
                                             <Typography variant="h6" component="h3">
-                                                Math Past Papers
+                                                Math DSE Past Papers
                                             </Typography>
                                         </Box>
                                         <Typography variant="body2" color="text.secondary" paragraph>
@@ -305,7 +297,7 @@ const Dashboard = () => {
                                 <Typography variant="h6" component="h3" fontWeight="600" sx={{ mb: 2 }}>
                                     Your Profile
                                 </Typography>
-                                <ProfileDisplay showEmail={true} />
+                                <ProfileDisplay showEmail={true} userEmail={user?.email} />
                             </Paper>
 
 
