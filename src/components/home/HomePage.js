@@ -19,7 +19,8 @@ import {
     Favorite,
     ArrowForward,
     People,
-    Logout
+    Logout,
+    PlayCircleOutline
 } from '@mui/icons-material'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -95,6 +96,16 @@ const HomePage = () => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
+                        {/* Demo Link - Always visible */}
+                        <Button
+                            variant="outlined"
+                            startIcon={<PlayCircleOutline />}
+                            onClick={() => navigate('/question-demo')}
+                            sx={{ mr: 1 }}
+                        >
+                            Demo
+                        </Button>
+
                         {user ? (
                             <>
                                 <Button
@@ -226,6 +237,14 @@ const HomePage = () => {
                                     endIcon={<ArrowForward />}
                                 >
                                     Browse Papers
+                                </Button>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<PlayCircleOutline />}
+                                    onClick={() => navigate('/question-demo')}
+                                >
+                                    View Demo
                                 </Button>
                             </CardActions>
                         </Card>
