@@ -70,48 +70,6 @@ const QuizTaker = () => {
         setAnswers(initialAnswers);
     }, [test, navigate]);
 
-    // Timer effect
-    useEffect(() => {
-        if (!quizStarted || timeRemaining <= 0) return;
-
-        const timer = setInterval(() => {
-            setTimeRemaining(prev => {
-                if (prev <= 1) {
-                    handleSubmitQuiz();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [quizStarted, timeRemaining, handleSubmitQuiz]);
-
-    const formatTime = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
-
-    const handleAnswerChange = (questionIndex, answer) => {
-        setAnswers(prev => ({
-            ...prev,
-            [questionIndex]: answer
-        }));
-    };
-
-    const handleNextQuestion = () => {
-        if (currentQuestionIndex < test.questions.length - 1) {
-            setCurrentQuestionIndex(prev => prev + 1);
-        }
-    };
-
-    const handlePreviousQuestion = () => {
-        if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev - 1);
-        }
-    };
-
     const handleSubmitQuiz = useCallback(async () => {
         if (isSubmitting) return;
 
@@ -174,6 +132,49 @@ const QuizTaker = () => {
             setIsSubmitting(false);
         }
     }, [isSubmitting, test, answers, timeRemaining, user, navigate, isPractice]);
+
+    // Timer effect
+    useEffect(() => {
+        if (!quizStarted || timeRemaining <= 0) return;
+
+        const timer = setInterval(() => {
+            setTimeRemaining(prev => {
+                if (prev <= 1) {
+                    handleSubmitQuiz();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [quizStarted, timeRemaining, handleSubmitQuiz]);
+
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    const handleAnswerChange = (questionIndex, answer) => {
+        setAnswers(prev => ({
+            ...prev,
+            [questionIndex]: answer
+        }));
+    };
+
+    const handleNextQuestion = () => {
+        if (currentQuestionIndex < test.questions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        }
+    };
+
+    const handlePreviousQuestion = () => {
+        if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(prev => prev - 1);
+        }
+    };
+
 
     const getProgress = () => {
         return ((currentQuestionIndex + 1) / test.questions.length) * 100;
