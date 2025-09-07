@@ -1,6 +1,6 @@
 [build]
-  # Build command
-  command = "npm run build"
+  # Build command with SEO optimization
+  command = "npm run build:seo"
 
   # Publish directory
   publish = "build"

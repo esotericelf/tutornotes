@@ -1,22 +1,25 @@
 // Performance optimization utilities
+import React from 'react';
 
 // Lazy loading utility for components
 export const lazyLoadComponent = (importFunc) => {
-    return React.lazy(importFunc);
+  return React.lazy(importFunc);
 };
 
 // Image optimization utility
 export const optimizeImage = (src, options = {}) => {
-    const {
-        width = 800,
-        height = 600,
-        quality = 80,
-        format = 'webp'
-    } = options;
+  const {
+    width = 800,
+    height = 600,
+    quality = 80,
+    format = 'webp'
+  } = options;
 
-    // If using a CDN or image optimization service, add parameters here
-    // Example: return `${src}?w=${width}&h=${height}&q=${quality}&f=${format}`;
-    return src;
+  // If using a CDN or image optimization service, add parameters here
+  // Example: return `${src}?w=${width}&h=${height}&q=${quality}&f=${format}`;
+  // eslint-disable-next-line no-unused-vars
+  const _ = { width, height, quality, format }; // Prevent unused variable warnings
+  return src;
 };
 
 // Preload critical resources

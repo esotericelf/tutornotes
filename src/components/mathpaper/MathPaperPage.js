@@ -36,7 +36,7 @@ import QuestionDisplay from './QuestionDisplay';
 import { DiscussionSection } from '../discussion';
 import SEOHead from '../common/SEOHead';
 import { createCourseStructuredData, createBreadcrumbStructuredData } from '../../utils/structuredData';
-import { trackMathPaperEvent, trackSearch, trackUserInteraction } from '../../utils/analytics';
+import { trackMathPaperEvent, trackSearch } from '../../utils/analytics';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
