@@ -1,5 +1,5 @@
 import { supabase } from '../../../services/supabase';
-import { Quiz, QuizFilters, QuizSortOptions } from '../types/quiz.types';
+import { QuizSortOptions } from '../types/quiz.types';
 
 /**
  * Quiz Service - Handles all quiz-related database operations
@@ -346,4 +346,5 @@ class QuizService {
 }
 
 // Export singleton instance
-export default new QuizService();
+const quizService = new QuizService();
+export default quizService;

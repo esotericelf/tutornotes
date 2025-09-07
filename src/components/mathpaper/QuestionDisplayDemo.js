@@ -10,7 +10,6 @@ import {
     FormControlLabel,
     FormControl,
     Chip,
-    Alert,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -19,7 +18,7 @@ import {
     Step,
     StepLabel
 } from '@mui/material';
-import { CheckCircle, Visibility, Quiz, NavigateNext, NavigateBefore } from '@mui/icons-material';
+import { CheckCircle, Visibility, NavigateNext, NavigateBefore } from '@mui/icons-material';
 import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
@@ -188,22 +187,6 @@ const QuestionDisplayDemo = () => {
         });
     };
 
-    const renderDiagram = (diagramContent) => {
-        if (!diagramContent) return null;
-
-        return (
-            <Box sx={{
-                width: '100%',
-                height: '300px',
-                overflow: 'hidden',
-                borderRadius: 1,
-                border: '1px solid rgba(0,0,0,0.1)',
-                mb: 2
-            }}>
-                <div dangerouslySetInnerHTML={{ __html: diagramContent }} />
-            </Box>
-        );
-    };
 
     if (showSolution) {
         const score = getScore();

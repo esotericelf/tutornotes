@@ -227,7 +227,7 @@ export const QuizAnalytics = {
 };
 
 // Export all types for easy importing
-export default {
+const quizTypes = {
     Question,
     Quiz,
     QuizAttempt,
@@ -246,3 +246,5 @@ export default {
     DIFFICULTY_LEVELS,
     DIFFICULTY_LABELS
 };
+
+export default quizTypes;

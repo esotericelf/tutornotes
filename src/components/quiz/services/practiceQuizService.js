@@ -381,4 +381,5 @@ class PracticeQuizService {
     }
 }
 
-export default new PracticeQuizService();
+const practiceQuizService = new PracticeQuizService();
+export default practiceQuizService;

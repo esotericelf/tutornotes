@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box,
     Container,
@@ -36,14 +36,14 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../../contexts/AuthContext';
 import quizService from '../services/quizService';
-import { QuizFilters, QuizSortOptions, DIFFICULTY_LABELS } from '../types/quiz.types';
+import { QuizSortOptions } from '../types/quiz.types';
 
 /**
  * QuizDashboard - Main component for the quiz module
  * Inherits the parent project's Material-UI design system
  */
 const QuizDashboard = () => {
-    const { user, userRole } = useAuth();
+    const { userRole } = useAuth();
     const [quizzes, setQuizzes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -62,9 +62,9 @@ const QuizDashboard = () => {
     // Load quizzes on component mount and when filters change
     useEffect(() => {
         loadQuizzes();
-    }, [filters, sortBy, page, searchTerm]);
+    }, [loadQuizzes]);
 
-    const loadQuizzes = async () => {
+    const loadQuizzes = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -95,7 +95,7 @@ const QuizDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters, sortBy, page, searchTerm]);
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({ ...prev, [field]: value }));
@@ -138,16 +138,6 @@ const QuizDashboard = () => {
         return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
     };
 
-    const getDifficultyColor = (level) => {
-        const colors = {
-            1: 'success',
-            2: 'info',
-            3: 'warning',
-            4: 'error',
-            5: 'error'
-        };
-        return colors[level] || 'default';
-    };
 
     if (loading && quizzes.length === 0) {
         return (

@@ -215,4 +215,5 @@ class RandomizedQuizService {
     }
 }
 
-export default new RandomizedQuizService();
+const randomizedQuizService = new RandomizedQuizService();
+export default randomizedQuizService;
