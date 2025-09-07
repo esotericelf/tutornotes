@@ -1,8 +1,10 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './contexts/AuthContext'
+import { initializeAnalytics, trackRouteChange } from './utils/analytics'
 import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import Dashboard from './components/dashboard/Dashboard'
@@ -158,50 +160,72 @@ const theme = createTheme({
   },
 })
 
+// Component to track route changes
+const AnalyticsTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Track route changes
+    const routeName = location.pathname === '/' ? 'Home' :
+      location.pathname.replace('/', '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    trackRouteChange(location.pathname, routeName);
+  }, [location]);
+
+  return null;
+};
+
 function App() {
+  useEffect(() => {
+    // Initialize analytics when app starts
+    initializeAnalytics();
+  }, []);
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AuthProvider>
-        <Router>
-          <div className="App">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/mathpaper" element={<MathPaperPage />} />
-              <Route path="/question-demo" element={<QuestionDisplayDemo />} />
+    <HelmetProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>
+          <Router>
+            <AnalyticsTracker />
+            <div className="App">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/mathpaper" element={<MathPaperPage />} />
+                <Route path="/question-demo" element={<QuestionDisplayDemo />} />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Quiz Routes */}
-              <Route
-                path="/quiz/take"
-                element={
-                  <ProtectedRoute>
-                    <QuizTaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/results"
-                element={
-                  <ProtectedRoute>
-                    <QuizResults />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </div>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+                {/* Quiz Routes */}
+                <Route
+                  path="/quiz/take"
+                  element={
+                    <ProtectedRoute>
+                      <QuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/results"
+                  element={
+                    <ProtectedRoute>
+                      <QuizResults />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </div>
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   )
 }
 

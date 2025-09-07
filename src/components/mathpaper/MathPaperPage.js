@@ -34,6 +34,9 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import QuestionDisplay from './QuestionDisplay';
 import { DiscussionSection } from '../discussion';
+import SEOHead from '../common/SEOHead';
+import { createCourseStructuredData, createBreadcrumbStructuredData } from '../../utils/structuredData';
+import { trackMathPaperEvent, trackSearch, trackUserInteraction } from '../../utils/analytics';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
@@ -105,9 +108,14 @@ const MathPaperPage = () => {
 
                 setQuestions(filteredData);
 
+                // Track search analytics
+                const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
+                trackSearch(searchTerm, filteredData.length);
+
                 // If exactly one result and all three filters are specified, show details directly
                 if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
                     setSelectedQuestion(filteredData[0]);
+                    trackMathPaperEvent('question_viewed', selectedYear, selectedPaper, selectedQuestionNo);
                     // Scroll to question details after a short delay to ensure component is rendered
                     setTimeout(() => {
                         questionDetailsRef.current?.scrollIntoView({
@@ -195,346 +203,371 @@ const MathPaperPage = () => {
         setError('');
     };
 
+    const breadcrumbs = [
+        { name: 'Home', url: '/' },
+        { name: 'Math Papers', url: '/mathpaper' }
+    ];
+
+    const courseData = {
+        name: 'DSE Math Past Papers',
+        description: 'Comprehensive collection of DSE Mathematics past papers with detailed solutions and explanations for Hong Kong students'
+    };
+
     return (
-        <Box sx={{
-            minHeight: '100vh',
-            backgroundColor: '#ffffff',
-            // Prevent vibration effects
-            '& .MuiSelect-select': {
-                transition: 'none !important'
-            },
-            '& .MuiFormControl-root': {
-                transition: 'none !important'
-            },
-            '& .MuiInputBase-root': {
-                transition: 'none !important'
-            },
-            '& .MuiAutocomplete-root': {
-                transition: 'none !important'
-            }
-        }}>
-            <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
-                <Toolbar>
-                    <IconButton edge="start" color="primary" onClick={() => navigate('/')} sx={{ mr: 2 }}>
-                        <ArrowBack />
-                    </IconButton>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Math Past Papers
-                    </Typography>
-                </Toolbar>
-            </AppBar>
+        <>
+            <SEOHead
+                title="DSE Math Past Papers - Practice Questions & Solutions | TutorNote"
+                description="Access comprehensive DSE Math past papers with detailed solutions. Practice with real exam questions, track your progress, and improve your mathematics skills for the Hong Kong DSE exam."
+                keywords="DSE Math, Past Papers, Mathematics, Hong Kong, Exam Practice, Solutions, HKDSE, Secondary School, Math Questions"
+                url="/mathpaper"
+                structuredData={[
+                    createCourseStructuredData(courseData),
+                    createBreadcrumbStructuredData(breadcrumbs)
+                ]}
+            />
+            <Box sx={{
+                minHeight: '100vh',
+                backgroundColor: '#ffffff',
+                // Prevent vibration effects
+                '& .MuiSelect-select': {
+                    transition: 'none !important'
+                },
+                '& .MuiFormControl-root': {
+                    transition: 'none !important'
+                },
+                '& .MuiInputBase-root': {
+                    transition: 'none !important'
+                },
+                '& .MuiAutocomplete-root': {
+                    transition: 'none !important'
+                }
+            }}>
+                <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
+                    <Toolbar>
+                        <IconButton edge="start" color="primary" onClick={() => navigate('/')} sx={{ mr: 2 }}>
+                            <ArrowBack />
+                        </IconButton>
+                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                            Math Past Papers
+                        </Typography>
+                    </Toolbar>
+                </AppBar>
 
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                {/* Breadcrumb */}
-                <Box sx={{ mb: 3 }}>
-                    <Breadcrumbs aria-label="breadcrumb">
-                        <Link component={RouterLink} to="/" color="inherit" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Home sx={{ mr: 0.5 }} fontSize="small" /> Home
-                        </Link>
-                        <Typography color="text.primary">Math Past Papers</Typography>
-                    </Breadcrumbs>
-                </Box>
-
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <School sx={{ mr: 1 }} color="primary" />
-                        Math Past Papers
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        Filter and search through past mathematics examination papers
-                    </Typography>
-                </Box>
-
-                {/* Filter Section */}
-                <Paper sx={{ p: 3, mb: 4 }}>
-                    <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <FilterList sx={{ mr: 1 }} />
-                        Filter Questions
-                    </Typography>
-
-                    <Grid container spacing={3} alignItems="center">
-                        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                            <FormControl fullWidth>
-                                <InputLabel id="year-select-label">Year</InputLabel>
-                                <Select
-                                    labelId="year-select-label"
-                                    id="year-select"
-                                    value={selectedYear}
-                                    label="Year"
-                                    onChange={(e) => setSelectedYear(e.target.value)}
-                                    MenuProps={{
-                                        PaperProps: {
-                                            style: {
-                                                maxHeight: 300
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value="">All Years</MenuItem>
-                                    {yearOptions.map((year) => (
-                                        <MenuItem key={year} value={year}>{year}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                            <FormControl fullWidth>
-                                <InputLabel id="paper-select-label">Paper</InputLabel>
-                                <Select
-                                    labelId="paper-select-label"
-                                    id="paper-select"
-                                    value={selectedPaper}
-                                    label="Paper"
-                                    onChange={(e) => {
-                                        setSelectedPaper(e.target.value);
-                                        setSelectedQuestionNo(''); // Reset question number when paper changes
-                                    }}
-                                    MenuProps={{
-                                        PaperProps: {
-                                            style: {
-                                                maxHeight: 200
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value="">All Papers</MenuItem>
-                                    {paperOptions.map((paper) => (
-                                        <MenuItem key={paper} value={paper}>Paper {paper}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                            <FormControl fullWidth>
-                                <InputLabel id="question-select-label">Question Number</InputLabel>
-                                <Select
-                                    labelId="question-select-label"
-                                    id="question-select"
-                                    value={selectedQuestionNo}
-                                    label="Question Number"
-                                    onChange={(e) => setSelectedQuestionNo(e.target.value)}
-                                    disabled={!selectedPaper}
-                                    MenuProps={{
-                                        PaperProps: {
-                                            style: {
-                                                maxHeight: 300
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value="">All Questions</MenuItem>
-                                    {getQuestionNumberOptions(selectedPaper).map((num) => (
-                                        <MenuItem key={num} value={num}>{num}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                            <Autocomplete
-                                multiple
-                                options={availableTags}
-                                value={searchTags}
-                                onChange={(event, newValue) => setSearchTags(newValue)}
-                                inputValue={searchInput}
-                                onInputChange={(event, newInputValue) => setSearchInput(newInputValue)}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        id="tags-autocomplete"
-                                        label="Search by tags"
-                                        placeholder="Type to search tags..."
-                                        helperText=""
-                                        sx={{ minWidth: '200px' }}
-                                    />
-                                )}
-                                renderTags={(value, getTagProps) =>
-                                    value.map((option, index) => (
-                                        <Chip
-                                            label={option}
-                                            {...getTagProps({ index })}
-                                            color="primary"
-                                            variant="outlined"
-                                            size="small"
-                                        />
-                                    ))
-                                }
-                                freeSolo
-                                filterOptions={(options, params) => {
-                                    const filtered = options.filter(option =>
-                                        option.toLowerCase().includes(params.inputValue.toLowerCase())
-                                    );
-                                    return filtered;
-                                }}
-                                ListboxProps={{
-                                    style: {
-                                        maxHeight: 200
-                                    }
-                                }}
-                            />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                onClick={handleFilterSearch}
-                                disabled={loading}
-                                sx={{ height: 56 }}
-                            >
-                                {loading ? <CircularProgress size={24} /> : 'Search'}
-                            </Button>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                onClick={handleClearFilters}
-                                disabled={loading}
-                                sx={{ height: 56 }}
-                            >
-                                Clear
-                            </Button>
-                        </Grid>
-                    </Grid>
-
-                    <Box sx={{ mt: 2 }}>
-                        <Button
-                            variant="outlined"
-                            onClick={handleTagSearch}
-                            disabled={loading || searchTags.length === 0}
-                            startIcon={<Search />}
-                        >
-                            Search Tags
-                        </Button>
+                <Container maxWidth="lg" sx={{ py: 4 }}>
+                    {/* Breadcrumb */}
+                    <Box sx={{ mb: 3 }}>
+                        <Breadcrumbs aria-label="breadcrumb">
+                            <Link component={RouterLink} to="/" color="inherit" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Home sx={{ mr: 0.5 }} fontSize="small" /> Home
+                            </Link>
+                            <Typography color="text.primary">Math Past Papers</Typography>
+                        </Breadcrumbs>
                     </Box>
-                </Paper>
 
-                {/* Error Display */}
-                {error && (
-                    <Alert severity="error" sx={{ mb: 3 }}>
-                        {error}
-                    </Alert>
-                )}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <School sx={{ mr: 1 }} color="primary" />
+                            Math Past Papers
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            Filter and search through past mathematics examination papers
+                        </Typography>
+                    </Box>
 
-                {/* Results Section */}
-                {questions.length > 0 && !selectedQuestion && (
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Results ({questions.length} questions found)
+                    {/* Filter Section */}
+                    <Paper sx={{ p: 3, mb: 4 }}>
+                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <FilterList sx={{ mr: 1 }} />
+                            Filter Questions
                         </Typography>
 
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {questions.map((question, index) => (
-                                <Box
-                                    key={question.id}
-                                    sx={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        p: 2,
-                                        border: '1px solid',
-                                        borderColor: 'divider',
-                                        borderRadius: 1,
-                                        cursor: 'pointer',
-                                        '&:hover': {
-                                            backgroundColor: 'action.hover',
-                                            borderColor: 'primary.main'
-                                        },
-                                        transition: 'all 0.2s ease-in-out'
-                                    }}
-                                    onClick={() => setSelectedQuestion(question)}
-                                >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 'bold', minWidth: 60 }}>
-                                            #{index + 1}
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Chip
-                                                label={`Year ${question.year}`}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: '#87ceeb',
-                                                    color: '#ffffff',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            />
-                                            <Chip
-                                                label={`Paper ${question.paper}`}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: '#ffa500',
-                                                    color: '#ffffff',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            />
-                                            <Chip
-                                                label={`Q${question.question_no}`}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: '#6c757d',
-                                                    color: '#ffffff',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            />
-                                        </Box>
-                                    </Box>
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        startIcon={<Visibility />}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedQuestion(question);
+                        <Grid container spacing={3} alignItems="center">
+                            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="year-select-label">Year</InputLabel>
+                                    <Select
+                                        labelId="year-select-label"
+                                        id="year-select"
+                                        value={selectedYear}
+                                        label="Year"
+                                        onChange={(e) => setSelectedYear(e.target.value)}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 300
+                                                }
+                                            }
                                         }}
                                     >
-                                        View
-                                    </Button>
-                                </Box>
-                            ))}
-                        </Box>
-                    </Paper>
-                )}
+                                        <MenuItem value="">All Years</MenuItem>
+                                        {yearOptions.map((year) => (
+                                            <MenuItem key={year} value={year}>{year}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
 
-                {/* Question Display Section */}
-                {selectedQuestion && (
-                    <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
-                        {questions.length > 1 && (
-                            <Box sx={{ mb: 3 }}>
+                            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="paper-select-label">Paper</InputLabel>
+                                    <Select
+                                        labelId="paper-select-label"
+                                        id="paper-select"
+                                        value={selectedPaper}
+                                        label="Paper"
+                                        onChange={(e) => {
+                                            setSelectedPaper(e.target.value);
+                                            setSelectedQuestionNo(''); // Reset question number when paper changes
+                                        }}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 200
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="">All Papers</MenuItem>
+                                        {paperOptions.map((paper) => (
+                                            <MenuItem key={paper} value={paper}>Paper {paper}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="question-select-label">Question Number</InputLabel>
+                                    <Select
+                                        labelId="question-select-label"
+                                        id="question-select"
+                                        value={selectedQuestionNo}
+                                        label="Question Number"
+                                        onChange={(e) => setSelectedQuestionNo(e.target.value)}
+                                        disabled={!selectedPaper}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    maxHeight: 300
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="">All Questions</MenuItem>
+                                        {getQuestionNumberOptions(selectedPaper).map((num) => (
+                                            <MenuItem key={num} value={num}>{num}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Autocomplete
+                                    multiple
+                                    options={availableTags}
+                                    value={searchTags}
+                                    onChange={(event, newValue) => setSearchTags(newValue)}
+                                    inputValue={searchInput}
+                                    onInputChange={(event, newInputValue) => setSearchInput(newInputValue)}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            id="tags-autocomplete"
+                                            label="Search by tags"
+                                            placeholder="Type to search tags..."
+                                            helperText=""
+                                            sx={{ minWidth: '200px' }}
+                                        />
+                                    )}
+                                    renderTags={(value, getTagProps) =>
+                                        value.map((option, index) => (
+                                            <Chip
+                                                label={option}
+                                                {...getTagProps({ index })}
+                                                color="primary"
+                                                variant="outlined"
+                                                size="small"
+                                            />
+                                        ))
+                                    }
+                                    freeSolo
+                                    filterOptions={(options, params) => {
+                                        const filtered = options.filter(option =>
+                                            option.toLowerCase().includes(params.inputValue.toLowerCase())
+                                        );
+                                        return filtered;
+                                    }}
+                                    ListboxProps={{
+                                        style: {
+                                            maxHeight: 200
+                                        }
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={handleFilterSearch}
+                                    disabled={loading}
+                                    sx={{ height: 56 }}
+                                >
+                                    {loading ? <CircularProgress size={24} /> : 'Search'}
+                                </Button>
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6, md: 1 }}>
                                 <Button
                                     variant="outlined"
-                                    startIcon={<ArrowBack />}
-                                    onClick={() => setSelectedQuestion(null)}
+                                    fullWidth
+                                    onClick={handleClearFilters}
+                                    disabled={loading}
+                                    sx={{ height: 56 }}
                                 >
-                                    Back to Results ({questions.length} questions)
+                                    Clear
                                 </Button>
-                            </Box>
-                        )}
-                        <QuestionDisplay question={selectedQuestion} />
+                            </Grid>
+                        </Grid>
 
-                        {/* Discussion Section */}
-                        <Box sx={{ mt: 4 }}>
-                            <DiscussionSection questionId={selectedQuestion.id} />
+                        <Box sx={{ mt: 2 }}>
+                            <Button
+                                variant="outlined"
+                                onClick={handleTagSearch}
+                                disabled={loading || searchTags.length === 0}
+                                startIcon={<Search />}
+                            >
+                                Search Tags
+                            </Button>
                         </Box>
-                    </Box>
-                )}
-
-                {/* No Results Message */}
-                {!loading && questions.length === 0 && !selectedQuestion && (selectedYear || selectedPaper || selectedQuestionNo || searchTags.length > 0) && (
-                    <Paper sx={{ p: 3, textAlign: 'center' }}>
-                        <Typography variant="h6" color="text.secondary">
-                            No questions found matching your criteria
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Try adjusting your filters or search terms
-                        </Typography>
                     </Paper>
-                )}
-            </Container>
-        </Box>
+
+                    {/* Error Display */}
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 3 }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    {/* Results Section */}
+                    {questions.length > 0 && !selectedQuestion && (
+                        <Paper sx={{ p: 3 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Results ({questions.length} questions found)
+                            </Typography>
+
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                {questions.map((question, index) => (
+                                    <Box
+                                        key={question.id}
+                                        sx={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            p: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            borderRadius: 1,
+                                            cursor: 'pointer',
+                                            '&:hover': {
+                                                backgroundColor: 'action.hover',
+                                                borderColor: 'primary.main'
+                                            },
+                                            transition: 'all 0.2s ease-in-out'
+                                        }}
+                                        onClick={() => {
+                                            setSelectedQuestion(question);
+                                            trackMathPaperEvent('question_clicked', question.year, question.paper, question.question_no);
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                            <Typography variant="body1" sx={{ fontWeight: 'bold', minWidth: 60 }}>
+                                                #{index + 1}
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Chip
+                                                    label={`Year ${question.year}`}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: '#87ceeb',
+                                                        color: '#ffffff',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                />
+                                                <Chip
+                                                    label={`Paper ${question.paper}`}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: '#ffa500',
+                                                        color: '#ffffff',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                />
+                                                <Chip
+                                                    label={`Q${question.question_no}`}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: '#6c757d',
+                                                        color: '#ffffff',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Box>
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            startIcon={<Visibility />}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedQuestion(question);
+                                            }}
+                                        >
+                                            View
+                                        </Button>
+                                    </Box>
+                                ))}
+                            </Box>
+                        </Paper>
+                    )}
+
+                    {/* Question Display Section */}
+                    {selectedQuestion && (
+                        <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
+                            {questions.length > 1 && (
+                                <Box sx={{ mb: 3 }}>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBack />}
+                                        onClick={() => setSelectedQuestion(null)}
+                                    >
+                                        Back to Results ({questions.length} questions)
+                                    </Button>
+                                </Box>
+                            )}
+                            <QuestionDisplay question={selectedQuestion} />
+
+                            {/* Discussion Section */}
+                            <Box sx={{ mt: 4 }}>
+                                <DiscussionSection questionId={selectedQuestion.id} />
+                            </Box>
+                        </Box>
+                    )}
+
+                    {/* No Results Message */}
+                    {!loading && questions.length === 0 && !selectedQuestion && (selectedYear || selectedPaper || selectedQuestionNo || searchTags.length > 0) && (
+                        <Paper sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography variant="h6" color="text.secondary">
+                                No questions found matching your criteria
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                Try adjusting your filters or search terms
+                            </Typography>
+                        </Paper>
+                    )}
+                </Container>
+            </Box>
+        </>
     );
 };
 

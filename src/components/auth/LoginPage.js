@@ -31,6 +31,7 @@ import {
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
+import { trackLogin, trackSignup, trackError } from '../../utils/analytics'
 
 // Custom Discord icon component
 const DiscordIcon = () => (
@@ -171,8 +172,10 @@ const LoginPage = () => {
                 if (result.error) {
                     console.error('Login error:', result.error)
                     setError(result.error.message || 'Login failed. Please check your credentials.')
+                    trackError('Login Error', result.error.message, 'LoginPage')
                 } else {
                     setSuccess('Successfully logged in!')
+                    trackLogin('email')
                     setTimeout(() => {
                         navigate('/dashboard')
                     }, 1000)
@@ -196,8 +199,10 @@ const LoginPage = () => {
                 if (result.error) {
                     console.error('Registration error:', result.error)
                     setError(result.error.message || 'Registration failed. Please try again.')
+                    trackError('Registration Error', result.error.message, 'LoginPage')
                 } else {
                     setSuccess('Registration successful! Please check your email to verify your account.')
+                    trackSignup('email')
                 }
             }
         } catch (err) {

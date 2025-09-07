@@ -24,6 +24,8 @@ import {
 } from '@mui/icons-material'
 import AuthContext from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import SEOHead from '../common/SEOHead'
+import { createWebsiteStructuredData, createOrganizationStructuredData } from '../../utils/structuredData'
 
 const HomePage = () => {
     const { user, signOut } = useContext(AuthContext)
@@ -79,369 +81,378 @@ const HomePage = () => {
     }
 
     return (
-        <Box sx={{ minHeight: '100vh', backgroundColor: '#ffffff' }}>
-            {/* Navigation Bar */}
-            <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
-                <Toolbar sx={{
-                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                    minHeight: { xs: 56, sm: 64 }
-                }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0 }}>
-                        <School sx={{ fontSize: { xs: 24, sm: 32 }, color: 'primary.main', mr: { xs: 1, sm: 2 } }} />
-                        <Typography
-                            variant="h5"
-                            component="h1"
-                            color="primary"
-                            fontWeight="bold"
-                            sx={{
-                                fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            Tutor Notes
-                        </Typography>
-                    </Box>
-                    <Box sx={{
-                        display: 'flex',
-                        gap: { xs: 1, sm: 2 },
+        <>
+            <SEOHead
+                title="TutorNote - DSE Math Past Papers for Hong Kong Students"
+                description="Comprehensive DSE Math Past Papers, practice quizzes, and educational resources for Hong Kong students. Access past papers, track progress, and improve your math skills."
+                keywords="DSE, Math, Past Papers, Hong Kong, Education, Tutoring, Mathematics, HKDSE, Secondary School, Exam Preparation, Practice Quizzes"
+                url="/"
+                structuredData={[createWebsiteStructuredData(), createOrganizationStructuredData()]}
+            />
+            <Box sx={{ minHeight: '100vh', backgroundColor: '#ffffff' }}>
+                {/* Navigation Bar */}
+                <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
+                    <Toolbar sx={{
                         flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                        justifyContent: { xs: 'center', sm: 'flex-end' },
-                        width: { xs: '100%', sm: 'auto' },
-                        mt: { xs: 1, sm: 0 }
+                        minHeight: { xs: 56, sm: 64 }
                     }}>
-                        {/* Demo Link - Always visible */}
-                        <Button
-                            variant="outlined"
-                            startIcon={<PlayCircleOutline sx={{ fontSize: { xs: 18, sm: 20 } }} />}
-                            onClick={() => navigate('/question-demo')}
-                            size="small"
-                            sx={{
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                minWidth: { xs: 'auto', sm: 'auto' }
-                            }}
-                        >
-                            Demo
-                        </Button>
-
-                        {user ? (
-                            <>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => navigate('/dashboard')}
-                                    size="small"
-                                    sx={{
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                        display: { xs: 'none', sm: 'inline-flex' }
-                                    }}
-                                >
-                                    Dashboard
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    onClick={() => navigate('/dashboard')}
-                                    size="small"
-                                    sx={{
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                    }}
-                                >
-                                    {window.innerWidth < 600 ? 'Continue' : 'Continue Learning'}
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    startIcon={<Logout sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                                    onClick={handleLogout}
-                                    size="small"
-                                    sx={{
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                    }}
-                                >
-                                    Logout
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => navigate('/login')}
-                                    size="small"
-                                    sx={{
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                    }}
-                                >
-                                    Sign In
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    onClick={() => navigate('/login')}
-                                    size="small"
-                                    sx={{
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                    }}
-                                >
-                                    Get Started
-                                </Button>
-                            </>
-                        )}
-                    </Box>
-                </Toolbar>
-            </AppBar>
-
-            {/* Hero Section */}
-            <Box
-                sx={{
-                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                    color: '#495057',
-                    py: 12,
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}
-            >
-                <Container maxWidth="lg">
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            textAlign: 'center',
-                            position: 'relative',
-                            zIndex: 2
-                        }}
-                    >
-                        <Typography
-                            variant="h2"
-                            component="h1"
-                            fontWeight="bold"
-                            sx={{ mb: 3, fontSize: { xs: '2.5rem', md: '3.5rem' } }}
-                        >
-                            Your Learning Journey
-                            <br />
-                            Starts Here
-                        </Typography>
-                        <Typography
-                            variant="h5"
-                            sx={{
-                                mb: 4,
-                                maxWidth: 600,
-                                opacity: 0.9,
-                                fontSize: { xs: '1.1rem', md: '1.3rem' }
-                            }}
-                        >
-                            Access comprehensive math past papers, expert tutor notes, and join a community of learners
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            endIcon={<ArrowForward />}
-                            onClick={handleGetStarted}
-                            sx={{
-                                px: 4,
-                                py: 1.5,
-                                fontSize: '1.2rem',
-                                backgroundColor: '#6c757d',
-                                color: 'white',
-                                '&:hover': {
-                                    backgroundColor: '#495057'
-                                }
-                            }}
-                        >
-                            {user ? 'Continue Learning' : 'Start Learning Now'}
-                        </Button>
-                    </Box>
-                </Container>
-            </Box>
-
-            {/* Features Section */}
-            <Container maxWidth="lg" sx={{ py: 8 }}>
-                <Typography variant="h3" component="h2" align="center" gutterBottom>
-                    Features
-                </Typography>
-                <Grid container spacing={4} sx={{ mt: 4 }}>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <School sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-                                <Typography variant="h5" component="h3" gutterBottom>
-                                    Math Past Papers
-                                </Typography>
-                                <Typography variant="body1" color="text.secondary" paragraph>
-                                    Access comprehensive collection of past mathematics examination papers with advanced filtering and search capabilities.
-                                </Typography>
-                            </CardContent>
-                            <CardActions>
-                                <Button
-                                    size="small"
-                                    onClick={() => navigate('/mathpaper')}
-                                    endIcon={<ArrowForward />}
-                                >
-                                    Browse Papers
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<PlayCircleOutline />}
-                                    onClick={() => navigate('/question-demo')}
-                                >
-                                    View Demo
-                                </Button>
-                            </CardActions>
-                        </Card>
-                    </Grid>
-                    {features.map((feature, index) => (
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-                            <Card
+                        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0 }}>
+                            <School sx={{ fontSize: { xs: 24, sm: 32 }, color: 'primary.main', mr: { xs: 1, sm: 2 } }} />
+                            <Typography
+                                variant="h5"
+                                component="h1"
+                                color="primary"
+                                fontWeight="bold"
                                 sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transition: 'all 0.3s ease',
+                                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                Tutor Notes
+                            </Typography>
+                        </Box>
+                        <Box sx={{
+                            display: 'flex',
+                            gap: { xs: 1, sm: 2 },
+                            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                            justifyContent: { xs: 'center', sm: 'flex-end' },
+                            width: { xs: '100%', sm: 'auto' },
+                            mt: { xs: 1, sm: 0 }
+                        }}>
+                            {/* Demo Link - Always visible */}
+                            <Button
+                                variant="outlined"
+                                startIcon={<PlayCircleOutline sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+                                onClick={() => navigate('/question-demo')}
+                                size="small"
+                                sx={{
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    minWidth: { xs: 'auto', sm: 'auto' }
+                                }}
+                            >
+                                Demo
+                            </Button>
+
+                            {user ? (
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => navigate('/dashboard')}
+                                        size="small"
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                            display: { xs: 'none', sm: 'inline-flex' }
+                                        }}
+                                    >
+                                        Dashboard
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => navigate('/dashboard')}
+                                        size="small"
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                        }}
+                                    >
+                                        {window.innerWidth < 600 ? 'Continue' : 'Continue Learning'}
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<Logout sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                                        onClick={handleLogout}
+                                        size="small"
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                        }}
+                                    >
+                                        Logout
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => navigate('/login')}
+                                        size="small"
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                        }}
+                                    >
+                                        Sign In
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => navigate('/login')}
+                                        size="small"
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                        }}
+                                    >
+                                        Get Started
+                                    </Button>
+                                </>
+                            )}
+                        </Box>
+                    </Toolbar>
+                </AppBar>
+
+                {/* Hero Section */}
+                <Box
+                    sx={{
+                        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                        color: '#495057',
+                        py: 12,
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}
+                >
+                    <Container maxWidth="lg">
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                                position: 'relative',
+                                zIndex: 2
+                            }}
+                        >
+                            <Typography
+                                variant="h2"
+                                component="h1"
+                                fontWeight="bold"
+                                sx={{ mb: 3, fontSize: { xs: '2.5rem', md: '3.5rem' } }}
+                            >
+                                Your Learning Journey
+                                <br />
+                                Starts Here
+                            </Typography>
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    mb: 4,
+                                    maxWidth: 600,
+                                    opacity: 0.9,
+                                    fontSize: { xs: '1.1rem', md: '1.3rem' }
+                                }}
+                            >
+                                Access comprehensive math past papers, expert tutor notes, and join a community of learners
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                endIcon={<ArrowForward />}
+                                onClick={handleGetStarted}
+                                sx={{
+                                    px: 4,
+                                    py: 1.5,
+                                    fontSize: '1.2rem',
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
                                     '&:hover': {
-                                        transform: 'translateY(-8px)',
-                                        boxShadow: 8
+                                        backgroundColor: '#495057'
                                     }
                                 }}
                             >
-                                <CardContent
-                                    sx={{
-                                        flexGrow: 1,
-                                        textAlign: 'center',
-                                        p: 3
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            mb: 2
-                                        }}
-                                    >
-                                        {feature.icon}
-                                    </Box>
-                                    <Typography gutterBottom variant="h6" component="h3" fontWeight="600">
-                                        {feature.title}
+                                {user ? 'Continue Learning' : 'Start Learning Now'}
+                            </Button>
+                        </Box>
+                    </Container>
+                </Box>
+
+                {/* Features Section */}
+                <Container maxWidth="lg" sx={{ py: 8 }}>
+                    <Typography variant="h3" component="h2" align="center" gutterBottom>
+                        Features
+                    </Typography>
+                    <Grid container spacing={4} sx={{ mt: 4 }}>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                <CardContent sx={{ flexGrow: 1 }}>
+                                    <School sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+                                    <Typography variant="h5" component="h3" gutterBottom>
+                                        Math Past Papers
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                                        {feature.description}
+                                    <Typography variant="body1" color="text.secondary" paragraph>
+                                        Access comprehensive collection of past mathematics examination papers with advanced filtering and search capabilities.
                                     </Typography>
                                 </CardContent>
-                                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                                <CardActions>
+                                    <Button
+                                        size="small"
+                                        onClick={() => navigate('/mathpaper')}
+                                        endIcon={<ArrowForward />}
+                                    >
+                                        Browse Papers
+                                    </Button>
                                     <Button
                                         size="small"
                                         variant="outlined"
-                                        onClick={() => {
-                                            if (feature.title === 'Practice Quizzes') {
-                                                navigate('/dashboard')
-                                            } else {
-                                                // Handle other features
-                                            }
-                                        }}
+                                        startIcon={<PlayCircleOutline />}
+                                        onClick={() => navigate('/question-demo')}
                                     >
-                                        {feature.title === 'Practice Quizzes' ? 'Start Quiz' : 'Learn More'}
+                                        View Demo
                                     </Button>
                                 </CardActions>
                             </Card>
                         </Grid>
-                    ))}
-                </Grid>
-            </Container>
-
-            {/* Stats Section */}
-            <Box sx={{ backgroundColor: 'grey.50', py: 8 }}>
-                <Container maxWidth="lg">
-                    <Grid container spacing={4}>
-                        {stats.map((stat, index) => (
-                            <Grid size={{ xs: 6, md: 3 }} key={index}>
-                                <Box sx={{ textAlign: 'center' }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                                        {React.cloneElement(stat.icon, {
-                                            sx: { fontSize: 32, color: 'primary.main' }
-                                        })}
-                                    </Box>
-                                    <Typography variant="h3" component="div" fontWeight="bold" color="primary">
-                                        {stat.number}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
-                                        {stat.label}
-                                    </Typography>
-                                </Box>
+                        {features.map((feature, index) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                                <Card
+                                    sx={{
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            transform: 'translateY(-8px)',
+                                            boxShadow: 8
+                                        }
+                                    }}
+                                >
+                                    <CardContent
+                                        sx={{
+                                            flexGrow: 1,
+                                            textAlign: 'center',
+                                            p: 3
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                mb: 2
+                                            }}
+                                        >
+                                            {feature.icon}
+                                        </Box>
+                                        <Typography gutterBottom variant="h6" component="h3" fontWeight="600">
+                                            {feature.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                                            {feature.description}
+                                        </Typography>
+                                    </CardContent>
+                                    <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => {
+                                                if (feature.title === 'Practice Quizzes') {
+                                                    navigate('/dashboard')
+                                                } else {
+                                                    // Handle other features
+                                                }
+                                            }}
+                                        >
+                                            {feature.title === 'Practice Quizzes' ? 'Start Quiz' : 'Learn More'}
+                                        </Button>
+                                    </CardActions>
+                                </Card>
                             </Grid>
                         ))}
                     </Grid>
                 </Container>
-            </Box>
 
-            {/* Call to Action */}
-            <Container maxWidth="lg" sx={{ py: 8 }}>
-                <Paper
-                    sx={{
-                        p: 6,
-                        textAlign: 'center',
-                        background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-                        color: 'white',
-                        borderRadius: 3
-                    }}
-                >
-                    <Typography variant="h3" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                        Ready to Transform Your Learning?
-                    </Typography>
-                    <Typography variant="h6" sx={{ mb: 4, opacity: 0.9, maxWidth: 600, mx: 'auto' }}>
-                        Join thousands of students who are already using Tutor Notes to improve their academic performance and achieve their goals.
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={handleGetStarted}
-                            sx={{
-                                backgroundColor: 'white',
-                                color: 'primary.main',
-                                px: 4,
-                                py: 1.5,
-                                fontSize: '1.1rem',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.9)'
-                                }
-                            }}
-                        >
-                            {user ? 'Access Dashboard' : 'Start Free Today'}
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            size="large"
-                            sx={{
-                                borderColor: 'white',
-                                color: 'white',
-                                px: 4,
-                                py: 1.5,
-                                fontSize: '1.1rem',
-                                '&:hover': {
+                {/* Stats Section */}
+                <Box sx={{ backgroundColor: 'grey.50', py: 8 }}>
+                    <Container maxWidth="lg">
+                        <Grid container spacing={4}>
+                            {stats.map((stat, index) => (
+                                <Grid size={{ xs: 6, md: 3 }} key={index}>
+                                    <Box sx={{ textAlign: 'center' }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                                            {React.cloneElement(stat.icon, {
+                                                sx: { fontSize: 32, color: 'primary.main' }
+                                            })}
+                                        </Box>
+                                        <Typography variant="h3" component="div" fontWeight="bold" color="primary">
+                                            {stat.number}
+                                        </Typography>
+                                        <Typography variant="body1" color="text.secondary">
+                                            {stat.label}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </Container>
+                </Box>
+
+                {/* Call to Action */}
+                <Container maxWidth="lg" sx={{ py: 8 }}>
+                    <Paper
+                        sx={{
+                            p: 6,
+                            textAlign: 'center',
+                            background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                            color: 'white',
+                            borderRadius: 3
+                        }}
+                    >
+                        <Typography variant="h3" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
+                            Ready to Transform Your Learning?
+                        </Typography>
+                        <Typography variant="h6" sx={{ mb: 4, opacity: 0.9, maxWidth: 600, mx: 'auto' }}>
+                            Join thousands of students who are already using Tutor Notes to improve their academic performance and achieve their goals.
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                onClick={handleGetStarted}
+                                sx={{
+                                    backgroundColor: 'white',
+                                    color: 'primary.main',
+                                    px: 4,
+                                    py: 1.5,
+                                    fontSize: '1.1rem',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                                    }
+                                }}
+                            >
+                                {user ? 'Access Dashboard' : 'Start Free Today'}
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="large"
+                                sx={{
                                     borderColor: 'white',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                                }
-                            }}
-                        >
-                            Learn More
-                        </Button>
-                    </Box>
-                </Paper>
-            </Container>
-
-            {/* Footer */}
-            <Box sx={{ backgroundColor: 'grey.900', color: 'white', py: 4 }}>
-                <Container maxWidth="lg">
-                    <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            Tutor Notes
-                        </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                            © 2024 Tutor Notes. All rights reserved.
-                        </Typography>
-                    </Box>
+                                    color: 'white',
+                                    px: 4,
+                                    py: 1.5,
+                                    fontSize: '1.1rem',
+                                    '&:hover': {
+                                        borderColor: 'white',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                    }
+                                }}
+                            >
+                                Learn More
+                            </Button>
+                        </Box>
+                    </Paper>
                 </Container>
+
+                {/* Footer */}
+                <Box sx={{ backgroundColor: 'grey.900', color: 'white', py: 4 }}>
+                    <Container maxWidth="lg">
+                        <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                Tutor Notes
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                                © 2024 Tutor Notes. All rights reserved.
+                            </Typography>
+                        </Box>
+                    </Container>
+                </Box>
             </Box>
-        </Box>
+        </>
     )
 }
 
