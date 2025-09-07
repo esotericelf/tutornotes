@@ -26,13 +26,11 @@ import {
     ArrowBack,
     CheckCircle,
     Cancel,
-    Timer,
     Quiz,
-    TrendingUp,
     School
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { InlineMath, BlockMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import randomizedQuizService from '../services/randomizedQuizService';
 

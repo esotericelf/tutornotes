@@ -3,7 +3,7 @@
  * Handles taking quizzes with randomized questions and answer options
  */
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import {
     Box,
     Container,
@@ -33,7 +33,7 @@ import {
     Quiz
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { InlineMath, BlockMath } from 'react-katex';
+import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import AuthContext from '../../../contexts/AuthContext';
 import randomizedQuizService from '../services/randomizedQuizService';
@@ -112,7 +112,7 @@ const QuizTaker = () => {
         }
     };
 
-    const handleSubmitQuiz = async () => {
+    const handleSubmitQuiz = useCallback(async () => {
         if (isSubmitting) return;
 
         try {
@@ -173,7 +173,7 @@ const QuizTaker = () => {
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [isSubmitting, test, answers, timeRemaining, user, navigate, isPractice]);
 
     const getProgress = () => {
         return ((currentQuestionIndex + 1) / test.questions.length) * 100;
