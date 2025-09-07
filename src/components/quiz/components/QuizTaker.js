@@ -188,23 +188,35 @@ const QuizTaker = () => {
         if (!text) return '';
 
         try {
-            // Split text by LaTeX delimiters - using simpler pattern that works
-            const parts = text.split(/(\$[^$]+\$)/);
+            // First, split by newlines to handle line breaks
+            const lines = text.split('\n');
+            
+            return lines.map((line, lineIndex) => {
+                // Split each line by LaTeX delimiters
+                const parts = line.split(/(\$[^$]+\$)/);
 
-            return parts.map((part, index) => {
-                if (part.startsWith('$') && part.endsWith('$')) {
-                    // Inline math: $...$
-                    const math = part.slice(1, -1);
-                    try {
-                        return <InlineMath key={index} math={math} />;
-                    } catch (error) {
-                        console.warn('KaTeX rendering error:', error);
-                        return <span key={index} style={{ color: 'red' }}>{part}</span>;
+                const lineContent = parts.map((part, partIndex) => {
+                    if (part.startsWith('$') && part.endsWith('$')) {
+                        // Inline math: $...$
+                        const math = part.slice(1, -1);
+                        try {
+                            return <InlineMath key={`${lineIndex}-${partIndex}`} math={math} />;
+                        } catch (error) {
+                            console.warn('KaTeX rendering error:', error);
+                            return <span key={`${lineIndex}-${partIndex}`} style={{ color: 'red' }}>{part}</span>;
+                        }
+                    } else {
+                        // Regular text
+                        return <span key={`${lineIndex}-${partIndex}`}>{part}</span>;
                     }
-                } else {
-                    // Regular text
-                    return <span key={index}>{part}</span>;
-                }
+                });
+
+                // Return each line as a div with proper line break
+                return (
+                    <div key={lineIndex} style={{ marginBottom: lineIndex < lines.length - 1 ? '0.5em' : '0' }}>
+                        {lineContent}
+                    </div>
+                );
             });
         } catch (error) {
             console.warn('LaTeX parsing error:', error);
