@@ -44,16 +44,10 @@ const HomePage = () => {
 
     const features = [
         {
-            icon: <Book sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Math Past Papers',
-            description: 'Access a comprehensive collection of past exam papers with detailed solutions and step-by-step explanations.',
+            icon: <PlayCircleOutline sx={{ fontSize: 48, color: 'primary.main' }} />,
+            title: 'Practice Quizzes',
+            description: 'Test your knowledge with interactive practice quizzes. Track your progress and identify areas for improvement.',
             color: '#e3f2fd'
-        },
-        {
-            icon: <School sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Tutor Notes',
-            description: 'Browse educational notes and resources created by experienced tutors and educators.',
-            color: '#f3e5f5'
         },
         {
             icon: <Forum sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -71,7 +65,7 @@ const HomePage = () => {
 
     const stats = [
         { number: '150+', label: 'Past Papers', icon: <Book /> },
-        { number: '50+', label: 'Tutor Notes', icon: <School /> },
+        { number: '30+', label: 'Practice Quizzes', icon: <PlayCircleOutline /> },
         { number: '25+', label: 'Active Discussions', icon: <Forum /> },
         { number: '1000+', label: 'Students', icon: <People /> }
     ]
@@ -287,8 +281,18 @@ const HomePage = () => {
                                     </Typography>
                                 </CardContent>
                                 <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                                    <Button size="small" variant="outlined">
-                                        Learn More
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        onClick={() => {
+                                            if (feature.title === 'Practice Quizzes') {
+                                                navigate('/dashboard')
+                                            } else {
+                                                // Handle other features
+                                            }
+                                        }}
+                                    >
+                                        {feature.title === 'Practice Quizzes' ? 'Start Quiz' : 'Learn More'}
                                     </Button>
                                 </CardActions>
                             </Card>

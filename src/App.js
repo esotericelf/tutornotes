@@ -9,6 +9,7 @@ import Dashboard from './components/dashboard/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import MathPaperPage from './components/mathpaper/MathPaperPage'
 import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
+import { QuizTaker, QuizResults } from './components/quiz'
 
 import './App.css'
 
@@ -132,6 +133,24 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Quiz Routes */}
+              <Route
+                path="/quiz/take"
+                element={
+                  <ProtectedRoute>
+                    <QuizTaker />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/quiz/results"
+                element={
+                  <ProtectedRoute>
+                    <QuizResults />
                   </ProtectedRoute>
                 }
               />

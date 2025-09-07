@@ -30,6 +30,7 @@ import AuthContext from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import ProfileDisplay from '../user/ProfileDisplay'
 import useProfile from '../../hooks/useProfile'
+import PracticeQuizBlock from '../quiz/components/PracticeQuizBlock'
 
 const Dashboard = () => {
     const { user, signOut, loading } = useContext(AuthContext)
@@ -243,6 +244,11 @@ const Dashboard = () => {
                                     </CardContent>
                                 </Card>
                             </Grid>
+                            {/* Practice Quiz Block */}
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <PracticeQuizBlock />
+                            </Grid>
+
                             {dashboardItems.map((item, index) => (
                                 <Grid size={{ xs: 12, sm: 6 }} key={index}>
                                     <Card

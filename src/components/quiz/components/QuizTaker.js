@@ -1,49 +1,79 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Quiz Taker Component
+ * Handles taking quizzes with randomized questions and answer options
+ */
+
+import React, { useState, useEffect, useContext } from 'react';
 import {
-    Container, Box, Paper, Typography, Button, Radio, RadioGroup,
-    FormControlLabel, FormControl, FormLabel, LinearProgress, Chip,
-    IconButton, Alert, Dialog, DialogTitle, DialogContent, DialogActions
+    Box,
+    Container,
+    Typography,
+    Button,
+    Card,
+    CardContent,
+    FormControl,
+    FormControlLabel,
+    Radio,
+    RadioGroup,
+    LinearProgress,
+    Alert,
+    CircularProgress,
+    AppBar,
+    Toolbar,
+    IconButton,
+    Chip,
+    Grid,
+    Paper
 } from '@mui/material';
-import { NavigateBefore, NavigateNext, Timer, PlayArrow, Pause, Stop } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
-import quizService from '../services/quizService';
-import { InlineMath } from 'react-katex';
+import {
+    ArrowBack,
+    ArrowForward,
+    CheckCircle,
+    Timer,
+    Quiz
+} from '@mui/icons-material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+import AuthContext from '../../../contexts/AuthContext';
+import randomizedQuizService from '../services/randomizedQuizService';
 
 const QuizTaker = () => {
-    const { id: quizId } = useParams();
+    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const location = useLocation();
 
-    const [quiz, setQuiz] = useState(null);
+    // Get test data from navigation state
+    const { test, isPractice = false } = location.state || {};
+
+    // State management
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
-    const [timeRemaining, setTimeRemaining] = useState(0);
-    const [isStarted, setIsStarted] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [timeRemaining, setTimeRemaining] = useState(30 * 60); // 30 minutes in seconds
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
-    const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+    const [quizStarted, setQuizStarted] = useState(false);
 
+    // Initialize quiz
     useEffect(() => {
-        const loadQuiz = async () => {
-            try {
-                const result = await quizService.getQuizById(quizId);
-                if (result.error) throw result.error;
-                setQuiz(result.data);
-                setTimeRemaining(result.data.time_limit_minutes * 60);
-                setLoading(false);
-            } catch (err) {
-                setError('Failed to load quiz');
-                setLoading(false);
-            }
-        };
-        loadQuiz();
-    }, [quizId]);
+        if (!test) {
+            navigate('/dashboard');
+            return;
+        }
 
+        setQuizStarted(true);
+        // Initialize answers object
+        const initialAnswers = {};
+        test.questions.forEach((question, index) => {
+            initialAnswers[index] = null;
+        });
+        setAnswers(initialAnswers);
+    }, [test, navigate]);
+
+    // Timer effect
     useEffect(() => {
-        if (!isStarted || isPaused || timeRemaining <= 0) return;
+        if (!quizStarted || timeRemaining <= 0) return;
+
         const timer = setInterval(() => {
             setTimeRemaining(prev => {
                 if (prev <= 1) {
@@ -53,21 +83,25 @@ const QuizTaker = () => {
                 return prev - 1;
             });
         }, 1000);
+
         return () => clearInterval(timer);
-    }, [isStarted, isPaused, timeRemaining]);
+    }, [quizStarted, timeRemaining]);
 
     const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    const handleAnswerSelect = (questionId, answer) => {
-        setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    const handleAnswerChange = (questionIndex, answer) => {
+        setAnswers(prev => ({
+            ...prev,
+            [questionIndex]: answer
+        }));
     };
 
     const handleNextQuestion = () => {
-        if (currentQuestionIndex < (quiz?.questions?.length || 0) - 1) {
+        if (currentQuestionIndex < test.questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
         }
     };
@@ -78,316 +112,304 @@ const QuizTaker = () => {
         }
     };
 
-    const handleStartQuiz = () => setIsStarted(true);
-    const handlePauseQuiz = () => setIsPaused(!isPaused);
-    const handleSubmitQuiz = () => setShowSubmitDialog(true);
+    const handleSubmitQuiz = async () => {
+        if (isSubmitting) return;
 
-    const handleConfirmSubmit = () => {
-        setShowSubmitDialog(false);
-        navigate(`/quiz/${quizId}/results`, {
-            state: { answers, quiz, timeTaken: quiz.time_limit_minutes * 60 - timeRemaining }
-        });
+        try {
+            setIsSubmitting(true);
+            setError(null);
+
+            // Calculate score
+            let correctAnswers = 0;
+            const quizAnswers = [];
+
+            test.questions.forEach((question, index) => {
+                const userAnswer = answers[index];
+                const isCorrect = userAnswer === question.correct_answer;
+
+                if (isCorrect) {
+                    correctAnswers++;
+                }
+
+                quizAnswers.push({
+                    question_id: question.id,
+                    selected_answer: userAnswer,
+                    is_correct: isCorrect
+                });
+            });
+
+            const percentage = Math.round((correctAnswers / test.questions.length) * 100);
+
+            // Create attempt data
+            const attemptData = {
+                user_id: user?.id,
+                quiz_id: test.id,
+                score: correctAnswers,
+                max_score: test.questions.length,
+                percentage: percentage,
+                time_taken_seconds: (30 * 60) - timeRemaining,
+                answers: quizAnswers,
+                completed_at: new Date().toISOString(),
+                is_completed: true
+            };
+
+            // Submit attempt
+            if (user) {
+                await randomizedQuizService.submitQuizAttempt(attemptData, test.questions);
+            }
+
+            // Navigate to results
+            navigate('/quiz/results', {
+                state: {
+                    test,
+                    attemptData,
+                    isPractice
+                }
+            });
+
+        } catch (err) {
+            setError(err.message || 'Failed to submit quiz');
+            console.error('Error submitting quiz:', err);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const getProgressPercentage = () => {
-        if (!quiz) return 0;
-        const answeredCount = Object.keys(answers).length;
-        return (answeredCount / (quiz.questions?.length || 0)) * 100;
+    const getProgress = () => {
+        return ((currentQuestionIndex + 1) / test.questions.length) * 100;
     };
 
-    const getCurrentQuestion = () => {
-        if (!quiz?.questions) return null;
-        return quiz.questions[currentQuestionIndex];
+    const getAnsweredCount = () => {
+        return Object.values(answers).filter(answer => answer !== null).length;
     };
 
+    // Helper function to render text with LaTeX
     const renderWithLaTeX = (text) => {
         if (!text) return '';
-        const parts = text.split(/(\$[^$]+\$)/);
-        return parts.map((part, index) => {
-            if (part.startsWith('$') && part.endsWith('$')) {
-                const math = part.slice(1, -1);
-                return <InlineMath key={index} math={math} />;
-            }
-            return <span key={index}>{part}</span>;
-        });
+
+        try {
+            // Split text by LaTeX delimiters - using simpler pattern that works
+            const parts = text.split(/(\$[^$]+\$)/);
+
+            return parts.map((part, index) => {
+                if (part.startsWith('$') && part.endsWith('$')) {
+                    // Inline math: $...$
+                    const math = part.slice(1, -1);
+                    try {
+                        return <InlineMath key={index} math={math} />;
+                    } catch (error) {
+                        console.warn('KaTeX rendering error:', error);
+                        return <span key={index} style={{ color: 'red' }}>{part}</span>;
+                    }
+                } else {
+                    // Regular text
+                    return <span key={index}>{part}</span>;
+                }
+            });
+        } catch (error) {
+            console.warn('LaTeX parsing error:', error);
+            return <span>{text}</span>;
+        }
     };
 
-    const renderDiagram = (diagramContent) => {
-        if (!diagramContent) return null;
-
-        if (diagramContent.includes('<iframe')) {
-            return (
-                <Box sx={{ width: '100%', height: '300px', overflow: 'hidden', borderRadius: 1, border: '1px solid rgba(0,0,0,0.1)' }}>
-                    <div dangerouslySetInnerHTML={{ __html: diagramContent }} />
-                </Box>
-            );
-        }
-
-        if (diagramContent.includes('geogebra.org/m/')) {
-            const materialId = diagramContent.split('/m/')[1];
-            return (
-                <Box sx={{ width: '100%', height: '300px', overflow: 'hidden', borderRadius: 1, border: '1px solid rgba(0,0,0,0.1)' }}>
-                    <iframe
-                        scrolling="no"
-                        title="GeoGebra Diagram"
-                        src={`https://www.geogebra.org/material/iframe/id/${materialId}/width/100%/height/300/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false`}
-                        width="100%"
-                        height="300px"
-                        style={{ border: '0px' }}
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-                    />
-                </Box>
-            );
-        }
-
-        return null;
-    };
-
-    if (loading) {
+    if (!test) {
         return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <LinearProgress />
-                <Typography variant="h6" sx={{ mt: 2 }}>Loading quiz...</Typography>
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                <Alert severity="error">
+                    No quiz data found. Please start a quiz from the dashboard.
+                </Alert>
             </Container>
         );
     }
 
-    if (error) {
-        return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Alert severity="error">{error}</Alert>
-            </Container>
-        );
-    }
-
-    if (!quiz) {
-        return (
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Alert severity="warning">Quiz not found</Alert>
-            </Container>
-        );
-    }
-
-    const currentQuestion = getCurrentQuestion();
-    const progressPercentage = getProgressPercentage();
+    const currentQuestion = test.questions[currentQuestionIndex];
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            {/* Quiz Header */}
-            <Paper elevation={3} sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                    <Box>
-                        <Typography variant="h4" component="h1" gutterBottom>
-                            {quiz.title}
+        <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
+            {/* Header */}
+            <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Toolbar>
+                    <IconButton onClick={() => navigate('/dashboard')} sx={{ mr: 2 }}>
+                        <ArrowBack />
+                    </IconButton>
+                    <Quiz sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" component="h1" color="primary" fontWeight="bold">
+                            {test.title}
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                            {quiz.description}
+                        <Typography variant="body2" color="text.secondary">
+                            Question {currentQuestionIndex + 1} of {test.questions.length}
                         </Typography>
                     </Box>
-
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {isStarted && (
-                            <>
-                                <Chip
-                                    icon={<Timer />}
-                                    label={formatTime(timeRemaining)}
-                                    color={timeRemaining < 300 ? 'error' : 'default'}
-                                    variant="outlined"
-                                    sx={{ color: 'white', borderColor: 'white' }}
-                                />
-
-                                <IconButton onClick={handlePauseQuiz} sx={{ color: 'white' }}>
-                                    {isPaused ? <PlayArrow /> : <Pause />}
-                                </IconButton>
-                            </>
-                        )}
-
-                        {!isStarted ? (
-                            <Button
-                                variant="contained"
-                                startIcon={<PlayArrow />}
-                                onClick={handleStartQuiz}
-                                sx={{ bgcolor: 'white', color: 'primary.main' }}
-                            >
-                                Start Quiz
-                            </Button>
-                        ) : (
-                            <Button
-                                variant="contained"
-                                startIcon={<Stop />}
-                                onClick={handleSubmitQuiz}
-                                color="error"
-                                sx={{ bgcolor: 'white', color: 'error.main' }}
-                            >
-                                Submit Quiz
-                            </Button>
-                        )}
+                        <Chip
+                            icon={<Timer />}
+                            label={formatTime(timeRemaining)}
+                            color={timeRemaining < 300 ? 'error' : 'primary'}
+                            variant="outlined"
+                        />
+                        <Chip
+                            label={`${getAnsweredCount()}/${test.questions.length} answered`}
+                            color="info"
+                            variant="outlined"
+                        />
                     </Box>
-                </Box>
-            </Paper>
+                </Toolbar>
+            </AppBar>
 
             {/* Progress Bar */}
-            <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                        Progress: {Object.keys(answers).length} / {quiz.questions?.length || 0} questions answered
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        {Math.round(progressPercentage)}%
-                    </Typography>
-                </Box>
-                <LinearProgress
-                    variant="determinate"
-                    value={progressPercentage}
-                    sx={{ height: 8, borderRadius: 4 }}
-                />
-            </Paper>
+            <LinearProgress
+                variant="determinate"
+                value={getProgress()}
+                sx={{ height: 4 }}
+            />
 
-            {/* Question Navigation */}
-            {isStarted && (
-                <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Button
-                            startIcon={<NavigateBefore />}
-                            onClick={handlePreviousQuestion}
-                            disabled={currentQuestionIndex === 0}
-                        >
-                            Previous
-                        </Button>
+            {/* Main Content */}
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                {error && (
+                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+                        {error}
+                    </Alert>
+                )}
 
-                        <Typography variant="body1">
-                            Question {currentQuestionIndex + 1} of {quiz.questions?.length || 0}
+                {/* Question Card */}
+                <Card sx={{ mb: 3 }}>
+                    <CardContent sx={{ p: 4 }}>
+                        <Typography variant="h6" component="h2" sx={{ mb: 3 }}>
+                            {renderWithLaTeX(currentQuestion.question)}
                         </Typography>
 
+                        {/* Question Diagram */}
+                        {currentQuestion.question_diagram && (
+                            <Box sx={{ mb: 3, textAlign: 'center' }}>
+                                <div dangerouslySetInnerHTML={{ __html: currentQuestion.question_diagram }} />
+                            </Box>
+                        )}
+
+                        {/* Answer Options */}
+                        <FormControl component="fieldset" fullWidth>
+                            <RadioGroup
+                                value={answers[currentQuestionIndex] || ''}
+                                onChange={(e) => handleAnswerChange(currentQuestionIndex, e.target.value)}
+                            >
+                                {['A', 'B', 'C', 'D'].map((option) => (
+                                    <FormControlLabel
+                                        key={option}
+                                        value={option}
+                                        control={<Radio />}
+                                        label={
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                <Typography variant="body1">
+                                                    {renderWithLaTeX(currentQuestion[`option_${option.toLowerCase()}`])}
+                                                </Typography>
+                                                {currentQuestion[`option_${option.toLowerCase()}_diagram`] && (
+                                                    <div dangerouslySetInnerHTML={{
+                                                        __html: currentQuestion[`option_${option.toLowerCase()}_diagram`]
+                                                    }} />
+                                                )}
+                                            </Box>
+                                        }
+                                        sx={{
+                                            mb: 2,
+                                            p: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            borderRadius: 1,
+                                            '&:hover': {
+                                                backgroundColor: 'action.hover'
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </RadioGroup>
+                        </FormControl>
+                    </CardContent>
+                </Card>
+
+                {/* Navigation */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<ArrowBack />}
+                        onClick={handlePreviousQuestion}
+                        disabled={currentQuestionIndex === 0}
+                    >
+                        Previous
+                    </Button>
+
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        {test.questions.map((_, index) => (
+                            <Button
+                                key={index}
+                                variant={index === currentQuestionIndex ? 'contained' : 'outlined'}
+                                size="small"
+                                onClick={() => setCurrentQuestionIndex(index)}
+                                sx={{ minWidth: 40 }}
+                            >
+                                {index + 1}
+                            </Button>
+                        ))}
+                    </Box>
+
+                    {currentQuestionIndex === test.questions.length - 1 ? (
                         <Button
-                            endIcon={<NavigateNext />}
+                            variant="contained"
+                            endIcon={isSubmitting ? <CircularProgress size={20} /> : <CheckCircle />}
+                            onClick={handleSubmitQuiz}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="contained"
+                            endIcon={<ArrowForward />}
                             onClick={handleNextQuestion}
-                            disabled={currentQuestionIndex === (quiz.questions?.length || 0) - 1}
                         >
                             Next
                         </Button>
-                    </Box>
-                </Paper>
-            )}
-
-            {/* Question Display */}
-            {isStarted && currentQuestion && (
-                <Paper elevation={3} sx={{ p: 4, mb: 3 }}>
-                    {/* Question Text */}
-                    <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-                        {renderWithLaTeX(currentQuestion.question)}
-                    </Typography>
-
-                    {/* Question Diagram - Fixed overflow */}
-                    {currentQuestion.question_diagram && (
-                        <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" color="primary" gutterBottom>
-                                Question Diagram:
-                            </Typography>
-                            {renderDiagram(currentQuestion.question_diagram)}
-                        </Box>
                     )}
+                </Box>
 
-                    {/* Multiple Choice Options */}
-                    <FormControl component="fieldset" sx={{ width: '100%' }}>
-                        <FormLabel component="legend" sx={{ mb: 2 }}>
-                            Select your answer:
-                        </FormLabel>
-                        <RadioGroup
-                            value={answers[currentQuestion.id] || ''}
-                            onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value)}
-                        >
-                            {['A', 'B', 'C', 'D'].map((option) => (
-                                <FormControlLabel
-                                    key={option}
-                                    value={option}
-                                    control={<Radio />}
-                                    label={
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                                            <Typography variant="body1" sx={{ fontWeight: 'bold', minWidth: '30px' }}>
-                                                {option})
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {renderWithLaTeX(currentQuestion[`option_${option.toLowerCase()}`])}
-                                            </Typography>
-                                        </Box>
-                                    }
-                                    sx={{
-                                        mb: 2,
-                                        p: 2,
-                                        border: '1px solid',
-                                        borderColor: answers[currentQuestion.id] === option ? 'primary.main' : 'divider',
-                                        borderRadius: 1,
-                                        bgcolor: answers[currentQuestion.id] === option ? 'primary.50' : 'background.paper',
-                                        '&:hover': { bgcolor: 'action.hover' }
-                                    }}
-                                />
-                            ))}
-                        </RadioGroup>
-                    </FormControl>
-
-                    {/* Option Diagrams */}
-                    {['A', 'B', 'C', 'D'].map((option) => {
-                        const diagramKey = `option_${option.toLowerCase()}_diagram`;
-                        if (currentQuestion[diagramKey]) {
-                            return (
-                                <Box key={option} sx={{ mt: 2, mb: 3 }}>
-                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                        Diagram for option {option}:
-                                    </Typography>
-                                    {renderDiagram(currentQuestion[diagramKey])}
-                                </Box>
-                            );
-                        }
-                        return null;
-                    })}
+                {/* Quick Stats */}
+                <Paper sx={{ p: 2, mt: 3 }}>
+                    <Grid container spacing={2}>
+                        <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" color="text.secondary">
+                                Progress
+                            </Typography>
+                            <Typography variant="h6">
+                                {Math.round(getProgress())}%
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" color="text.secondary">
+                                Answered
+                            </Typography>
+                            <Typography variant="h6">
+                                {getAnsweredCount()}/{test.questions.length}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" color="text.secondary">
+                                Time Left
+                            </Typography>
+                            <Typography variant="h6">
+                                {formatTime(timeRemaining)}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                            <Typography variant="body2" color="text.secondary">
+                                Type
+                            </Typography>
+                            <Typography variant="h6">
+                                {isPractice ? 'Practice' : 'Quiz'}
+                            </Typography>
+                        </Grid>
+                    </Grid>
                 </Paper>
-            )}
-
-            {/* Submit Quiz Dialog */}
-            <Dialog open={showSubmitDialog} onClose={() => setShowSubmitDialog(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Submit Quiz?</DialogTitle>
-                <DialogContent>
-                    <Typography variant="body1" gutterBottom>
-                        Are you sure you want to submit your quiz? You won't be able to change your answers after submission.
-                    </Typography>
-                    <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            Questions answered: {Object.keys(answers).length} / {quiz.questions?.length || 0}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Time remaining: {formatTime(timeRemaining)}
-                        </Typography>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setShowSubmitDialog(false)}>Continue Quiz</Button>
-                    <Button onClick={handleConfirmSubmit} variant="contained" color="primary">
-                        Submit Quiz
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Instructions for non-started state */}
-            {!isStarted && (
-                <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom>
-                        Ready to start?
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                        This quiz contains {quiz.questions?.length || 0} questions and you have {quiz.time_limit_minutes} minutes to complete it.
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        size="large"
-                        startIcon={<PlayArrow />}
-                        onClick={handleStartQuiz}
-                    >
-                        Start Quiz Now
-                    </Button>
-                </Paper>
-            )}
-        </Container>
+            </Container>
+        </Box>
     );
 };
 
