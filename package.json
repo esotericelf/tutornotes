@@ -32,12 +32,6 @@
     "eject": "react-scripts eject",
     "test:run": "node test-runner.js"
   },
-  "overrides": {
-    "react-helmet-async": {
-      "react": "$react",
-      "react-dom": "$react-dom"
-    }
-  },
   "eslintConfig": {
     "extends": [
       "react-app",

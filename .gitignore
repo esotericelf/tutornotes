@@ -23,6 +23,8 @@
 /docs/
 /database/
 /scripts/
+!scripts/setup-seo.js
+!scripts/generate-sitemap.js
 *.sql
 *.md
 !README.md
@@ -31,7 +33,7 @@
 docker-compose.yml
 Dockerfile*
 nginx.conf
-netlify.toml
+!netlify.toml
 
 npm-debug.log*
 yarn-debug.log*
