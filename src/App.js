@@ -47,6 +47,15 @@ const theme = createTheme({
       color: '#495057',
     },
   },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 900,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -109,6 +118,40 @@ const theme = createTheme({
         outlined: {
           borderColor: '#dee2e6',
           color: '#6c757d',
+        },
+      },
+    },
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          '@media (min-width: 600px)': {
+            paddingLeft: '24px',
+            paddingRight: '24px',
+          },
+        },
+      },
+    },
+    MuiToolbar: {
+      styleOverrides: {
+        root: {
+          minHeight: '56px',
+          '@media (min-width: 600px)': {
+            minHeight: '64px',
+          },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiInputBase-input': {
+            fontSize: '16px', // Prevents zoom on iOS
+            '@media (min-width: 600px)': {
+              fontSize: '1rem',
+            },
+          },
         },
       },
     },

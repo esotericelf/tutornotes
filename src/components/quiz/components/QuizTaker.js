@@ -228,30 +228,81 @@ const QuizTaker = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
             {/* Header */}
             <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Toolbar>
-                    <IconButton onClick={() => navigate('/dashboard')} sx={{ mr: 2 }}>
+                <Toolbar sx={{
+                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                    minHeight: { xs: 56, sm: 64 },
+                    py: { xs: 1, sm: 0 }
+                }}>
+                    <IconButton
+                        onClick={() => navigate('/dashboard')}
+                        sx={{
+                            mr: { xs: 1, sm: 2 },
+                            p: { xs: 1, sm: 1.5 }
+                        }}
+                    >
                         <ArrowBack />
                     </IconButton>
-                    <Quiz sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" component="h1" color="primary" fontWeight="bold">
+                    <Quiz sx={{
+                        fontSize: { xs: 24, sm: 32 },
+                        color: 'primary.main',
+                        mr: { xs: 1, sm: 2 }
+                    }} />
+                    <Box sx={{
+                        flexGrow: 1,
+                        minWidth: 0,
+                        overflow: 'hidden'
+                    }}>
+                        <Typography
+                            variant="h6"
+                            component="h1"
+                            color="primary"
+                            fontWeight="bold"
+                            sx={{
+                                fontSize: { xs: '1rem', sm: '1.25rem' },
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
                             {test.title}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        >
                             Question {currentQuestionIndex + 1} of {test.questions.length}
                         </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: { xs: 1, sm: 2 },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        justifyContent: { xs: 'center', sm: 'flex-end' },
+                        width: { xs: '100%', sm: 'auto' },
+                        mt: { xs: 1, sm: 0 }
+                    }}>
                         <Chip
-                            icon={<Timer />}
+                            icon={<Timer sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                             label={formatTime(timeRemaining)}
                             color={timeRemaining < 300 ? 'error' : 'primary'}
                             variant="outlined"
+                            size="small"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                height: { xs: 28, sm: 32 }
+                            }}
                         />
                         <Chip
                             label={`${getAnsweredCount()}/${test.questions.length} answered`}
                             color="info"
                             variant="outlined"
+                            size="small"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                height: { xs: 28, sm: 32 }
+                            }}
                         />
                     </Box>
                 </Toolbar>
@@ -327,24 +378,47 @@ const QuizTaker = () => {
                 </Card>
 
                 {/* Navigation */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: { xs: 2, sm: 0 }
+                }}>
                     <Button
                         variant="outlined"
                         startIcon={<ArrowBack />}
                         onClick={handlePreviousQuestion}
                         disabled={currentQuestionIndex === 0}
+                        size="small"
+                        sx={{
+                            minWidth: { xs: 'auto', sm: 'auto' },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                        }}
                     >
                         Previous
                     </Button>
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{
+                        display: 'flex',
+                        gap: { xs: 0.5, sm: 1 },
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        maxWidth: { xs: '100%', sm: 'auto' },
+                        overflowX: { xs: 'auto', sm: 'visible' },
+                        pb: { xs: 1, sm: 0 }
+                    }}>
                         {test.questions.map((_, index) => (
                             <Button
                                 key={index}
                                 variant={index === currentQuestionIndex ? 'contained' : 'outlined'}
                                 size="small"
                                 onClick={() => setCurrentQuestionIndex(index)}
-                                sx={{ minWidth: 40 }}
+                                sx={{
+                                    minWidth: { xs: 32, sm: 40 },
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    height: { xs: 32, sm: 36 }
+                                }}
                             >
                                 {index + 1}
                             </Button>
@@ -357,6 +431,10 @@ const QuizTaker = () => {
                             endIcon={isSubmitting ? <CircularProgress size={20} /> : <CheckCircle />}
                             onClick={handleSubmitQuiz}
                             disabled={isSubmitting}
+                            size="small"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                            }}
                         >
                             {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
                         </Button>
@@ -365,6 +443,10 @@ const QuizTaker = () => {
                             variant="contained"
                             endIcon={<ArrowForward />}
                             onClick={handleNextQuestion}
+                            size="small"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                            }}
                         >
                             Next
                         </Button>

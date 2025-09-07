@@ -19,7 +19,8 @@ import {
     Toolbar,
     IconButton,
     Paper,
-    Divider
+    Divider,
+    CircularProgress
 } from '@mui/material';
 import {
     ArrowBack,
@@ -33,15 +34,94 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+import randomizedQuizService from '../services/randomizedQuizService';
 
 const QuizResults = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
     // Get results data from navigation state
-    const { test, attemptData, isPractice = false } = location.state || {};
+    const { test, attemptData, isPractice = false, attemptId } = location.state || {};
 
-    if (!test || !attemptData) {
+    // State for loading attempt data
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [loadedTest, setLoadedTest] = useState(test);
+    const [loadedAttemptData, setLoadedAttemptData] = useState(attemptData);
+
+    // Load attempt data if only attemptId is provided
+    useEffect(() => {
+        const loadAttemptData = async () => {
+            console.log('QuizResults useEffect - attemptId:', attemptId);
+            console.log('QuizResults useEffect - test:', test);
+            console.log('QuizResults useEffect - attemptData:', attemptData);
+
+            if (attemptId && !attemptData) {
+                try {
+                    setLoading(true);
+                    setError(null);
+
+                    console.log('Loading quiz results for attemptId:', attemptId);
+                    const results = await randomizedQuizService.getQuizResults(attemptId);
+                    console.log('Quiz results loaded:', results);
+
+                    // Transform the data to match the expected format
+                    const transformedTest = {
+                        ...results.quiz,
+                        questions: results.questions
+                    };
+
+                    const transformedAttemptData = {
+                        ...results.attempt,
+                        answers: results.attempt.answers || []
+                    };
+
+                    console.log('Transformed test:', transformedTest);
+                    console.log('Transformed attempt data:', transformedAttemptData);
+
+                    setLoadedTest(transformedTest);
+                    setLoadedAttemptData(transformedAttemptData);
+                } catch (err) {
+                    console.error('Error loading quiz results:', err);
+                    setError(`Failed to load quiz results: ${err.message}`);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadAttemptData();
+    }, [attemptId, test, attemptData]);
+
+    // Show loading state
+    if (loading) {
+        return (
+            <Container maxWidth="md" sx={{ py: 4, textAlign: 'center' }}>
+                <CircularProgress sx={{ mb: 2 }} />
+                <Typography variant="h6">Loading quiz results...</Typography>
+            </Container>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+                <Button variant="contained" onClick={() => navigate('/dashboard')}>
+                    Back to Dashboard
+                </Button>
+            </Container>
+        );
+    }
+
+    // Use loaded data or fallback to state data
+    const finalTest = loadedTest || test;
+    const finalAttemptData = loadedAttemptData || attemptData;
+
+    if (!finalTest || !finalAttemptData) {
         return (
             <Container maxWidth="md" sx={{ py: 4 }}>
                 <Alert severity="error">
@@ -114,7 +194,7 @@ const QuizResults = () => {
                             Quiz Results
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            {test.title}
+                            {finalTest.title}
                         </Typography>
                     </Box>
                     <Chip
@@ -131,10 +211,10 @@ const QuizResults = () => {
                 <Card sx={{ mb: 4 }}>
                     <CardContent sx={{ p: 4, textAlign: 'center' }}>
                         <Typography variant="h3" component="div" sx={{ mb: 2 }}>
-                            {attemptData.percentage}%
+                            {finalAttemptData.percentage}%
                         </Typography>
-                        <Typography variant="h5" color={getScoreColor(attemptData.percentage)} sx={{ mb: 3 }}>
-                            {getScoreLabel(attemptData.percentage)}
+                        <Typography variant="h5" color={getScoreColor(finalAttemptData.percentage)} sx={{ mb: 3 }}>
+                            {getScoreLabel(finalAttemptData.percentage)}
                         </Typography>
 
                         <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -144,7 +224,7 @@ const QuizResults = () => {
                                         Score
                                     </Typography>
                                     <Typography variant="h6">
-                                        {attemptData.score}/{attemptData.max_score}
+                                        {finalAttemptData.score}/{finalAttemptData.max_score}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -154,7 +234,7 @@ const QuizResults = () => {
                                         Time Taken
                                     </Typography>
                                     <Typography variant="h6">
-                                        {formatTime(attemptData.time_taken_seconds)}
+                                        {formatTime(finalAttemptData.time_taken_seconds)}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -164,7 +244,7 @@ const QuizResults = () => {
                                         Questions
                                     </Typography>
                                     <Typography variant="h6">
-                                        {test.questions.length}
+                                        {finalTest.questions.length}
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -182,8 +262,8 @@ const QuizResults = () => {
 
                         <LinearProgress
                             variant="determinate"
-                            value={attemptData.percentage}
-                            color={getScoreColor(attemptData.percentage)}
+                            value={finalAttemptData.percentage}
+                            color={getScoreColor(finalAttemptData.percentage)}
                             sx={{ height: 8, borderRadius: 4, mb: 3 }}
                         />
 
@@ -215,9 +295,9 @@ const QuizResults = () => {
                             Question Review
                         </Typography>
 
-                        {test.questions.map((question, index) => {
-                            const userAnswer = attemptData.answers[index]?.selected_answer;
-                            const isCorrect = attemptData.answers[index]?.is_correct;
+                        {finalTest.questions.map((question, index) => {
+                            const userAnswer = finalAttemptData.answers[index]?.selected_answer;
+                            const isCorrect = finalAttemptData.answers[index]?.is_correct;
 
                             return (
                                 <Paper key={question.id} sx={{ p: 3, mb: 2 }}>

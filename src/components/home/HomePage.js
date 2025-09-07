@@ -82,20 +82,45 @@ const HomePage = () => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#ffffff' }}>
             {/* Navigation Bar */}
             <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
-                <Toolbar>
-                    <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                        <School sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
-                        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+                <Toolbar sx={{
+                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                    minHeight: { xs: 56, sm: 64 }
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0 }}>
+                        <School sx={{ fontSize: { xs: 24, sm: 32 }, color: 'primary.main', mr: { xs: 1, sm: 2 } }} />
+                        <Typography
+                            variant="h5"
+                            component="h1"
+                            color="primary"
+                            fontWeight="bold"
+                            sx={{
+                                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
                             Tutor Notes
                         </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{
+                        display: 'flex',
+                        gap: { xs: 1, sm: 2 },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        justifyContent: { xs: 'center', sm: 'flex-end' },
+                        width: { xs: '100%', sm: 'auto' },
+                        mt: { xs: 1, sm: 0 }
+                    }}>
                         {/* Demo Link - Always visible */}
                         <Button
                             variant="outlined"
-                            startIcon={<PlayCircleOutline />}
+                            startIcon={<PlayCircleOutline sx={{ fontSize: { xs: 18, sm: 20 } }} />}
                             onClick={() => navigate('/question-demo')}
-                            sx={{ mr: 1 }}
+                            size="small"
+                            sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                minWidth: { xs: 'auto', sm: 'auto' }
+                            }}
                         >
                             Demo
                         </Button>
@@ -105,20 +130,33 @@ const HomePage = () => {
                                 <Button
                                     variant="outlined"
                                     onClick={() => navigate('/dashboard')}
+                                    size="small"
+                                    sx={{
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                        display: { xs: 'none', sm: 'inline-flex' }
+                                    }}
                                 >
                                     Dashboard
                                 </Button>
                                 <Button
                                     variant="contained"
                                     onClick={() => navigate('/dashboard')}
+                                    size="small"
+                                    sx={{
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                    }}
                                 >
-                                    Continue Learning
+                                    {window.innerWidth < 600 ? 'Continue' : 'Continue Learning'}
                                 </Button>
                                 <Button
                                     variant="outlined"
                                     color="error"
-                                    startIcon={<Logout />}
+                                    startIcon={<Logout sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                                     onClick={handleLogout}
+                                    size="small"
+                                    sx={{
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                    }}
                                 >
                                     Logout
                                 </Button>
@@ -128,12 +166,20 @@ const HomePage = () => {
                                 <Button
                                     variant="outlined"
                                     onClick={() => navigate('/login')}
+                                    size="small"
+                                    sx={{
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                    }}
                                 >
                                     Sign In
                                 </Button>
                                 <Button
                                     variant="contained"
                                     onClick={() => navigate('/login')}
+                                    size="small"
+                                    sx={{
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                    }}
                                 >
                                     Get Started
                                 </Button>

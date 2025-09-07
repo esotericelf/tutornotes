@@ -127,6 +127,8 @@ class RandomizedQuizService {
      */
     async getQuizResults(attemptId) {
         try {
+            console.log('Fetching quiz results for attemptId:', attemptId);
+
             const { data: attempt, error } = await supabase
                 .from('quiz_attempts')
                 .select(`
@@ -136,7 +138,18 @@ class RandomizedQuizService {
                 .eq('id', attemptId)
                 .single();
 
-            if (error) throw error;
+            console.log('Supabase response - attempt:', attempt);
+            console.log('Supabase response - error:', error);
+
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
+
+            if (!attempt) {
+                console.error('No attempt found for ID:', attemptId);
+                throw new Error('No attempt found');
+            }
 
             // Get the questions to show results
             const questionIds = attempt.quiz.questions;
@@ -147,8 +160,52 @@ class RandomizedQuizService {
 
             if (questionsError) throw questionsError;
 
+            // Debug: Log the raw attempt data to understand the structure
+            console.log('Raw attempt data:', attempt);
+            console.log('Raw answers data:', attempt.answers);
+            console.log('Answers type:', typeof attempt.answers);
+            console.log('Is answers array?', Array.isArray(attempt.answers));
+
+            // Process answers to match the expected format for QuizResults component
+            let processedAnswers = [];
+
+            if (Array.isArray(attempt.answers)) {
+                // New format: answers is an array of objects
+                processedAnswers = questions.map((question, index) => {
+                    const answerData = attempt.answers[index] || {};
+                    return {
+                        question_id: question.id,
+                        selected_answer: answerData.selected_answer || null,
+                        is_correct: answerData.is_correct || false
+                    };
+                });
+            } else if (attempt.answers && typeof attempt.answers === 'object') {
+                // Old format: answers might be an object with question IDs as keys
+                processedAnswers = questions.map((question, index) => {
+                    const answerData = attempt.answers[question.id] || attempt.answers[index] || {};
+                    return {
+                        question_id: question.id,
+                        selected_answer: answerData.selected_answer || answerData.selected_option || null,
+                        is_correct: answerData.is_correct || false
+                    };
+                });
+            } else {
+                // Fallback: create empty answers if no answers data exists
+                processedAnswers = questions.map((question) => ({
+                    question_id: question.id,
+                    selected_answer: null,
+                    is_correct: false
+                }));
+            }
+
+            // Create a properly formatted attempt object
+            const formattedAttempt = {
+                ...attempt,
+                answers: processedAnswers
+            };
+
             return {
-                attempt,
+                attempt: formattedAttempt,
                 questions
             };
         } catch (error) {

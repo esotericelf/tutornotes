@@ -287,7 +287,12 @@ const LoginPage = () => {
                     </Typography>
 
                     {/* OAuth Login Buttons */}
-                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 2,
+                        mb: 3
+                    }}>
                         {/* Google Login Button */}
                         <Button
                             variant="outlined"
@@ -299,9 +304,11 @@ const LoginPage = () => {
                             disabled={googleLoading}
                             aria-label="Sign in with Google"
                             sx={{
-                                py: 1.5,
+                                py: { xs: 1.5, sm: 1.5 },
                                 borderColor: '#4285f4',
                                 color: '#4285f4',
+                                minHeight: { xs: 48, sm: 56 },
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
                                 '&:hover': {
                                     borderColor: '#3367d6',
                                     backgroundColor: 'rgba(66, 133, 244, 0.04)'
@@ -322,9 +329,11 @@ const LoginPage = () => {
                             disabled={googleLoading}
                             aria-label="Sign in with Discord"
                             sx={{
-                                py: 1.5,
+                                py: { xs: 1.5, sm: 1.5 },
                                 borderColor: '#5865F2',
                                 color: '#5865F2',
+                                minHeight: { xs: 48, sm: 56 },
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
                                 '&:hover': {
                                     borderColor: '#4752C4',
                                     backgroundColor: 'rgba(88, 101, 242, 0.04)'
