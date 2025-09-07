@@ -26,12 +26,6 @@ const pages = [
         priority: '0.9'
     },
     {
-        url: '/question-demo',
-        lastmod: new Date().toISOString().split('T')[0],
-        changefreq: 'monthly',
-        priority: '0.7'
-    },
-    {
         url: '/quiz/take',
         lastmod: new Date().toISOString().split('T')[0],
         changefreq: 'weekly',

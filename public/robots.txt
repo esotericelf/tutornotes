@@ -7,12 +7,12 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
 Disallow: /static/
+Disallow: /question-demo
 
 # Allow important pages
 Allow: /
 Allow: /login
 Allow: /mathpaper
-Allow: /question-demo
 Allow: /quiz/
 
 # Sitemap location

@@ -9,6 +9,7 @@ import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
 import Dashboard from './components/dashboard/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import AdminRoute from './components/auth/AdminRoute'
 import MathPaperPage from './components/mathpaper/MathPaperPage'
 import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
 import { QuizTaker, QuizResults } from './components/quiz'
@@ -192,7 +193,14 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/mathpaper" element={<MathPaperPage />} />
-                <Route path="/question-demo" element={<QuestionDisplayDemo />} />
+                <Route 
+                  path="/question-demo" 
+                  element={
+                    <AdminRoute>
+                      <QuestionDisplayDemo />
+                    </AdminRoute>
+                  } 
+                />
 
                 <Route
                   path="/dashboard"

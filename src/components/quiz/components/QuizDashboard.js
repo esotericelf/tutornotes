@@ -179,17 +179,19 @@ const QuizDashboard = () => {
                         </Typography>
                     </Box>
 
-                    {/* Demo Link */}
-                    <Button
-                        variant="outlined"
-                        startIcon={<DemoIcon />}
-                        href="/question-demo"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{ ml: 2 }}
-                    >
-                        View Demo
-                    </Button>
+                    {/* Demo Link - Admin Only */}
+                    {userRole === 'admin' && (
+                        <Button
+                            variant="outlined"
+                            startIcon={<DemoIcon />}
+                            href="/question-demo"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ ml: 2 }}
+                        >
+                            View Demo
+                        </Button>
+                    )}
                 </Box>
             </Box>
 
