@@ -4,7 +4,7 @@ export const SEO_CONFIG = {
     // Site Information
     siteName: 'TutorNote',
     siteDescription: 'Comprehensive DSE Math Past Papers, practice quizzes, and educational resources for Hong Kong students',
-    siteUrl: process.env.REACT_APP_PRODUCTION_URL || 'https://your-domain.com',
+    siteUrl: process.env.REACT_APP_PRODUCTION_URL || 'https://tutornotes.com.hk',
     siteImage: '/favicon.svg',
 
     // Default Meta Tags

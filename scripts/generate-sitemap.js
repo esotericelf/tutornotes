@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BASE_URL = process.env.REACT_APP_PRODUCTION_URL || 'https://your-domain.com';
+const BASE_URL = process.env.REACT_APP_PRODUCTION_URL || 'https://tutornotes.com.hk';
 const SITEMAP_PATH = path.join(__dirname, '../public/sitemap.xml');
 
 // Define your site structure

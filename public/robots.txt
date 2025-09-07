@@ -16,7 +16,7 @@ Allow: /question-demo
 Allow: /quiz/
 
 # Sitemap location
-Sitemap: https://your-domain.com/sitemap.xml
+Sitemap: https://tutornotes.com.hk/sitemap.xml
 
 # Crawl delay (optional - be respectful to server resources)
 Crawl-delay: 1

@@ -6,22 +6,22 @@ export const createWebsiteStructuredData = () => {
         "@type": "WebSite",
         "name": "TutorNote",
         "description": "Comprehensive DSE Math Past Papers, practice quizzes, and educational resources for Hong Kong students",
-        "url": process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com",
+        "url": process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk",
         "potentialAction": {
             "@type": "SearchAction",
             "target": {
                 "@type": "EntryPoint",
-                "urlTemplate": `${process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com"}/search?q={search_term_string}`
+                "urlTemplate": `${process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk"}/search?q={search_term_string}`
             },
             "query-input": "required name=search_term_string"
         },
         "publisher": {
             "@type": "Organization",
             "name": "TutorNote",
-            "url": process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com",
+            "url": process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk",
             "logo": {
                 "@type": "ImageObject",
-                "url": `${process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com"}/favicon.svg`
+                "url": `${process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk"}/favicon.svg`
             }
         }
     };
@@ -33,8 +33,8 @@ export const createOrganizationStructuredData = () => {
         "@type": "EducationalOrganization",
         "name": "TutorNote",
         "description": "Online platform providing DSE Math past papers and educational resources for Hong Kong students",
-        "url": process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com",
-        "logo": `${process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com"}/favicon.svg`,
+        "url": process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk",
+        "logo": `${process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk"}/favicon.svg`,
         "address": {
             "@type": "PostalAddress",
             "addressCountry": "HK"
@@ -57,7 +57,7 @@ export const createCourseStructuredData = (courseData) => {
         "provider": {
             "@type": "EducationalOrganization",
             "name": "TutorNote",
-            "url": process.env.REACT_APP_PRODUCTION_URL || "https://your-domain.com"
+            "url": process.env.REACT_APP_PRODUCTION_URL || "https://tutornotes.com.hk"
         },
         "courseMode": "online",
         "educationalLevel": "Secondary",
