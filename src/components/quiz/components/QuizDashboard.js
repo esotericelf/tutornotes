@@ -59,11 +59,6 @@ const QuizDashboard = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [showFilters, setShowFilters] = useState(false);
 
-    // Load quizzes on component mount and when filters change
-    useEffect(() => {
-        loadQuizzes();
-    }, [loadQuizzes]);
-
     const loadQuizzes = useCallback(async () => {
         try {
             setLoading(true);
@@ -96,6 +91,11 @@ const QuizDashboard = () => {
             setLoading(false);
         }
     }, [filters, sortBy, page, searchTerm]);
+
+    // Load quizzes on component mount and when filters change
+    useEffect(() => {
+        loadQuizzes();
+    }, [loadQuizzes]);
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({ ...prev, [field]: value }));

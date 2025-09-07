@@ -85,7 +85,7 @@ const QuizTaker = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [quizStarted, timeRemaining]);
+    }, [quizStarted, timeRemaining, handleSubmitQuiz]);
 
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
