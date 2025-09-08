@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box,
     Container,
@@ -59,6 +59,9 @@ const MathPaperPage = () => {
     const [selectedQuestion, setSelectedQuestion] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [questionTags, setQuestionTags] = useState({}); // Store tags for each question
+    const [popularTags, setPopularTags] = useState([]);
+    const [isTagSearchActive, setIsTagSearchActive] = useState(false); // Track if tag search is active
 
     // Generate year options (2012-2025)
     const yearOptions = Array.from({ length: 14 }, (_, i) => 2012 + i);
@@ -76,15 +79,169 @@ const MathPaperPage = () => {
         return [];
     };
 
-    // Set empty tags by default since database functions don't exist
-    useEffect(() => {
-        setAvailableTags([]);
+    // Sample available tags for testing
+    const getSampleAvailableTags = useCallback(() => {
+        return [
+            'factor_method', 'roots', 'quadratic_formula', 'domain', 'range',
+            'sine', 'cosine', 'tangent', 'conditional_probability', 'arithmetic_sequence',
+            'geometric_sequence', 'quadratic_inequalities', 'chords', 'standard_deviation',
+            'permutation_notation', 'combination_notation', 'direct_variation', 'inverse_variation'
+        ];
     }, []);
+
+    // Load available tags from actual questions in the database
+    const loadAvailableTags = useCallback(async () => {
+        try {
+            // Get all questions to extract their tags
+            const { data: allQuestions, error } = await supabase
+                .from('Math_Past_Paper')
+                .select('tags')
+                .not('tags', 'is', null);
+
+            if (error) {
+                console.error('Error loading questions for tags:', error);
+                // Fallback to sample tags
+                setAvailableTags(getSampleAvailableTags());
+                return;
+            }
+
+            // Extract all unique tags from questions
+            const allTags = new Set();
+            allQuestions.forEach(question => {
+                if (question.tags && Array.isArray(question.tags)) {
+                    question.tags.forEach(tag => allTags.add(tag));
+                }
+            });
+
+            const uniqueTags = Array.from(allTags).sort();
+
+            if (uniqueTags.length === 0) {
+                // If no tags found, use sample tags for testing
+                setAvailableTags(getSampleAvailableTags());
+            } else {
+                setAvailableTags(uniqueTags);
+            }
+        } catch (err) {
+            console.error('Error loading tags:', err);
+            // For testing, use sample tags
+            setAvailableTags(getSampleAvailableTags());
+        }
+    }, [getSampleAvailableTags]);
+
+    // Extract unique tags from all questions for autocomplete
+    const extractTagsFromQuestions = useCallback((questionsList) => {
+        const allTags = new Set();
+        questionsList.forEach(question => {
+            if (question.tags && Array.isArray(question.tags)) {
+                question.tags.forEach(tag => allTags.add(tag));
+            }
+        });
+        return Array.from(allTags);
+    }, []);
+
+    // Sample popular tags for testing
+    const getSamplePopularTags = useCallback(() => {
+        return [
+            { topic: 'Quadratic Equations', tag: 'factor_method', count: 25 },
+            { topic: 'Functions and Graphs', tag: 'domain', count: 20 },
+            { topic: 'Trigonometry', tag: 'sine', count: 18 },
+            { topic: 'Probability', tag: 'conditional_probability', count: 15 },
+            { topic: 'Sequences and Series', tag: 'arithmetic_sequence', count: 12 },
+            { topic: 'Inequalities and Linear Programming', tag: 'quadratic_inequalities', count: 10 },
+            { topic: 'Properties of Circles', tag: 'chords', count: 8 },
+            { topic: 'Measures of Dispersion', tag: 'standard_deviation', count: 6 }
+        ];
+    }, []);
+
+    // Load popular tags using Supabase function
+    const loadPopularTags = useCallback(async () => {
+        try {
+            // Call the Supabase function to get popular tags with counts
+            const { data, error } = await supabase.rpc('get_popular_math_paper_tags', {
+                limit_count: 15
+            });
+
+            if (error) {
+                console.error('Error loading popular tags:', error);
+                // Fallback to sample tags
+                setPopularTags(getSamplePopularTags());
+                return;
+            }
+
+            // Convert the result to the expected format
+            const popularTagsArray = data.map(item => ({
+                topic: 'General', // We don't have topic info in the tags array
+                tag: item.tag,
+                count: item.count
+            }));
+
+            console.log('Popular tags loaded from database:', popularTagsArray.slice(0, 5)); // Show top 5 for debugging
+
+            if (popularTagsArray.length === 0) {
+                // If no tags found, use sample tags for testing
+                setPopularTags(getSamplePopularTags());
+            } else {
+                setPopularTags(popularTagsArray);
+            }
+        } catch (err) {
+            console.error('Error loading popular tags:', err);
+            // For testing, return some sample popular tags
+            setPopularTags(getSamplePopularTags());
+        }
+    }, [getSamplePopularTags]);
+
+    // Load available tags from database
+    useEffect(() => {
+        loadAvailableTags();
+        loadPopularTags();
+    }, [loadAvailableTags, loadPopularTags]);
+
+    // Debug: Monitor questions state changes
+    // useEffect(() => {
+    //     console.log('Questions state changed to:', questions.length, 'questions');
+    //     if (questions.length > 0) {
+    //         console.log('First question:', questions[0]);
+    //     }
+    // }, [questions]);
+
+
+    // Convert question tags array to the format expected by the UI
+    const getQuestionTagsFromData = (question) => {
+        if (!question || !question.tags || !Array.isArray(question.tags)) {
+            return [];
+        }
+
+        // Convert array of tag strings to objects with topic and tag properties
+        return question.tags.map(tag => ({
+            topic: 'General', // Default topic since we don't have topic info in the tags array
+            tag: tag
+        }));
+    };
+
+    // Load tags for all questions in the current results
+    const loadTagsForQuestions = async (questionsList) => {
+        const tagsMap = {};
+        for (const question of questionsList) {
+            const tags = getQuestionTagsFromData(question);
+            tagsMap[question.id] = tags;
+        }
+        setQuestionTags(tagsMap);
+    };
 
     // Handle filter search
     const handleFilterSearch = async () => {
+        // console.log('handleFilterSearch called with:', { selectedYear, selectedPaper, selectedQuestionNo });
+
+        // Don't run filter search if we're doing a tag search
+        if (isTagSearchActive) {
+            console.log('Skipping handleFilterSearch because tag search is active (isTagSearchActive =', isTagSearchActive, ')');
+            return;
+        }
+
         setLoading(true);
         setError('');
+        // console.log('Resetting isTagSearchActive to false for regular filter search');
+        setIsTagSearchActive(false); // Reset tag search flag when doing regular filter search
 
         try {
             const { data, error } = await supabase.rpc('filter_math_papers_by_year_paper', {
@@ -108,6 +265,16 @@ const MathPaperPage = () => {
 
                 setQuestions(filteredData);
 
+                // Load tags for the questions
+                if (filteredData.length > 0) {
+                    loadTagsForQuestions(filteredData);
+                    // Update available tags from the loaded questions
+                    const questionTags = extractTagsFromQuestions(filteredData);
+                    if (questionTags.length > 0) {
+                        setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
+                    }
+                }
+
                 // Track search analytics
                 const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
                 trackSearch(searchTerm, filteredData.length);
@@ -115,6 +282,14 @@ const MathPaperPage = () => {
                 // If exactly one result and all three filters are specified, show details directly
                 if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
                     setSelectedQuestion(filteredData[0]);
+                    // Load tags for the selected question if not already loaded
+                    if (!questionTags[filteredData[0].id]) {
+                        const tags = getQuestionTagsFromData(filteredData[0]);
+                        setQuestionTags(prev => ({
+                            ...prev,
+                            [filteredData[0].id]: tags
+                        }));
+                    }
                     trackMathPaperEvent('question_viewed', selectedYear, selectedPaper, selectedQuestionNo);
                     // Scroll to question details after a short delay to ensure component is rendered
                     setTimeout(() => {
@@ -139,48 +314,69 @@ const MathPaperPage = () => {
         }
     };
 
-    // Handle tag search
+    // Handle tag search - search through all available questions
     const handleTagSearch = async () => {
+        // console.log('handleTagSearch called with searchTags:', searchTags);
         if (searchTags.length === 0) return;
 
+        // console.log('Setting isTagSearchActive to true for tag search');
+        setIsTagSearchActive(true);
         setLoading(true);
         setError('');
 
         try {
-            // Search for each tag and combine results
-            const allResults = [];
+            // First, get all questions from the database
+            const { data: allQuestions, error } = await supabase
+                .from('Math_Past_Paper')
+                .select('*')
+                .order('year', { ascending: false })
+                .order('question_no', { ascending: true });
 
-            for (const tag of searchTags) {
-                try {
-                    const { data, error } = await supabase.rpc('search_math_papers_by_keyword', {
-                        search_term: tag
-                    });
+            if (error) {
+                console.error('Error fetching questions for tag search:', error);
+                setError('Failed to fetch questions for search');
+                return;
+            }
 
-                    if (error) {
-                        console.error(`Error searching for tag "${tag}":`, error);
-                        if (error.message.includes('function') || error.message.includes('table')) {
-                            console.log(`Database function not available for tag "${tag}"`);
-                        }
-                    } else {
-                        allResults.push(...(data || []));
-                    }
-                } catch (err) {
-                    console.error(`Error searching for tag "${tag}":`, err);
-                    if (err.message === 'Request timeout') {
-                        console.log(`Database function timed out for tag "${tag}"`);
-                    }
+            // Filter questions that contain any of the selected tags
+            // console.log('Search tags:', searchTags);
+            // console.log('Total questions:', allQuestions.length);
+
+            const matchingQuestions = allQuestions.filter(question => {
+                if (!question.tags || !Array.isArray(question.tags)) {
+                    return false;
+                }
+
+                // Check if any of the search tags match any of the question's tags
+                const matches = searchTags.some(searchTag =>
+                    question.tags.some(questionTag =>
+                        questionTag.toLowerCase().includes(searchTag.toLowerCase()) ||
+                        searchTag.toLowerCase().includes(questionTag.toLowerCase())
+                    )
+                );
+
+                // if (matches) {
+                //     console.log('Match found:', question.id, question.tags);
+                // }
+
+                return matches;
+            });
+
+            // console.log('Matching questions:', matchingQuestions.length);
+            setQuestions(matchingQuestions);
+
+            // Load tags for the matching questions
+            if (matchingQuestions.length > 0) {
+                loadTagsForQuestions(matchingQuestions);
+                // Update available tags from the loaded questions
+                const questionTags = extractTagsFromQuestions(matchingQuestions);
+                if (questionTags.length > 0) {
+                    setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
                 }
             }
 
-            // Remove duplicates based on id
-            const uniqueResults = allResults.filter((question, index, self) =>
-                index === self.findIndex(q => q.id === question.id)
-            );
-
-            setQuestions(uniqueResults);
-
-            if (allResults.length === 0) {
-                setError('No results found. Database functions may not be set up.');
+            if (matchingQuestions.length === 0) {
+                setError(`No questions found with tags: ${searchTags.join(', ')}`);
             }
 
         } catch (err) {
@@ -188,7 +384,22 @@ const MathPaperPage = () => {
             setError('Failed to search by tags');
         } finally {
             setLoading(false);
+            // Reset tag search flag after a longer delay to prevent conflicts
+            setTimeout(() => {
+                // console.log('Resetting isTagSearchActive flag after tag search');
+                setIsTagSearchActive(false);
+            }, 1000);
         }
+    };
+
+    // Handle popular tag click - just set the tag in the search box
+    const handlePopularTagClick = (tag) => {
+        setSearchTags([tag]);
+        setSearchInput('');
+        // Clear any previous results
+        setQuestions([]);
+        setSelectedQuestion(null);
+        setError('');
     };
 
     // Clear all filters
@@ -200,7 +411,10 @@ const MathPaperPage = () => {
         setSearchInput('');
         setQuestions([]);
         setSelectedQuestion(null);
+        setQuestionTags({});
         setError('');
+        // console.log('Resetting isTagSearchActive to false in clear filters');
+        setIsTagSearchActive(false);
     };
 
     const breadcrumbs = [
@@ -380,15 +594,19 @@ const MathPaperPage = () => {
                                         />
                                     )}
                                     renderTags={(value, getTagProps) =>
-                                        value.map((option, index) => (
-                                            <Chip
-                                                label={option}
-                                                {...getTagProps({ index })}
-                                                color="primary"
-                                                variant="outlined"
-                                                size="small"
-                                            />
-                                        ))
+                                        value.map((option, index) => {
+                                            const { key, ...tagProps } = getTagProps({ index });
+                                            return (
+                                                <Chip
+                                                    key={key}
+                                                    label={option}
+                                                    {...tagProps}
+                                                    color="primary"
+                                                    variant="outlined"
+                                                    size="small"
+                                                />
+                                            );
+                                        })
                                     }
                                     freeSolo
                                     filterOptions={(options, params) => {
@@ -409,7 +627,14 @@ const MathPaperPage = () => {
                                 <Button
                                     variant="contained"
                                     fullWidth
-                                    onClick={handleFilterSearch}
+                                    onClick={() => {
+                                        // If tags are selected, do tag search; otherwise do filter search
+                                        if (searchTags.length > 0) {
+                                            handleTagSearch();
+                                        } else {
+                                            handleFilterSearch();
+                                        }
+                                    }}
                                     disabled={loading}
                                     sx={{ height: 56 }}
                                 >
@@ -430,17 +655,57 @@ const MathPaperPage = () => {
                             </Grid>
                         </Grid>
 
-                        <Box sx={{ mt: 2 }}>
-                            <Button
-                                variant="outlined"
-                                onClick={handleTagSearch}
-                                disabled={loading || searchTags.length === 0}
-                                startIcon={<Search />}
-                            >
-                                Search Tags
-                            </Button>
-                        </Box>
                     </Paper>
+
+                    {/* Popular Tags Section */}
+                    {popularTags.length > 0 && (
+                        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
+                            <Typography variant="h6" gutterBottom sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mb: 2,
+                                fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                            }}>
+                                <Search sx={{ mr: 1, fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
+                                Popular Tags
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{
+                                mb: 2,
+                                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                            }}>
+                                Click on a tag to search for related questions
+                            </Typography>
+                            <Box sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: { xs: 0.5, sm: 1 }
+                            }}>
+                                {popularTags.map((tagData, index) => (
+                                    <Chip
+                                        key={index}
+                                        label={`${tagData.tag} (${tagData.count})`}
+                                        onClick={() => handlePopularTagClick(tagData.tag)}
+                                        color="primary"
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            cursor: 'pointer',
+                                            fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                                            height: { xs: '24px', sm: '32px' },
+                                            '& .MuiChip-label': {
+                                                px: { xs: 1, sm: 1.5 }
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: 'primary.main',
+                                                color: 'white'
+                                            },
+                                            transition: 'all 0.2s ease-in-out'
+                                        }}
+                                    />
+                                ))}
+                            </Box>
+                        </Paper>
+                    )}
 
                     {/* Error Display */}
                     {error && (
@@ -451,8 +716,10 @@ const MathPaperPage = () => {
 
                     {/* Results Section */}
                     {questions.length > 0 && !selectedQuestion && (
-                        <Paper sx={{ p: 3 }}>
-                            <Typography variant="h6" gutterBottom>
+                        <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+                            <Typography variant="h6" gutterBottom sx={{
+                                fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                            }}>
                                 Results ({questions.length} questions found)
                             </Typography>
 
@@ -463,12 +730,14 @@ const MathPaperPage = () => {
                                         sx={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            p: 2,
+                                            alignItems: { xs: 'flex-start', sm: 'center' },
+                                            p: { xs: 1.5, sm: 2 },
                                             border: '1px solid',
                                             borderColor: 'divider',
                                             borderRadius: 1,
                                             cursor: 'pointer',
+                                            flexDirection: { xs: 'column', sm: 'row' },
+                                            gap: { xs: 1, sm: 0 },
                                             '&:hover': {
                                                 backgroundColor: 'action.hover',
                                                 borderColor: 'primary.main'
@@ -477,42 +746,99 @@ const MathPaperPage = () => {
                                         }}
                                         onClick={() => {
                                             setSelectedQuestion(question);
+                                            // Load tags for the selected question if not already loaded
+                                            if (!questionTags[question.id]) {
+                                                const tags = getQuestionTagsFromData(question);
+                                                setQuestionTags(prev => ({
+                                                    ...prev,
+                                                    [question.id]: tags
+                                                }));
+                                            }
                                             trackMathPaperEvent('question_clicked', question.year, question.paper, question.question_no);
                                         }}
                                     >
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                            <Typography variant="body1" sx={{ fontWeight: 'bold', minWidth: 60 }}>
-                                                #{index + 1}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Chip
-                                                    label={`Year ${question.year}`}
-                                                    size="small"
-                                                    sx={{
-                                                        backgroundColor: '#87ceeb',
-                                                        color: '#ffffff',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                />
-                                                <Chip
-                                                    label={`Paper ${question.paper}`}
-                                                    size="small"
-                                                    sx={{
-                                                        backgroundColor: '#ffa500',
-                                                        color: '#ffffff',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                />
-                                                <Chip
-                                                    label={`Q${question.question_no}`}
-                                                    size="small"
-                                                    sx={{
-                                                        backgroundColor: '#6c757d',
-                                                        color: '#ffffff',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                />
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                alignItems: { xs: 'flex-start', sm: 'center' },
+                                                gap: { xs: 1, sm: 2 },
+                                                flexDirection: { xs: 'column', sm: 'row' }
+                                            }}>
+                                                <Typography variant="body1" sx={{
+                                                    fontWeight: 'bold',
+                                                    minWidth: { xs: 'auto', sm: 60 },
+                                                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                                                }}>
+                                                    #{index + 1}
+                                                </Typography>
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: { xs: 0.5, sm: 1 },
+                                                    flexWrap: 'wrap'
+                                                }}>
+                                                    <Chip
+                                                        label={`Year ${question.year}`}
+                                                        size="small"
+                                                        sx={{
+                                                            backgroundColor: '#87ceeb',
+                                                            color: '#ffffff',
+                                                            fontWeight: 'bold',
+                                                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                                            height: { xs: '20px', sm: '24px' }
+                                                        }}
+                                                    />
+                                                    <Chip
+                                                        label={`Paper ${question.paper}`}
+                                                        size="small"
+                                                        sx={{
+                                                            backgroundColor: '#ffa500',
+                                                            color: '#ffffff',
+                                                            fontWeight: 'bold',
+                                                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                                            height: { xs: '20px', sm: '24px' }
+                                                        }}
+                                                    />
+                                                    <Chip
+                                                        label={`Q${question.question_no}`}
+                                                        size="small"
+                                                        sx={{
+                                                            backgroundColor: '#6c757d',
+                                                            color: '#ffffff',
+                                                            fontWeight: 'bold',
+                                                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                                            height: { xs: '20px', sm: '24px' }
+                                                        }}
+                                                    />
+                                                </Box>
                                             </Box>
+                                            {/* Display tags for this question */}
+                                            {questionTags[question.id] && questionTags[question.id].length > 0 && (
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: { xs: 0.3, sm: 0.5 },
+                                                    ml: { xs: 0, sm: 7 },
+                                                    mt: { xs: 1, sm: 0 }
+                                                }}>
+                                                    {questionTags[question.id].map((tagData, tagIndex) => (
+                                                        <Chip
+                                                            key={tagIndex}
+                                                            label={tagData.tag}
+                                                            size="small"
+                                                            variant="outlined"
+                                                            color="secondary"
+                                                            sx={{
+                                                                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                                                height: { xs: '18px', sm: '20px' },
+                                                                '& .MuiChip-label': {
+                                                                    px: { xs: 0.5, sm: 1 }
+                                                                }
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            )}
                                         </Box>
                                         <Button
                                             variant="outlined"
@@ -521,6 +847,19 @@ const MathPaperPage = () => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setSelectedQuestion(question);
+                                                // Load tags for the selected question if not already loaded
+                                                if (!questionTags[question.id]) {
+                                                    const tags = getQuestionTagsFromData(question);
+                                                    setQuestionTags(prev => ({
+                                                        ...prev,
+                                                        [question.id]: tags
+                                                    }));
+                                                }
+                                            }}
+                                            sx={{
+                                                fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                                                minWidth: { xs: '60px', sm: 'auto' },
+                                                alignSelf: { xs: 'flex-end', sm: 'auto' }
                                             }}
                                         >
                                             View
@@ -545,7 +884,11 @@ const MathPaperPage = () => {
                                     </Button>
                                 </Box>
                             )}
-                            <QuestionDisplay question={selectedQuestion} />
+                            <QuestionDisplay
+                                question={selectedQuestion}
+                                questionTags={questionTags[selectedQuestion.id] || []}
+                                onTagClick={handlePopularTagClick}
+                            />
 
                             {/* Discussion Section */}
                             <Box sx={{ mt: 4 }}>

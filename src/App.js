@@ -13,6 +13,7 @@ import AdminRoute from './components/auth/AdminRoute'
 import MathPaperPage from './components/mathpaper/MathPaperPage'
 import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
 import { QuizTaker, QuizResults } from './components/quiz'
+import TopicTagsDebug from './components/debug/TopicTagsDebug'
 
 import './App.css'
 
@@ -193,13 +194,13 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/mathpaper" element={<MathPaperPage />} />
-                <Route 
-                  path="/question-demo" 
+                <Route
+                  path="/question-demo"
                   element={
                     <AdminRoute>
                       <QuestionDisplayDemo />
                     </AdminRoute>
-                  } 
+                  }
                 />
 
                 <Route
@@ -225,6 +226,16 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <QuizResults />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Debug Routes */}
+                <Route
+                  path="/debug/topic-tags"
+                  element={
+                    <ProtectedRoute>
+                      <TopicTagsDebug />
                     </ProtectedRoute>
                   }
                 />

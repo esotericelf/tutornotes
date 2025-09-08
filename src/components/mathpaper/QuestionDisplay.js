@@ -4,15 +4,17 @@ import {
     Typography,
     Box,
     Divider,
-    IconButton
+    IconButton,
+    Chip
 } from '@mui/material';
-import { ExpandMore, ExpandLess } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Label } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-const QuestionDisplay = ({ question }) => {
+const QuestionDisplay = ({ question, questionTags = [], onTagClick }) => {
     const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
     const [selectedDiagramIndex, setSelectedDiagramIndex] = useState(0);
+
 
     const handleSolutionDiagramToggle = () => {
         setSolutionDiagramExpanded(!solutionDiagramExpanded);
@@ -254,6 +256,48 @@ const QuestionDisplay = ({ question }) => {
                     <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Question</Typography>
                 </Paper>
             </Box>
+
+            {/* Tags Section */}
+            {questionTags && questionTags.length > 0 && (
+                <Paper
+                    elevation={2}
+                    sx={{
+                        padding: { xs: 1.5, sm: 2 },
+                        mb: { xs: 2, sm: 3 },
+                        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                        borderRadius: { xs: 2, sm: 3 }
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Label sx={{ mr: 1, color: 'primary.main' }} />
+                        <Typography variant="h6" fontWeight="bold" color="primary" sx={{
+                            fontSize: { xs: '1rem', sm: '1.25rem' }
+                        }}>
+                            Tags
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {questionTags.map((tagData, index) => (
+                            <Chip
+                                key={index}
+                                label={tagData.tag}
+                                color="primary"
+                                variant="outlined"
+                                onClick={() => onTagClick && onTagClick(tagData.tag)}
+                                sx={{
+                                    cursor: onTagClick ? 'pointer' : 'default',
+                                    '&:hover': onTagClick ? {
+                                        backgroundColor: 'primary.main',
+                                        color: 'white'
+                                    } : {},
+                                    transition: 'all 0.2s ease-in-out',
+                                    fontSize: { xs: '0.8rem', sm: '0.9rem' }
+                                }}
+                            />
+                        ))}
+                    </Box>
+                </Paper>
+            )}
 
             {/* Question Section - Only show if question text or diagram exists */}
             {(question.question || question.question_diagram) && (
