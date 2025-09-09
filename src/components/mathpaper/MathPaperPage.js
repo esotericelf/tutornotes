@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box,
     Container,
@@ -45,7 +45,7 @@ const MathPaperPage = () => {
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
     const tagsLoadedRef = useRef(false);
-    
+
     useEffect(() => {
         setComponentMounted(true);
         return () => {
