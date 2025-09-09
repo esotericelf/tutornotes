@@ -44,7 +44,8 @@ const MathPaperPage = () => {
 
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
-
+    const tagsLoadedRef = useRef(false);
+    
     useEffect(() => {
         setComponentMounted(true);
         return () => {
@@ -136,7 +137,7 @@ const MathPaperPage = () => {
             // For testing, use sample tags
             setAvailableTags(getSampleAvailableTags());
         }
-    }, []); // Remove dependency to prevent infinite loop
+    }, [getSampleAvailableTags]);
 
     // Extract unique tags from all questions for autocomplete
     const extractTagsFromQuestions = useCallback((questionsList) => {
@@ -210,13 +211,16 @@ const MathPaperPage = () => {
             // For testing, return some sample popular tags
             setPopularTags(getSamplePopularTags());
         }
-    }, []); // Remove dependency to prevent infinite loop
+    }, [getSamplePopularTags]);
 
     // Load available tags from database
     useEffect(() => {
-        loadAvailableTags();
-        loadPopularTags();
-    }, []); // Empty dependency array to prevent infinite loop
+        if (!tagsLoadedRef.current) {
+            tagsLoadedRef.current = true;
+            loadAvailableTags();
+            loadPopularTags();
+        }
+    }, [loadAvailableTags, loadPopularTags]);
 
     // Debug: Monitor questions state changes
     // useEffect(() => {
