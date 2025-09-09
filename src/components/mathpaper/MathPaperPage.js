@@ -42,6 +42,16 @@ const MathPaperPage = () => {
     const navigate = useNavigate();
     const questionDetailsRef = React.useRef(null);
 
+    // Add component mount tracking to prevent infinite loops
+    const [componentMounted, setComponentMounted] = useState(false);
+
+    useEffect(() => {
+        setComponentMounted(true);
+        return () => {
+            setComponentMounted(false);
+        };
+    }, []);
+
 
 
     // Filter states
@@ -126,7 +136,7 @@ const MathPaperPage = () => {
             // For testing, use sample tags
             setAvailableTags(getSampleAvailableTags());
         }
-    }, [getSampleAvailableTags]);
+    }, []); // Remove dependency to prevent infinite loop
 
     // Extract unique tags from all questions for autocomplete
     const extractTagsFromQuestions = useCallback((questionsList) => {
@@ -163,6 +173,18 @@ const MathPaperPage = () => {
 
             if (error) {
                 console.error('Error loading popular tags:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code,
+                    userAgent: navigator.userAgent,
+                    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                });
+                // Check if it's a permission error for anonymous users
+                if (error.message.includes('permission') || error.message.includes('denied')) {
+                    console.log('Permission error - using sample tags for anonymous users');
+                }
                 // Fallback to sample tags
                 setPopularTags(getSamplePopularTags());
                 return;
@@ -188,13 +210,13 @@ const MathPaperPage = () => {
             // For testing, return some sample popular tags
             setPopularTags(getSamplePopularTags());
         }
-    }, [getSamplePopularTags]);
+    }, []); // Remove dependency to prevent infinite loop
 
     // Load available tags from database
     useEffect(() => {
         loadAvailableTags();
         loadPopularTags();
-    }, [loadAvailableTags, loadPopularTags]);
+    }, []); // Empty dependency array to prevent infinite loop
 
     // Debug: Monitor questions state changes
     // useEffect(() => {
@@ -244,15 +266,24 @@ const MathPaperPage = () => {
         setIsTagSearchActive(false); // Reset tag search flag when doing regular filter search
 
         try {
-            const { data, error } = await supabase.rpc('filter_math_papers_by_year_paper', {
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
+
+            const queryPromise = supabase.rpc('filter_math_papers_by_year_paper', {
                 filter_year: selectedYear || null,
                 filter_paper: selectedPaper || null
             });
+
+            const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
             if (error) {
                 console.error('Error fetching questions:', error);
                 if (error.message.includes('function') || error.message.includes('table')) {
                     setError('Database function not available. Please set up the database first.');
+                } else if (error.message.includes('permission') || error.message.includes('denied')) {
+                    setError('Access denied. Please try refreshing the page or contact support.');
                 } else {
                     setError('Failed to fetch questions');
                 }
@@ -325,16 +356,26 @@ const MathPaperPage = () => {
         setError('');
 
         try {
-            // First, get all questions from the database
-            const { data: allQuestions, error } = await supabase
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
+
+            const queryPromise = supabase
                 .from('Math_Past_Paper')
                 .select('*')
                 .order('year', { ascending: false })
                 .order('question_no', { ascending: true });
 
+            const { data: allQuestions, error } = await Promise.race([queryPromise, timeoutPromise]);
+
             if (error) {
                 console.error('Error fetching questions for tag search:', error);
-                setError('Failed to fetch questions for search');
+                if (error.message.includes('permission') || error.message.includes('denied')) {
+                    setError('Access denied. Please try refreshing the page or contact support.');
+                } else {
+                    setError('Failed to fetch questions for search');
+                }
                 return;
             }
 
@@ -426,6 +467,15 @@ const MathPaperPage = () => {
         name: 'DSE Math Past Papers',
         description: 'Comprehensive collection of DSE Mathematics past papers with detailed solutions and explanations for Hong Kong students'
     };
+
+    // Safety check - don't render if component isn't mounted
+    if (!componentMounted) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <>

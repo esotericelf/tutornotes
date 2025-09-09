@@ -26,7 +26,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer-when-downgrade"
-    Content-Security-Policy = "default-src 'self' http: https: data: blob: 'unsafe-inline'"
+    Content-Security-Policy = "default-src 'self' http: https: data: blob: 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co; style-src 'self' 'unsafe-inline' https://*.supabase.co;"
 
 [[headers]]
   for = "*.js"
