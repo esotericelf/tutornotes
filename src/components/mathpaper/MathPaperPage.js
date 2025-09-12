@@ -30,7 +30,7 @@ import {
     ArrowBack,
     Visibility
 } from '@mui/icons-material';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import QuestionDisplay from './QuestionDisplay';
 import { DiscussionSection } from '../discussion';
@@ -40,6 +40,7 @@ import { trackMathPaperEvent, trackSearch } from '../../utils/analytics';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const questionDetailsRef = React.useRef(null);
 
     // Add component mount tracking to prevent infinite loops
@@ -52,6 +53,123 @@ const MathPaperPage = () => {
             setComponentMounted(false);
         };
     }, []);
+
+    // Convert question tags array to the format expected by the UI
+    const getQuestionTagsFromData = (question) => {
+        if (!question || !question.tags || !Array.isArray(question.tags)) {
+            return [];
+        }
+
+        // Convert array of tag strings to objects with topic and tag properties
+        return question.tags.map(tag => ({
+            topic: 'General', // Default topic since we don't have topic info in the tags array
+            tag: tag
+        }));
+    };
+
+    // Extract unique tags from all questions for autocomplete
+    const extractTagsFromQuestions = useCallback((questionsList) => {
+        const allTags = new Set();
+        questionsList.forEach(question => {
+            if (question.tags && Array.isArray(question.tags)) {
+                question.tags.forEach(tag => allTags.add(tag));
+            }
+        });
+        return Array.from(allTags);
+    }, []);
+
+    // Load tags for all questions in the current results
+    const loadTagsForQuestions = useCallback(async (questionsList) => {
+        const tagsMap = {};
+        for (const question of questionsList) {
+            const tags = getQuestionTagsFromData(question);
+            tagsMap[question.id] = tags;
+        }
+        setQuestionTags(tagsMap);
+    }, []);
+
+    // Handle tag search from URL parameters (simplified like your reference code)
+    const handleTagSearchFromURL = useCallback(async (tags) => {
+        if (tags.length === 0) return;
+
+        setIsTagSearchActive(true);
+        setLoading(true);
+        setError('');
+
+        try {
+            console.log('Searching for tags from URL:', tags);
+
+            // Use direct query with contains operator (like your reference code)
+            let query = supabase
+                .from('Math_Past_Paper')
+                .select('*')
+                .order('year', { ascending: false })
+                .order('question_no', { ascending: true });
+
+            // Add tag filtering (like your reference code)
+            if (tags.length > 0) {
+                query = query.contains('tags', tags);
+            }
+
+            // Add timeout (like your reference code)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
+
+            const { data, error } = await Promise.race([query, timeoutPromise]);
+
+            if (error) {
+                console.error('Error in URL tag search:', error);
+                setError(`Failed to search by tags: ${error.message}`);
+                return;
+            }
+
+            const matchingQuestions = data || [];
+            setQuestions(matchingQuestions);
+
+            // Load tags for the matching questions
+            if (matchingQuestions.length > 0) {
+                loadTagsForQuestions(matchingQuestions);
+                // Update available tags from the loaded questions
+                const questionTags = extractTagsFromQuestions(matchingQuestions);
+                if (questionTags.length > 0) {
+                    setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
+                }
+            }
+
+            if (matchingQuestions.length === 0) {
+                setError(`No questions found with tags: ${tags.join(', ')}`);
+            }
+
+        } catch (err) {
+            console.error('Error searching by tags from URL:', err);
+            setError(`Failed to search by tags: ${err.message}`);
+        } finally {
+            setLoading(false);
+            setTimeout(() => {
+                setIsTagSearchActive(false);
+            }, 1000);
+        }
+    }, [loadTagsForQuestions, extractTagsFromQuestions]);
+
+    // Initialize state from URL parameters
+    useEffect(() => {
+        const urlTags = searchParams.get('tags');
+        if (urlTags) {
+            const tagsArray = urlTags.split(',').filter(tag => tag.trim());
+            setSearchTags(tagsArray);
+            // Automatically trigger tag search if tags are in URL
+            if (tagsArray.length > 0) {
+                handleTagSearchFromURL(tagsArray);
+            }
+        } else {
+            // Clear tags if no URL parameters
+            setSearchTags([]);
+            setQuestions([]);
+            setSelectedQuestion(null);
+            setError('');
+        }
+    }, [searchParams, handleTagSearchFromURL]);
 
 
 
@@ -139,16 +257,6 @@ const MathPaperPage = () => {
         }
     }, [getSampleAvailableTags]);
 
-    // Extract unique tags from all questions for autocomplete
-    const extractTagsFromQuestions = useCallback((questionsList) => {
-        const allTags = new Set();
-        questionsList.forEach(question => {
-            if (question.tags && Array.isArray(question.tags)) {
-                question.tags.forEach(tag => allTags.add(tag));
-            }
-        });
-        return Array.from(allTags);
-    }, []);
 
     // Sample popular tags for testing
     const getSamplePopularTags = useCallback(() => {
@@ -164,51 +272,58 @@ const MathPaperPage = () => {
         ];
     }, []);
 
-    // Load popular tags using Supabase function
+    // Load popular tags using direct query (like your reference code)
     const loadPopularTags = useCallback(async () => {
         try {
-            // Call the Supabase function to get popular tags with counts
-            const { data, error } = await supabase.rpc('get_popular_math_paper_tags', {
-                limit_count: 15
-            });
+            console.log('Fetching popular tags...');
+
+            // Get tags from questions directly (like your reference code)
+            const { data, error } = await supabase
+                .from('Math_Past_Paper')
+                .select('tags')
+                .not('tags', 'is', null)
+                .limit(100);
 
             if (error) {
-                console.error('Error loading popular tags:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    details: error.details,
-                    hint: error.hint,
-                    code: error.code,
-                    userAgent: navigator.userAgent,
-                    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                });
-                // Check if it's a permission error for anonymous users
-                if (error.message.includes('permission') || error.message.includes('denied')) {
-                    console.log('Permission error - using sample tags for anonymous users');
-                }
-                // Fallback to sample tags
+                console.error('Error fetching tags:', error);
                 setPopularTags(getSamplePopularTags());
                 return;
             }
 
-            // Convert the result to the expected format
-            const popularTagsArray = data.map(item => ({
-                topic: 'General', // We don't have topic info in the tags array
-                tag: item.tag,
-                count: item.count
-            }));
+            // Process tags based on how they're stored (like your reference code)
+            const allTags = data.flatMap(item =>
+                Array.isArray(item.tags) ? item.tags :
+                    typeof item.tags === 'string' ? item.tags.split(',') :
+                        []
+            );
 
-            console.log('Popular tags loaded from database:', popularTagsArray.slice(0, 5)); // Show top 5 for debugging
+            // Get top 15 popular tags (like your reference code)
+            const tagCounts = {};
+            allTags.forEach(tag => {
+                if (tag && tag.trim()) {
+                    tagCounts[tag.trim()] = (tagCounts[tag.trim()] || 0) + 1;
+                }
+            });
+
+            const popularTagsArray = Object.entries(tagCounts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 15)
+                .map(([tag, count]) => ({
+                    topic: 'General',
+                    tag: tag,
+                    count: count
+                }));
+
+            console.log('Popular tags fetched:', popularTagsArray.length, 'tags');
 
             if (popularTagsArray.length === 0) {
-                // If no tags found, use sample tags for testing
                 setPopularTags(getSamplePopularTags());
             } else {
                 setPopularTags(popularTagsArray);
             }
+
         } catch (err) {
-            console.error('Error loading popular tags:', err);
-            // For testing, return some sample popular tags
+            console.error('Error fetching popular tags:', err);
             setPopularTags(getSamplePopularTags());
         }
     }, [getSamplePopularTags]);
@@ -231,183 +346,142 @@ const MathPaperPage = () => {
     // }, [questions]);
 
 
-    // Convert question tags array to the format expected by the UI
-    const getQuestionTagsFromData = (question) => {
-        if (!question || !question.tags || !Array.isArray(question.tags)) {
-            return [];
-        }
 
-        // Convert array of tag strings to objects with topic and tag properties
-        return question.tags.map(tag => ({
-            topic: 'General', // Default topic since we don't have topic info in the tags array
-            tag: tag
-        }));
-    };
 
-    // Load tags for all questions in the current results
-    const loadTagsForQuestions = async (questionsList) => {
-        const tagsMap = {};
-        for (const question of questionsList) {
-            const tags = getQuestionTagsFromData(question);
-            tagsMap[question.id] = tags;
-        }
-        setQuestionTags(tagsMap);
-    };
-
-    // Handle filter search
+    // Handle filter search (simplified like your reference code)
     const handleFilterSearch = async () => {
-        // console.log('handleFilterSearch called with:', { selectedYear, selectedPaper, selectedQuestionNo });
-
         // Don't run filter search if we're doing a tag search
         if (isTagSearchActive) {
-            console.log('Skipping handleFilterSearch because tag search is active (isTagSearchActive =', isTagSearchActive, ')');
+            console.log('Skipping handleFilterSearch because tag search is active');
             return;
         }
 
         setLoading(true);
         setError('');
-        // console.log('Resetting isTagSearchActive to false for regular filter search');
-        setIsTagSearchActive(false); // Reset tag search flag when doing regular filter search
+        setIsTagSearchActive(false);
 
         try {
-            // Add timeout to prevent hanging
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 10000)
-            );
+            console.log('Fetching questions with filters:', { selectedYear, selectedPaper, selectedQuestionNo });
 
-            const queryPromise = supabase.rpc('filter_math_papers_by_year_paper', {
-                filter_year: selectedYear || null,
-                filter_paper: selectedPaper || null
-            });
-
-            const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-
-            if (error) {
-                console.error('Error fetching questions:', error);
-                if (error.message.includes('function') || error.message.includes('table')) {
-                    setError('Database function not available. Please set up the database first.');
-                } else if (error.message.includes('permission') || error.message.includes('denied')) {
-                    setError('Access denied. Please try refreshing the page or contact support.');
-                } else {
-                    setError('Failed to fetch questions');
-                }
-            } else {
-                // Filter by question number if selected
-                let filteredData = data || [];
-                if (selectedQuestionNo) {
-                    filteredData = filteredData.filter(q => q.question_no === parseInt(selectedQuestionNo));
-                }
-
-                setQuestions(filteredData);
-
-                // Load tags for the questions
-                if (filteredData.length > 0) {
-                    loadTagsForQuestions(filteredData);
-                    // Update available tags from the loaded questions
-                    const questionTags = extractTagsFromQuestions(filteredData);
-                    if (questionTags.length > 0) {
-                        setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
-                    }
-                }
-
-                // Track search analytics
-                const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
-                trackSearch(searchTerm, filteredData.length);
-
-                // If exactly one result and all three filters are specified, show details directly
-                if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
-                    setSelectedQuestion(filteredData[0]);
-                    // Load tags for the selected question if not already loaded
-                    if (!questionTags[filteredData[0].id]) {
-                        const tags = getQuestionTagsFromData(filteredData[0]);
-                        setQuestionTags(prev => ({
-                            ...prev,
-                            [filteredData[0].id]: tags
-                        }));
-                    }
-                    trackMathPaperEvent('question_viewed', selectedYear, selectedPaper, selectedQuestionNo);
-                    // Scroll to question details after a short delay to ensure component is rendered
-                    setTimeout(() => {
-                        questionDetailsRef.current?.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }, 100);
-                } else {
-                    setSelectedQuestion(null);
-                }
-            }
-        } catch (err) {
-            console.error('Error fetching questions:', err);
-            if (err.message === 'Request timeout') {
-                setError('Database function timed out. Please set up the database first.');
-            } else {
-                setError('Failed to fetch questions');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Handle tag search - search through all available questions
-    const handleTagSearch = async () => {
-        // console.log('handleTagSearch called with searchTags:', searchTags);
-        if (searchTags.length === 0) return;
-
-        // console.log('Setting isTagSearchActive to true for tag search');
-        setIsTagSearchActive(true);
-        setLoading(true);
-        setError('');
-
-        try {
-            // Add timeout to prevent hanging
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 10000)
-            );
-
-            const queryPromise = supabase
+            // Use direct query instead of database function (like your reference code)
+            let query = supabase
                 .from('Math_Past_Paper')
                 .select('*')
                 .order('year', { ascending: false })
                 .order('question_no', { ascending: true });
 
-            const { data: allQuestions, error } = await Promise.race([queryPromise, timeoutPromise]);
+            // Add filters if selected
+            if (selectedYear) {
+                query = query.eq('year', selectedYear);
+            }
+            if (selectedPaper) {
+                query = query.eq('paper', selectedPaper);
+            }
+
+            // Add timeout (like your reference code)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
+
+            const { data, error } = await Promise.race([query, timeoutPromise]);
 
             if (error) {
-                console.error('Error fetching questions for tag search:', error);
-                if (error.message.includes('permission') || error.message.includes('denied')) {
-                    setError('Access denied. Please try refreshing the page or contact support.');
-                } else {
-                    setError('Failed to fetch questions for search');
-                }
+                console.error('Error fetching questions:', error);
+                setError(`Failed to fetch questions: ${error.message}`);
                 return;
             }
 
-            // Filter questions that contain any of the selected tags
-            // console.log('Search tags:', searchTags);
-            // console.log('Total questions:', allQuestions.length);
+            // Filter by question number if selected
+            let filteredData = data || [];
+            if (selectedQuestionNo) {
+                filteredData = filteredData.filter(q => q.question_no === parseInt(selectedQuestionNo));
+            }
 
-            const matchingQuestions = allQuestions.filter(question => {
-                if (!question.tags || !Array.isArray(question.tags)) {
-                    return false;
+            setQuestions(filteredData);
+
+            // Load tags for the questions
+            if (filteredData.length > 0) {
+                loadTagsForQuestions(filteredData);
+                // Update available tags from the loaded questions
+                const questionTags = extractTagsFromQuestions(filteredData);
+                if (questionTags.length > 0) {
+                    setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
                 }
+            }
 
-                // Check if any of the search tags match any of the question's tags
-                const matches = searchTags.some(searchTag =>
-                    question.tags.some(questionTag =>
-                        questionTag.toLowerCase().includes(searchTag.toLowerCase()) ||
-                        searchTag.toLowerCase().includes(questionTag.toLowerCase())
-                    )
-                );
+            // Track search analytics
+            const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
+            trackSearch(searchTerm, filteredData.length);
 
-                // if (matches) {
-                //     console.log('Match found:', question.id, question.tags);
-                // }
+            // If exactly one result and all three filters are specified, show details directly
+            if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
+                setSelectedQuestion(filteredData[0]);
+                // Load tags for the selected question if not already loaded
+                if (!questionTags[filteredData[0].id]) {
+                    const tags = getQuestionTagsFromData(filteredData[0]);
+                    setQuestionTags(prev => ({
+                        ...prev,
+                        [filteredData[0].id]: tags
+                    }));
+                }
+                trackMathPaperEvent('question_viewed', selectedYear, selectedPaper, selectedQuestionNo);
+                // Scroll to question details after a short delay to ensure component is rendered
+                setTimeout(() => {
+                    questionDetailsRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 100);
+            } else {
+                setSelectedQuestion(null);
+            }
 
-                return matches;
-            });
+        } catch (err) {
+            console.error('Error fetching questions:', err);
+            setError(`Failed to fetch questions: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            // console.log('Matching questions:', matchingQuestions.length);
+    // Handle tag search (simplified like your reference code)
+    const handleTagSearch = async (tagsToSearch = null) => {
+        const tags = tagsToSearch || searchTags;
+        if (tags.length === 0) return;
+
+        setIsTagSearchActive(true);
+        setLoading(true);
+        setError('');
+
+        try {
+            console.log('Searching for tags:', tags);
+
+            // Use direct query with contains operator (like your reference code)
+            let query = supabase
+                .from('Math_Past_Paper')
+                .select('*')
+                .order('year', { ascending: false })
+                .order('question_no', { ascending: true });
+
+            // Add tag filtering (like your reference code)
+            if (tags.length > 0) {
+                query = query.contains('tags', tags);
+            }
+
+            // Add timeout (like your reference code)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            );
+
+            const { data, error } = await Promise.race([query, timeoutPromise]);
+
+            if (error) {
+                console.error('Error in tag search:', error);
+                setError(`Failed to search by tags: ${error.message}`);
+                return;
+            }
+
+            const matchingQuestions = data || [];
             setQuestions(matchingQuestions);
 
             // Load tags for the matching questions
@@ -421,30 +495,51 @@ const MathPaperPage = () => {
             }
 
             if (matchingQuestions.length === 0) {
-                setError(`No questions found with tags: ${searchTags.join(', ')}`);
+                setError(`No questions found with tags: ${tags.join(', ')}`);
             }
 
         } catch (err) {
             console.error('Error searching by tags:', err);
-            setError('Failed to search by tags');
+            setError(`Failed to search by tags: ${err.message}`);
         } finally {
             setLoading(false);
             // Reset tag search flag after a longer delay to prevent conflicts
             setTimeout(() => {
-                // console.log('Resetting isTagSearchActive flag after tag search');
                 setIsTagSearchActive(false);
             }, 1000);
         }
     };
 
-    // Handle popular tag click - just set the tag in the search box
+
+
+    // Handle popular tag click - set the tag and update URL
     const handlePopularTagClick = (tag) => {
-        setSearchTags([tag]);
+        const newTags = [tag];
+        setSearchTags(newTags);
         setSearchInput('');
+
+        // Update URL with the new tag
+        setSearchParams({ tags: newTags.join(',') });
+
         // Clear any previous results
         setQuestions([]);
         setSelectedQuestion(null);
         setError('');
+
+        // Trigger search with the new tag
+        handleTagSearch(newTags);
+    };
+
+    // Handle tag selection from autocomplete
+    const handleTagSelection = (newTags) => {
+        setSearchTags(newTags);
+
+        // Update URL with the new tags
+        if (newTags.length > 0) {
+            setSearchParams({ tags: newTags.join(',') });
+        } else {
+            setSearchParams({});
+        }
     };
 
     // Clear all filters
@@ -458,8 +553,10 @@ const MathPaperPage = () => {
         setSelectedQuestion(null);
         setQuestionTags({});
         setError('');
-        // console.log('Resetting isTagSearchActive to false in clear filters');
         setIsTagSearchActive(false);
+
+        // Clear URL parameters
+        setSearchParams({});
     };
 
     const breadcrumbs = [
@@ -540,6 +637,17 @@ const MathPaperPage = () => {
                         <Typography variant="body1" color="text.secondary">
                             Filter and search through past mathematics examination papers
                         </Typography>
+                        {/* Debug info for URL-based tag filtering */}
+                        {searchTags.length > 0 && (
+                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    <strong>Active Tags:</strong> {searchTags.join(', ')}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    <strong>URL:</strong> {window.location.href}
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
 
                     {/* Filter Section */}
@@ -634,7 +742,7 @@ const MathPaperPage = () => {
                                     multiple
                                     options={availableTags}
                                     value={searchTags}
-                                    onChange={(event, newValue) => setSearchTags(newValue)}
+                                    onChange={(event, newValue) => handleTagSelection(newValue)}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue) => setSearchInput(newInputValue)}
                                     renderInput={(params) => (
@@ -684,8 +792,12 @@ const MathPaperPage = () => {
                                     onClick={() => {
                                         // If tags are selected, do tag search; otherwise do filter search
                                         if (searchTags.length > 0) {
+                                            // Update URL with current tags
+                                            setSearchParams({ tags: searchTags.join(',') });
                                             handleTagSearch();
                                         } else {
+                                            // Clear URL parameters for regular filter search
+                                            setSearchParams({});
                                             handleFilterSearch();
                                         }
                                     }}
@@ -712,6 +824,7 @@ const MathPaperPage = () => {
                     </Paper>
 
                     {/* Popular Tags Section */}
+                    {console.log('Rendering popular tags section, popularTags.length:', popularTags.length, 'popularTags:', popularTags)}
                     {popularTags.length > 0 && (
                         <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
                             <Typography variant="h6" gutterBottom sx={{
