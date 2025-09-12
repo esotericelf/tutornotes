@@ -49,6 +49,8 @@ const MathPaperPage = () => {
 
     useEffect(() => {
         setComponentMounted(true);
+        // Scroll to top on component mount
+        window.scrollTo(0, 0);
         return () => {
             setComponentMounted(false);
         };
@@ -169,6 +171,8 @@ const MathPaperPage = () => {
             setSelectedQuestion(null);
             setError('');
         }
+        // Scroll to top when URL parameters change
+        window.scrollTo(0, 0);
     }, [searchParams, handleTagSearchFromURL]);
 
 
@@ -557,6 +561,9 @@ const MathPaperPage = () => {
 
         // Clear URL parameters
         setSearchParams({});
+
+        // Scroll to top when clearing filters
+        window.scrollTo(0, 0);
     };
 
     const breadcrumbs = [
