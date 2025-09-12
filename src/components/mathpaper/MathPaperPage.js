@@ -637,17 +637,6 @@ const MathPaperPage = () => {
                         <Typography variant="body1" color="text.secondary">
                             Filter and search through past mathematics examination papers
                         </Typography>
-                        {/* Debug info for URL-based tag filtering */}
-                        {searchTags.length > 0 && (
-                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    <strong>Active Tags:</strong> {searchTags.join(', ')}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    <strong>URL:</strong> {window.location.href}
-                                </Typography>
-                            </Box>
-                        )}
                     </Box>
 
                     {/* Filter Section */}
