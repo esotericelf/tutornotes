@@ -144,7 +144,7 @@ const RandomizedQuizExample = ({ quizId }) => {
                             key={option}
                             value={option}
                             control={<Radio />}
-                            label={`${option}) `}{renderWithLaTeX(currentQ[`option_${option.toLowerCase()}`])}
+                            label={`${option}) ${renderWithLaTeX(currentQ[`option_${option.toLowerCase()}`])}`}
                         />
                     ))}
                 </RadioGroup>

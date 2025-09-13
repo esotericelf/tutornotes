@@ -30,18 +30,22 @@ import {
     ArrowBack,
     Visibility
 } from '@mui/icons-material';
-import { useNavigate, Link as RouterLink, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import QuestionDisplay from './QuestionDisplay';
 import { DiscussionSection } from '../discussion';
 import SEOHead from '../common/SEOHead';
 import { createCourseStructuredData, createBreadcrumbStructuredData } from '../../utils/structuredData';
 import { trackMathPaperEvent, trackSearch } from '../../utils/analytics';
+import QuestionURLService from '../../services/mathpaper/questionUrlService';
+import QuestionLoaderService from '../../services/mathpaper/questionLoaderService';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
+    const params = useParams(); // Get URL parameters for direct question access
     const questionDetailsRef = React.useRef(null);
+
 
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
@@ -57,7 +61,7 @@ const MathPaperPage = () => {
     }, []);
 
     // Convert question tags array to the format expected by the UI
-    const getQuestionTagsFromData = (question) => {
+    const getQuestionTagsFromData = useCallback((question) => {
         if (!question || !question.tags || !Array.isArray(question.tags)) {
             return [];
         }
@@ -67,7 +71,7 @@ const MathPaperPage = () => {
             topic: 'General', // Default topic since we don't have topic info in the tags array
             tag: tag
         }));
-    };
+    }, []);
 
     // Extract unique tags from all questions for autocomplete
     const extractTagsFromQuestions = useCallback((questionsList) => {
@@ -88,7 +92,61 @@ const MathPaperPage = () => {
             tagsMap[question.id] = tags;
         }
         setQuestionTags(tagsMap);
-    }, []);
+    }, [getQuestionTagsFromData]);
+
+    // Load a specific question by year, paper, and question number
+    const loadSpecificQuestion = useCallback(async (year, paper, questionNo) => {
+        setLoading(true);
+        setError('');
+
+        try {
+            console.log(`🔍 Loading specific question: ${year} Paper ${paper} Question ${questionNo}`);
+
+            const result = await QuestionLoaderService.loadQuestion(year, paper, questionNo);
+
+            if (result.error) {
+                console.error('Error loading specific question:', result.error);
+                setError(result.error.message);
+                setSelectedQuestion(null);
+                setQuestions([]);
+                return;
+            }
+
+            if (result.data) {
+                setSelectedQuestion(result.data);
+                setQuestions([result.data]); // Show single question in results
+
+                // Load tags for the question
+                const tags = getQuestionTagsFromData(result.data);
+                setQuestionTags({ [result.data.id]: tags });
+
+                // Track the question view
+                trackMathPaperEvent('question_viewed', year, paper, questionNo);
+
+                // Scroll to question details after a short delay
+                setTimeout(() => {
+                    questionDetailsRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 100);
+
+                console.log(`✅ Successfully loaded question: ${result.data.id}`);
+            } else {
+                setError(`Question not found: ${year} Paper ${paper} Question ${questionNo}`);
+                setSelectedQuestion(null);
+                setQuestions([]);
+            }
+
+        } catch (err) {
+            console.error('Unexpected error loading specific question:', err);
+            setError(`Failed to load question: ${err.message}`);
+            setSelectedQuestion(null);
+            setQuestions([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [getQuestionTagsFromData]);
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags) => {
@@ -154,26 +212,41 @@ const MathPaperPage = () => {
         }
     }, [loadTagsForQuestions, extractTagsFromQuestions]);
 
+    // Clear URL parameters and reset to general search
+    const clearURLParams = useCallback(() => {
+        navigate('/DSE_Math', { replace: true });
+    }, [navigate]);
+
     // Initialize state from URL parameters
     useEffect(() => {
-        const urlTags = searchParams.get('tags');
-        if (urlTags) {
-            const tagsArray = urlTags.split(',').filter(tag => tag.trim());
-            setSearchTags(tagsArray);
-            // Automatically trigger tag search if tags are in URL
-            if (tagsArray.length > 0) {
-                handleTagSearchFromURL(tagsArray);
-            }
+        // Check if this is a direct question URL
+        const questionParams = QuestionURLService.getQuestionParamsFromRouter(params);
+
+        if (questionParams) {
+            // Direct question URL - load specific question
+            console.log('✅ Direct question URL detected:', questionParams);
+            loadSpecificQuestion(questionParams.year, questionParams.paper, questionParams.questionNo);
         } else {
-            // Clear tags if no URL parameters
-            setSearchTags([]);
-            setQuestions([]);
-            setSelectedQuestion(null);
-            setError('');
+            // Regular tag-based or filter-based search
+            const urlTags = searchParams.get('tags');
+            if (urlTags) {
+                const tagsArray = urlTags.split(',').filter(tag => tag.trim());
+                setSearchTags(tagsArray);
+                // Automatically trigger tag search if tags are in URL
+                if (tagsArray.length > 0) {
+                    handleTagSearchFromURL(tagsArray);
+                }
+            } else {
+                // Clear tags if no URL parameters
+                setSearchTags([]);
+                setQuestions([]);
+                setSelectedQuestion(null);
+                setError('');
+            }
         }
         // Scroll to top when URL parameters change
         window.scrollTo(0, 0);
-    }, [searchParams, handleTagSearchFromURL]);
+    }, [searchParams, params, handleTagSearchFromURL, loadSpecificQuestion]);
 
 
 
@@ -276,6 +349,16 @@ const MathPaperPage = () => {
         ];
     }, []);
 
+    // Shuffle array function for randomizing popular tags
+    const shuffleArray = (array) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
+
     // Load popular tags using direct query (like your reference code)
     const loadPopularTags = useCallback(async () => {
         try {
@@ -290,7 +373,8 @@ const MathPaperPage = () => {
 
             if (error) {
                 console.error('Error fetching tags:', error);
-                setPopularTags(getSamplePopularTags());
+                const sampleTags = getSamplePopularTags();
+                setPopularTags(shuffleArray(sampleTags));
                 return;
             }
 
@@ -321,14 +405,17 @@ const MathPaperPage = () => {
             console.log('Popular tags fetched:', popularTagsArray.length, 'tags');
 
             if (popularTagsArray.length === 0) {
-                setPopularTags(getSamplePopularTags());
+                const sampleTags = getSamplePopularTags();
+                setPopularTags(shuffleArray(sampleTags));
             } else {
-                setPopularTags(popularTagsArray);
+                // Shuffle the popular tags array to randomize display order
+                setPopularTags(shuffleArray(popularTagsArray));
             }
 
         } catch (err) {
             console.error('Error fetching popular tags:', err);
-            setPopularTags(getSamplePopularTags());
+            const sampleTags = getSamplePopularTags();
+            setPopularTags(shuffleArray(sampleTags));
         }
     }, [getSamplePopularTags]);
 
@@ -417,25 +504,12 @@ const MathPaperPage = () => {
             const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
             trackSearch(searchTerm, filteredData.length);
 
-            // If exactly one result and all three filters are specified, show details directly
+            // If exactly one result and all three filters are specified, navigate to direct question URL
             if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
-                setSelectedQuestion(filteredData[0]);
-                // Load tags for the selected question if not already loaded
-                if (!questionTags[filteredData[0].id]) {
-                    const tags = getQuestionTagsFromData(filteredData[0]);
-                    setQuestionTags(prev => ({
-                        ...prev,
-                        [filteredData[0].id]: tags
-                    }));
-                }
-                trackMathPaperEvent('question_viewed', selectedYear, selectedPaper, selectedQuestionNo);
-                // Scroll to question details after a short delay to ensure component is rendered
-                setTimeout(() => {
-                    questionDetailsRef.current?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }, 100);
+                // Navigate to the direct question URL instead of staying on search page
+                const questionURL = QuestionURLService.generateQuestionURL(selectedYear, selectedPaper, selectedQuestionNo);
+                navigate(questionURL);
+                return; // Exit early since we're navigating away
             } else {
                 setSelectedQuestion(null);
             }
@@ -452,6 +526,9 @@ const MathPaperPage = () => {
     const handleTagSearch = async (tagsToSearch = null) => {
         const tags = tagsToSearch || searchTags;
         if (tags.length === 0) return;
+
+        // Clear URL parameters when starting a new tag search
+        clearURLParams();
 
         setIsTagSearchActive(true);
         setLoading(true);
@@ -516,13 +593,30 @@ const MathPaperPage = () => {
 
 
 
+    // Generate URL for a specific question
+    const generateQuestionURL = useCallback((question) => {
+        try {
+            return QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+        } catch (error) {
+            console.error('Error generating question URL:', error);
+            return '/DSE_Math'; // Fallback to main page
+        }
+    }, []);
+
+    // Handle question click - navigate to direct question URL
+    const handleQuestionClick = useCallback((question) => {
+        const questionURL = generateQuestionURL(question);
+        navigate(questionURL);
+    }, [navigate, generateQuestionURL]);
+
     // Handle popular tag click - set the tag and update URL
     const handlePopularTagClick = (tag) => {
         const newTags = [tag];
         setSearchTags(newTags);
         setSearchInput('');
 
-        // Update URL with the new tag
+        // Clear URL parameters first, then update with new tag
+        clearURLParams();
         setSearchParams({ tags: newTags.join(',') });
 
         // Clear any previous results
@@ -538,7 +632,8 @@ const MathPaperPage = () => {
     const handleTagSelection = (newTags) => {
         setSearchTags(newTags);
 
-        // Update URL with the new tags
+        // Clear URL parameters first, then update with new tags
+        clearURLParams();
         if (newTags.length > 0) {
             setSearchParams({ tags: newTags.join(',') });
         } else {
@@ -560,7 +655,7 @@ const MathPaperPage = () => {
         setIsTagSearchActive(false);
 
         // Clear URL parameters
-        setSearchParams({});
+        clearURLParams();
 
         // Scroll to top when clearing filters
         window.scrollTo(0, 0);
@@ -788,12 +883,12 @@ const MathPaperPage = () => {
                                     onClick={() => {
                                         // If tags are selected, do tag search; otherwise do filter search
                                         if (searchTags.length > 0) {
-                                            // Update URL with current tags
+                                            // Clear URL parameters first, then update with current tags
+                                            clearURLParams();
                                             setSearchParams({ tags: searchTags.join(',') });
                                             handleTagSearch();
                                         } else {
-                                            // Clear URL parameters for regular filter search
-                                            setSearchParams({});
+                                            // For filter search, don't clear URL params - let it navigate to direct question URL if applicable
                                             handleFilterSearch();
                                         }
                                     }}
@@ -820,7 +915,6 @@ const MathPaperPage = () => {
                     </Paper>
 
                     {/* Popular Tags Section */}
-                    {console.log('Rendering popular tags section, popularTags.length:', popularTags.length, 'popularTags:', popularTags)}
                     {popularTags.length > 0 && (
                         <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
                             <Typography variant="h6" gutterBottom sx={{
@@ -907,18 +1001,7 @@ const MathPaperPage = () => {
                                             },
                                             transition: 'all 0.2s ease-in-out'
                                         }}
-                                        onClick={() => {
-                                            setSelectedQuestion(question);
-                                            // Load tags for the selected question if not already loaded
-                                            if (!questionTags[question.id]) {
-                                                const tags = getQuestionTagsFromData(question);
-                                                setQuestionTags(prev => ({
-                                                    ...prev,
-                                                    [question.id]: tags
-                                                }));
-                                            }
-                                            trackMathPaperEvent('question_clicked', question.year, question.paper, question.question_no);
-                                        }}
+                                        onClick={() => handleQuestionClick(question)}
                                     >
                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
                                             <Box sx={{
@@ -1009,15 +1092,7 @@ const MathPaperPage = () => {
                                             startIcon={<Visibility />}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setSelectedQuestion(question);
-                                                // Load tags for the selected question if not already loaded
-                                                if (!questionTags[question.id]) {
-                                                    const tags = getQuestionTagsFromData(question);
-                                                    setQuestionTags(prev => ({
-                                                        ...prev,
-                                                        [question.id]: tags
-                                                    }));
-                                                }
+                                                handleQuestionClick(question);
                                             }}
                                             sx={{
                                                 fontSize: { xs: '0.7rem', sm: '0.875rem' },

@@ -64,5 +64,8 @@
         "statements": 60
       }
     }
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1"
   }
 }
