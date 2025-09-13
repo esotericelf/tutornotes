@@ -12,7 +12,7 @@ Disallow: /question-demo
 # Allow important pages
 Allow: /
 Allow: /login
-Allow: /mathpaper
+Allow: /DSE_Math
 Allow: /quiz/
 
 # Sitemap location

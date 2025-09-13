@@ -224,7 +224,7 @@ const Dashboard = () => {
                     <Grid size={{ xs: 12, md: 8 }}>
                         <Grid container spacing={3}>
                             <Grid size={{ xs: 12, sm: 6 }}>
-                                <Card sx={{ height: '100%', cursor: 'pointer', transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 } }} onClick={() => navigate('/mathpaper')}>
+                                <Card sx={{ height: '100%', cursor: 'pointer', transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 } }} onClick={() => navigate('/DSE_Math')}>
                                     <CardContent>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                             <School sx={{ fontSize: 32, color: 'primary.main', mr: 1 }} />

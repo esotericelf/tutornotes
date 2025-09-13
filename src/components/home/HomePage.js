@@ -283,7 +283,7 @@ const HomePage = () => {
                                 <CardActions>
                                     <Button
                                         size="small"
-                                        onClick={() => navigate('/mathpaper')}
+                                        onClick={() => navigate('/DSE_Math')}
                                         endIcon={<ArrowForward />}
                                     >
                                         Browse Papers

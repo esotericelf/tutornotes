@@ -568,7 +568,7 @@ const MathPaperPage = () => {
 
     const breadcrumbs = [
         { name: 'Home', url: '/' },
-        { name: 'Math Papers', url: '/mathpaper' }
+        { name: 'DSE Math', url: '/DSE_Math' }
     ];
 
     const courseData = {
@@ -591,7 +591,7 @@ const MathPaperPage = () => {
                 title="DSE Math Past Papers - Practice Questions & Solutions | TutorNote"
                 description="Access comprehensive DSE Math past papers with detailed solutions. Practice with real exam questions, track your progress, and improve your mathematics skills for the Hong Kong DSE exam."
                 keywords="DSE Math, Past Papers, Mathematics, Hong Kong, Exam Practice, Solutions, HKDSE, Secondary School, Math Questions"
-                url="/mathpaper"
+                url="/DSE_Math"
                 structuredData={[
                     createCourseStructuredData(courseData),
                     createBreadcrumbStructuredData(breadcrumbs)
@@ -620,7 +620,7 @@ const MathPaperPage = () => {
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                            Math Past Papers
+                            DSE Math
                         </Typography>
                     </Toolbar>
                 </AppBar>
@@ -632,17 +632,17 @@ const MathPaperPage = () => {
                             <Link component={RouterLink} to="/" color="inherit" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Home sx={{ mr: 0.5 }} fontSize="small" /> Home
                             </Link>
-                            <Typography color="text.primary">Math Past Papers</Typography>
+                            <Typography color="text.primary">DSE Math</Typography>
                         </Breadcrumbs>
                     </Box>
 
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <School sx={{ mr: 1 }} color="primary" />
-                            Math Past Papers
+                            DSE Math
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
-                            Filter and search through past mathematics examination papers
+                            Filter and search through DSE mathematics examination papers
                         </Typography>
                     </Box>
 

@@ -193,7 +193,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/mathpaper" element={<MathPaperPage />} />
+                <Route path="/DSE_Math" element={<MathPaperPage />} />
                 <Route
                   path="/question-demo"
                   element={

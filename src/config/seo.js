@@ -28,11 +28,11 @@ export const SEO_CONFIG = {
             keywords: 'DSE, Math, Past Papers, Hong Kong, Education, Tutoring, Mathematics, HKDSE, Secondary School, Exam Preparation, Practice Quizzes',
             url: '/'
         },
-        mathpaper: {
+        DSE_Math: {
             title: 'DSE Math Past Papers - Practice Questions & Solutions | TutorNote',
             description: 'Access comprehensive DSE Math past papers with detailed solutions. Practice with real exam questions, track your progress, and improve your mathematics skills for the Hong Kong DSE exam.',
             keywords: 'DSE Math, Past Papers, Mathematics, Hong Kong, Exam Practice, Solutions, HKDSE, Secondary School, Math Questions',
-            url: '/mathpaper'
+            url: '/DSE_Math'
         },
         login: {
             title: 'Login - TutorNote',

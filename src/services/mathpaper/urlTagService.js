@@ -121,7 +121,7 @@ class URLTagService {
             // Transform data for URL display
             const transformedData = result.data.map(tag => ({
                 ...tag,
-                url: `/mathpaper?tags=${this.encodeTagsForURL([tag.tag])}`,
+                url: `/DSE_Math?tags=${this.encodeTagsForURL([tag.tag])}`,
                 encodedTag: this.encodeTagsForURL([tag.tag])
             }));
 
@@ -161,7 +161,7 @@ class URLTagService {
             // Transform data for URL display
             const transformedData = result.data.map(tag => ({
                 ...tag,
-                url: `/mathpaper?tags=${this.encodeTagsForURL([tag.tag])}`,
+                url: `/DSE_Math?tags=${this.encodeTagsForURL([tag.tag])}`,
                 encodedTag: this.encodeTagsForURL([tag.tag])
             }));
 
@@ -203,7 +203,7 @@ class URLTagService {
             // Add URL information to the statistics
             const enhancedData = result.data ? {
                 ...result.data,
-                url: `/mathpaper?tags=${this.encodeTagsForURL([tag.trim()])}`,
+                url: `/DSE_Math?tags=${this.encodeTagsForURL([tag.trim()])}`,
                 encodedTag: this.encodeTagsForURL([tag.trim()])
             } : null;
 
@@ -224,10 +224,10 @@ class URLTagService {
     /**
      * Create URL with tags
      * @param {Array<string>} tags - Array of tags
-     * @param {string} basePath - Base path (default: '/mathpaper')
+     * @param {string} basePath - Base path (default: '/DSE_Math')
      * @returns {string} Complete URL with tags
      */
-    static createURLWithTags(tags, basePath = '/mathpaper') {
+    static createURLWithTags(tags, basePath = '/DSE_Math') {
         if (!tags || !Array.isArray(tags) || tags.length === 0) {
             return basePath;
         }
@@ -240,9 +240,9 @@ class URLTagService {
      * Update browser URL with tags
      * @param {Array<string>} tags - Array of tags
      * @param {Object} navigate - React Router navigate function
-     * @param {string} basePath - Base path (default: '/mathpaper')
+     * @param {string} basePath - Base path (default: '/DSE_Math')
      */
-    static updateBrowserURL(tags, navigate, basePath = '/mathpaper') {
+    static updateBrowserURL(tags, navigate, basePath = '/DSE_Math') {
         if (!navigate || typeof navigate !== 'function') {
             console.warn('Navigate function not provided');
             return;
