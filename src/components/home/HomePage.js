@@ -241,24 +241,44 @@ const HomePage = () => {
                             >
                                 Access comprehensive math past papers, expert tutor notes, and join a community of learners
                             </Typography>
-                            <Button
-                                variant="contained"
-                                size="large"
-                                endIcon={<ArrowForward />}
-                                onClick={handleGetStarted}
-                                sx={{
-                                    px: 4,
-                                    py: 1.5,
-                                    fontSize: '1.2rem',
-                                    backgroundColor: '#6c757d',
-                                    color: 'white',
-                                    '&:hover': {
-                                        backgroundColor: '#495057'
-                                    }
-                                }}
-                            >
-                                {user ? 'Continue Learning' : 'Start Learning Now'}
-                            </Button>
+                            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+                                <Button
+                                    variant="contained"
+                                    size="large"
+                                    endIcon={<ArrowForward />}
+                                    onClick={handleGetStarted}
+                                    sx={{
+                                        px: 4,
+                                        py: 1.5,
+                                        fontSize: '1.2rem',
+                                        backgroundColor: '#6c757d',
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: '#495057'
+                                        }
+                                    }}
+                                >
+                                    {user ? 'Continue Learning' : 'Start Learning Now'}
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    size="large"
+                                    onClick={() => navigate('/changelog')}
+                                    sx={{
+                                        px: 4,
+                                        py: 1.5,
+                                        fontSize: '1.2rem',
+                                        borderColor: '#495057',
+                                        color: '#495057',
+                                        '&:hover': {
+                                            borderColor: '#495057',
+                                            backgroundColor: 'rgba(73, 80, 87, 0.1)'
+                                        }
+                                    }}
+                                >
+                                    What's New
+                                </Button>
+                            </Box>
                         </Box>
                     </Container>
                 </Box>

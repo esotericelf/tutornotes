@@ -14,6 +14,7 @@ import MathPaperPage from './components/mathpaper/MathPaperPage'
 import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
 import { QuizTaker, QuizResults } from './components/quiz'
 import TopicTagsDebug from './components/debug/TopicTagsDebug'
+import ChangelogPage from './components/common/ChangelogPage'
 
 import './App.css'
 
@@ -193,6 +194,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/changelog" element={<ChangelogPage />} />
                 <Route path="/DSE_Math/:year/:paper/:questionNo" element={<MathPaperPage />} />
                 <Route path="/DSE_Math" element={<MathPaperPage />} />
                 <Route
