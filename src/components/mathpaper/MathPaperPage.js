@@ -359,17 +359,17 @@ const MathPaperPage = () => {
         return shuffled;
     };
 
-    // Load popular tags using direct query (like your reference code)
+    // Load popular tags using direct query with accurate counting
     const loadPopularTags = useCallback(async () => {
         try {
             console.log('Fetching popular tags...');
 
-            // Get tags from questions directly (like your reference code)
+            // Get ALL tags from questions to get accurate counts
             const { data, error } = await supabase
                 .from('Math_Past_Paper')
                 .select('tags')
-                .not('tags', 'is', null)
-                .limit(100);
+                .not('tags', 'is', null);
+            // Removed .limit(100) to get accurate counts from all questions
 
             if (error) {
                 console.error('Error fetching tags:', error);
@@ -378,14 +378,14 @@ const MathPaperPage = () => {
                 return;
             }
 
-            // Process tags based on how they're stored (like your reference code)
+            // Process tags based on how they're stored
             const allTags = data.flatMap(item =>
                 Array.isArray(item.tags) ? item.tags :
                     typeof item.tags === 'string' ? item.tags.split(',') :
                         []
             );
 
-            // Get top 15 popular tags (like your reference code)
+            // Get accurate tag counts from ALL questions
             const tagCounts = {};
             allTags.forEach(tag => {
                 if (tag && tag.trim()) {
@@ -403,6 +403,7 @@ const MathPaperPage = () => {
                 }));
 
             console.log('Popular tags fetched:', popularTagsArray.length, 'tags');
+            console.log('Total questions processed:', data.length);
 
             if (popularTagsArray.length === 0) {
                 const sampleTags = getSamplePopularTags();

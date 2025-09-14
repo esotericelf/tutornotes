@@ -41,6 +41,32 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.1.1",
+            date: "December 2024",
+            type: "patch",
+            title: "Popular Tags Count Fix",
+            description: "Fixed inaccurate tag counts in the popular tags section",
+            features: [
+                {
+                    icon: <BugReport color="primary" />,
+                    title: "Accurate Tag Counts",
+                    description: "Popular tags now show correct counts from the entire database instead of just the first 100 questions",
+                    type: "fix"
+                },
+                {
+                    icon: <Search color="primary" />,
+                    title: "Improved Data Accuracy",
+                    description: "Tag popularity statistics now reflect the true distribution across all questions",
+                    type: "improvement"
+                }
+            ],
+            technical: [
+                "Removed .limit(100) restriction from popular tags query",
+                "Updated loadPopularTags function to fetch all questions",
+                "Enhanced tag counting logic for complete dataset accuracy"
+            ]
+        },
+        {
             version: "v2.1.0",
             date: "December 2024",
             type: "major",
