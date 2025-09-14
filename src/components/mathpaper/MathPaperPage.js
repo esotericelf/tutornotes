@@ -19,7 +19,8 @@ import {
     Toolbar,
     IconButton,
     Breadcrumbs,
-    Link
+    Link,
+    Pagination
 } from '@mui/material';
 import 'katex/dist/katex.min.css';
 import {
@@ -42,7 +43,7 @@ import QuestionLoaderService from '../../services/mathpaper/questionLoaderServic
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const params = useParams(); // Get URL parameters for direct question access
     const questionDetailsRef = React.useRef(null);
 
@@ -50,6 +51,12 @@ const MathPaperPage = () => {
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
     const tagsLoadedRef = useRef(false);
+
+    // Pagination states (declared early to avoid initialization order issues)
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(10); // Fixed at 10 items per page
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         setComponentMounted(true);
@@ -149,7 +156,9 @@ const MathPaperPage = () => {
     }, [getQuestionTagsFromData]);
 
     // Handle tag search from URL parameters (simplified like your reference code)
-    const handleTagSearchFromURL = useCallback(async (tags) => {
+    const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
+        console.log('🔍 handleTagSearchFromURL called with tags:', tags, 'page:', page);
+
         if (tags.length === 0) return;
 
         setIsTagSearchActive(true);
@@ -157,14 +166,39 @@ const MathPaperPage = () => {
         setError('');
 
         try {
-            console.log('Searching for tags from URL:', tags);
+            console.log('Searching for tags from URL:', tags, 'Page:', page);
 
-            // Use direct query with contains operator (like your reference code)
+            // Calculate offset for pagination
+            const offset = (page - 1) * pageSize;
+
+            // First, get the total count
+            let countQuery = supabase
+                .from('Math_Past_Paper')
+                .select('*', { count: 'exact', head: true });
+
+            if (tags.length > 0) {
+                countQuery = countQuery.contains('tags', tags);
+            }
+
+            const { count, error: countError } = await countQuery;
+
+            if (countError) {
+                console.error('Error getting count:', countError);
+                setError(`Failed to get results count: ${countError.message}`);
+                return;
+            }
+
+            const totalCount = count || 0;
+            setTotalCount(totalCount);
+            setTotalPages(Math.ceil(totalCount / pageSize));
+
+            // Now get the paginated data
             let query = supabase
                 .from('Math_Past_Paper')
                 .select('*')
                 .order('year', { ascending: false })
-                .order('question_no', { ascending: true });
+                .order('question_no', { ascending: true })
+                .range(offset, offset + pageSize - 1);
 
             // Add tag filtering (like your reference code)
             if (tags.length > 0) {
@@ -197,8 +231,16 @@ const MathPaperPage = () => {
                 }
             }
 
-            if (matchingQuestions.length === 0) {
+            if (matchingQuestions.length === 0 && totalCount === 0) {
                 setError(`No questions found with tags: ${tags.join(', ')}`);
+            }
+
+            // If exactly one result, navigate directly to the question detail page
+            if (totalCount === 1 && matchingQuestions.length === 1) {
+                const question = matchingQuestions[0];
+                const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                navigate(questionURL);
+                return; // Exit early since we're navigating away
             }
 
         } catch (err) {
@@ -210,15 +252,34 @@ const MathPaperPage = () => {
                 setIsTagSearchActive(false);
             }, 1000);
         }
-    }, [loadTagsForQuestions, extractTagsFromQuestions]);
+    }, [loadTagsForQuestions, extractTagsFromQuestions, pageSize, navigate]);
 
     // Clear URL parameters and reset to general search
     const clearURLParams = useCallback(() => {
         navigate('/DSE_Math', { replace: true });
     }, [navigate]);
 
+    // Update URL parameters with pagination
+    const updateURLWithPagination = useCallback((tags, page = 1) => {
+        const params = new URLSearchParams();
+        if (tags && tags.length > 0) {
+            params.set('tags', tags.join(','));
+        }
+        if (page > 1) {
+            params.set('page', page.toString());
+        }
+
+        // Use navigate to ensure we're on the correct path (/DSE_Math)
+        const searchString = params.toString();
+        const newURL = searchString ? `/DSE_Math?${searchString}` : '/DSE_Math';
+        navigate(newURL, { replace: true });
+    }, [navigate]);
+
+
     // Initialize state from URL parameters
     useEffect(() => {
+        console.log('🔍 URL useEffect triggered - searchParams:', searchParams.toString(), 'params:', params);
+
         // Check if this is a direct question URL
         const questionParams = QuestionURLService.getQuestionParamsFromRouter(params);
 
@@ -229,19 +290,29 @@ const MathPaperPage = () => {
         } else {
             // Regular tag-based or filter-based search
             const urlTags = searchParams.get('tags');
+            const urlPage = searchParams.get('page');
+
+            // Set pagination from URL (default to page 1 if not specified)
+            const pageFromURL = urlPage ? parseInt(urlPage, 10) : 1;
+            setCurrentPage(pageFromURL);
+
             if (urlTags) {
                 const tagsArray = urlTags.split(',').filter(tag => tag.trim());
                 setSearchTags(tagsArray);
                 // Automatically trigger tag search if tags are in URL
                 if (tagsArray.length > 0) {
-                    handleTagSearchFromURL(tagsArray);
+                    console.log('🔄 Triggering tag search from URL:', tagsArray);
+                    handleTagSearchFromURL(tagsArray, pageFromURL);
                 }
             } else {
                 // Clear tags if no URL parameters
+                console.log('🧹 Clearing search state - no URL parameters');
                 setSearchTags([]);
                 setQuestions([]);
                 setSelectedQuestion(null);
                 setError('');
+                setTotalCount(0);
+                setTotalPages(0);
             }
         }
         // Scroll to top when URL parameters change
@@ -441,7 +512,9 @@ const MathPaperPage = () => {
 
 
     // Handle filter search (simplified like your reference code)
-    const handleFilterSearch = async () => {
+    const handleFilterSearch = useCallback(async (page = 1) => {
+        console.log('🔍 handleFilterSearch called with page:', page);
+
         // Don't run filter search if we're doing a tag search
         if (isTagSearchActive) {
             console.log('Skipping handleFilterSearch because tag search is active');
@@ -453,21 +526,56 @@ const MathPaperPage = () => {
         setIsTagSearchActive(false);
 
         try {
-            console.log('Fetching questions with filters:', { selectedYear, selectedPaper, selectedQuestionNo });
+            console.log('Fetching questions with filters:', { selectedYear, selectedPaper, selectedQuestionNo, page });
 
-            // Use direct query instead of database function (like your reference code)
+            // Calculate offset for pagination
+            const offset = (page - 1) * pageSize;
+
+            // First, get the total count with all filters applied
+            let countQuery = supabase
+                .from('Math_Past_Paper')
+                .select('*', { count: 'exact', head: true });
+
+            // Add all filters to the count query
+            if (selectedYear) {
+                countQuery = countQuery.eq('year', selectedYear);
+            }
+            if (selectedPaper) {
+                countQuery = countQuery.eq('paper', selectedPaper);
+            }
+            if (selectedQuestionNo) {
+                countQuery = countQuery.eq('question_no', parseInt(selectedQuestionNo));
+            }
+
+            const { count, error: countError } = await countQuery;
+
+            if (countError) {
+                console.error('Error getting count:', countError);
+                setError(`Failed to get results count: ${countError.message}`);
+                return;
+            }
+
+            const totalCount = count || 0;
+            setTotalCount(totalCount);
+            setTotalPages(Math.ceil(totalCount / pageSize));
+
+            // Now get the paginated data with all filters applied
             let query = supabase
                 .from('Math_Past_Paper')
                 .select('*')
                 .order('year', { ascending: false })
-                .order('question_no', { ascending: true });
+                .order('question_no', { ascending: true })
+                .range(offset, offset + pageSize - 1);
 
-            // Add filters if selected
+            // Add all filters to the data query
             if (selectedYear) {
                 query = query.eq('year', selectedYear);
             }
             if (selectedPaper) {
                 query = query.eq('paper', selectedPaper);
+            }
+            if (selectedQuestionNo) {
+                query = query.eq('question_no', parseInt(selectedQuestionNo));
             }
 
             // Add timeout (like your reference code)
@@ -483,11 +591,7 @@ const MathPaperPage = () => {
                 return;
             }
 
-            // Filter by question number if selected
-            let filteredData = data || [];
-            if (selectedQuestionNo) {
-                filteredData = filteredData.filter(q => q.question_no === parseInt(selectedQuestionNo));
-            }
+            const filteredData = data || [];
 
             setQuestions(filteredData);
 
@@ -503,12 +607,12 @@ const MathPaperPage = () => {
 
             // Track search analytics
             const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
-            trackSearch(searchTerm, filteredData.length);
+            trackSearch(searchTerm, totalCount);
 
-            // If exactly one result and all three filters are specified, navigate to direct question URL
-            if (filteredData.length === 1 && selectedYear && selectedPaper && selectedQuestionNo) {
-                // Navigate to the direct question URL instead of staying on search page
-                const questionURL = QuestionURLService.generateQuestionURL(selectedYear, selectedPaper, selectedQuestionNo);
+            // If exactly one result, navigate directly to the question detail page
+            if (totalCount === 1 && filteredData.length === 1) {
+                const question = filteredData[0];
+                const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
             } else {
@@ -521,15 +625,18 @@ const MathPaperPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [isTagSearchActive, selectedYear, selectedPaper, selectedQuestionNo, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate]);
 
     // Handle tag search (simplified like your reference code)
-    const handleTagSearch = async (tagsToSearch = null) => {
+    const handleTagSearch = useCallback(async (tagsToSearch = null) => {
         const tags = tagsToSearch || searchTags;
+        console.log('🔍 handleTagSearch called with tags:', tags);
+
         if (tags.length === 0) return;
 
-        // Clear URL parameters when starting a new tag search
-        clearURLParams();
+        // Reset to page 1 for new tag search
+        setCurrentPage(1);
+        updateURLWithPagination(tags, 1);
 
         setIsTagSearchActive(true);
         setLoading(true);
@@ -538,12 +645,37 @@ const MathPaperPage = () => {
         try {
             console.log('Searching for tags:', tags);
 
-            // Use direct query with contains operator (like your reference code)
+            // Calculate offset for pagination (always page 1 for new search)
+            const offset = 0;
+
+            // First, get the total count
+            let countQuery = supabase
+                .from('Math_Past_Paper')
+                .select('*', { count: 'exact', head: true });
+
+            if (tags.length > 0) {
+                countQuery = countQuery.contains('tags', tags);
+            }
+
+            const { count, error: countError } = await countQuery;
+
+            if (countError) {
+                console.error('Error getting count:', countError);
+                setError(`Failed to get results count: ${countError.message}`);
+                return;
+            }
+
+            const totalCount = count || 0;
+            setTotalCount(totalCount);
+            setTotalPages(Math.ceil(totalCount / pageSize));
+
+            // Now get the paginated data
             let query = supabase
                 .from('Math_Past_Paper')
                 .select('*')
                 .order('year', { ascending: false })
-                .order('question_no', { ascending: true });
+                .order('question_no', { ascending: true })
+                .range(offset, offset + pageSize - 1);
 
             // Add tag filtering (like your reference code)
             if (tags.length > 0) {
@@ -576,8 +708,16 @@ const MathPaperPage = () => {
                 }
             }
 
-            if (matchingQuestions.length === 0) {
+            if (matchingQuestions.length === 0 && totalCount === 0) {
                 setError(`No questions found with tags: ${tags.join(', ')}`);
+            }
+
+            // If exactly one result, navigate directly to the question detail page
+            if (totalCount === 1 && matchingQuestions.length === 1) {
+                const question = matchingQuestions[0];
+                const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                navigate(questionURL);
+                return; // Exit early since we're navigating away
             }
 
         } catch (err) {
@@ -590,7 +730,7 @@ const MathPaperPage = () => {
                 setIsTagSearchActive(false);
             }, 1000);
         }
-    };
+    }, [searchTags, updateURLWithPagination, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate]);
 
 
 
@@ -616,14 +756,21 @@ const MathPaperPage = () => {
         setSearchTags(newTags);
         setSearchInput('');
 
-        // Clear URL parameters first, then update with new tag
-        clearURLParams();
-        setSearchParams({ tags: newTags.join(',') });
+        // Clear dropdown filters when using tags
+        setSelectedYear('');
+        setSelectedPaper('');
+        setSelectedQuestionNo('');
+
+        // Reset pagination for new tag search
+        setCurrentPage(1);
 
         // Clear any previous results
         setQuestions([]);
         setSelectedQuestion(null);
         setError('');
+
+        // Update URL with the new tag search (this will navigate to /DSE_Math)
+        updateURLWithPagination(newTags, 1);
 
         // Trigger search with the new tag
         handleTagSearch(newTags);
@@ -633,13 +780,15 @@ const MathPaperPage = () => {
     const handleTagSelection = (newTags) => {
         setSearchTags(newTags);
 
-        // Clear URL parameters first, then update with new tags
-        clearURLParams();
-        if (newTags.length > 0) {
-            setSearchParams({ tags: newTags.join(',') });
-        } else {
-            setSearchParams({});
-        }
+        // Clear dropdown filters when using tags
+        setSelectedYear('');
+        setSelectedPaper('');
+        setSelectedQuestionNo('');
+
+        // Reset pagination when tags change
+        setCurrentPage(1);
+        // Don't update URL here - let the Search button handle it
+        // This prevents double loading when user selects tags
     };
 
     // Clear all filters
@@ -655,12 +804,30 @@ const MathPaperPage = () => {
         setError('');
         setIsTagSearchActive(false);
 
+        // Reset pagination
+        setCurrentPage(1);
+        setTotalCount(0);
+        setTotalPages(0);
+
         // Clear URL parameters
         clearURLParams();
 
         // Scroll to top when clearing filters
         window.scrollTo(0, 0);
     };
+
+    // Handle page change
+    const handlePageChange = useCallback((event, newPage) => {
+        setCurrentPage(newPage);
+        updateURLWithPagination(searchTags, newPage);
+
+        // Re-run the current search with new page
+        if (searchTags.length > 0) {
+            handleTagSearchFromURL(searchTags, newPage);
+        } else if (selectedYear || selectedPaper || selectedQuestionNo) {
+            handleFilterSearch(newPage);
+        }
+    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL, handleFilterSearch]);
 
     const breadcrumbs = [
         { name: 'Home', url: '/' },
@@ -758,7 +925,12 @@ const MathPaperPage = () => {
                                         id="year-select"
                                         value={selectedYear}
                                         label="Year"
-                                        onChange={(e) => setSelectedYear(e.target.value)}
+                                        onChange={(e) => {
+                                            setSelectedYear(e.target.value);
+                                            // Clear tags when using dropdown filters
+                                            setSearchTags([]);
+                                            setSearchInput('');
+                                        }}
                                         MenuProps={{
                                             PaperProps: {
                                                 style: {
@@ -786,6 +958,9 @@ const MathPaperPage = () => {
                                         onChange={(e) => {
                                             setSelectedPaper(e.target.value);
                                             setSelectedQuestionNo(''); // Reset question number when paper changes
+                                            // Clear tags when using dropdown filters
+                                            setSearchTags([]);
+                                            setSearchInput('');
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -811,7 +986,12 @@ const MathPaperPage = () => {
                                         id="question-select"
                                         value={selectedQuestionNo}
                                         label="Question Number"
-                                        onChange={(e) => setSelectedQuestionNo(e.target.value)}
+                                        onChange={(e) => {
+                                            setSelectedQuestionNo(e.target.value);
+                                            // Clear tags when using dropdown filters
+                                            setSearchTags([]);
+                                            setSearchInput('');
+                                        }}
                                         disabled={!selectedPaper}
                                         MenuProps={{
                                             PaperProps: {
@@ -882,15 +1062,22 @@ const MathPaperPage = () => {
                                     variant="contained"
                                     fullWidth
                                     onClick={() => {
+                                        console.log('🔍 Search button clicked - searchTags:', searchTags);
+
+                                        // Reset pagination for new search
+                                        setCurrentPage(1);
+
                                         // If tags are selected, do tag search; otherwise do filter search
                                         if (searchTags.length > 0) {
-                                            // Clear URL parameters first, then update with current tags
-                                            clearURLParams();
-                                            setSearchParams({ tags: searchTags.join(',') });
+                                            console.log('🔍 Executing tag search');
+                                            // Update URL with tags and page 1
+                                            updateURLWithPagination(searchTags, 1);
                                             handleTagSearch();
                                         } else {
-                                            // For filter search, don't clear URL params - let it navigate to direct question URL if applicable
-                                            handleFilterSearch();
+                                            console.log('🔍 Executing filter search');
+                                            // For filter search, update URL with page 1
+                                            updateURLWithPagination([], 1);
+                                            handleFilterSearch(1);
                                         }
                                     }}
                                     disabled={loading}
@@ -978,7 +1165,12 @@ const MathPaperPage = () => {
                             <Typography variant="h6" gutterBottom sx={{
                                 fontSize: { xs: '1.1rem', sm: '1.25rem' }
                             }}>
-                                Results ({questions.length} questions found)
+                                Results ({totalCount} questions found)
+                                {totalPages > 1 && (
+                                    <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                                        (Page {currentPage} of {totalPages})
+                                    </Typography>
+                                )}
                             </Typography>
 
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1016,7 +1208,7 @@ const MathPaperPage = () => {
                                                     minWidth: { xs: 'auto', sm: 60 },
                                                     fontSize: { xs: '0.9rem', sm: '1rem' }
                                                 }}>
-                                                    #{index + 1}
+                                                    #{(currentPage - 1) * pageSize + index + 1}
                                                 </Typography>
                                                 <Box sx={{
                                                     display: 'flex',
@@ -1106,6 +1298,33 @@ const MathPaperPage = () => {
                                     </Box>
                                 ))}
                             </Box>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    mt: 3,
+                                    pt: 2,
+                                    borderTop: '1px solid',
+                                    borderColor: 'divider'
+                                }}>
+                                    <Pagination
+                                        count={totalPages}
+                                        page={currentPage}
+                                        onChange={handlePageChange}
+                                        color="primary"
+                                        size="large"
+                                        showFirstButton
+                                        showLastButton
+                                        sx={{
+                                            '& .MuiPaginationItem-root': {
+                                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                                            }
+                                        }}
+                                    />
+                                </Box>
+                            )}
                         </Paper>
                     )}
 

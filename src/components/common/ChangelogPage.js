@@ -41,8 +41,47 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.1.2",
+            date: "September 2025",
+            type: "patch",
+            title: "Smarter Search Experience",
+            description: "Made searching for math questions more intuitive and reliable with better navigation and cleaner interface",
+            features: [
+                {
+                    icon: <Navigation color="primary" />,
+                    title: "No More Confusing URLs",
+                    description: "When you click on topic tags, you'll always land on the right search page instead of getting stuck on weird mixed URLs",
+                    type: "fix"
+                },
+                {
+                    icon: <Search color="primary" />,
+                    title: "One Search Method at a Time",
+                    description: "The system now automatically clears conflicting search options - no more accidentally mixing year filters with topic tags",
+                    type: "improvement"
+                },
+                {
+                    icon: <Speed color="primary" />,
+                    title: "Faster Page Loading",
+                    description: "Improved backend performance means search results load quicker, especially when browsing through multiple pages",
+                    type: "improvement"
+                },
+                {
+                    icon: <MobileFriendly color="primary" />,
+                    title: "Cleaner Mobile Experience",
+                    description: "Search interface is now more streamlined on phones and tablets, making it easier to find questions on the go",
+                    type: "improvement"
+                }
+            ],
+            technical: [
+                "Fixed URL navigation to prevent detail page conflicts",
+                "Implemented mutual exclusion between search methods",
+                "Enhanced backend pagination for better performance",
+                "Improved code quality and reduced loading times"
+            ]
+        },
+        {
             version: "v2.1.1",
-            date: "December 2024",
+            date: "September 2025",
             type: "patch",
             title: "Popular Tags Count Fix",
             description: "Fixed inaccurate tag counts in the popular tags section",
@@ -68,7 +107,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.0",
-            date: "December 2024",
+            date: "September 2025",
             type: "major",
             title: "Direct Question URL System",
             description: "Revolutionary URL system for direct question access and seamless navigation",
@@ -114,7 +153,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.0.0",
-            date: "November 2024",
+            date: "September 2025",
             type: "major",
             title: "Enhanced User Experience",
             description: "Major improvements to user interface and functionality",
