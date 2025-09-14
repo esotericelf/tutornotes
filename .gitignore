@@ -25,6 +25,7 @@
 /scripts/
 !scripts/setup-seo.js
 !scripts/generate-sitemap.js
+!scripts/generate-dynamic-sitemap.js
 *.sql
 *.md
 !README.md
