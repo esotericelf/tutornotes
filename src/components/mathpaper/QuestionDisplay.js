@@ -10,8 +10,9 @@ import {
 import { ExpandMore, ExpandLess, Label } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+import CompactQuestionNavigation from './CompactQuestionNavigation';
 
-const QuestionDisplay = ({ question, questionTags = [], onTagClick }) => {
+const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionChange }) => {
     const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
     const [selectedDiagramIndex, setSelectedDiagramIndex] = useState(0);
 
@@ -201,6 +202,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick }) => {
             padding: { xs: 1, sm: 2, md: 3 },
             overflow: 'hidden'
         }}>
+
             {/* Metadata Row */}
             <Box sx={{
                 display: 'flex',
@@ -645,6 +647,17 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick }) => {
                     </Box>
                 </Box>
             </Paper>
+
+            {/* Compact Navigation - Below Solution */}
+            {onQuestionChange && (
+                <Box sx={{ mt: 3 }}>
+                    <CompactQuestionNavigation
+                        currentQuestion={question}
+                        onQuestionChange={onQuestionChange}
+                        variant="horizontal"
+                    />
+                </Box>
+            )}
         </Box>
     );
 };

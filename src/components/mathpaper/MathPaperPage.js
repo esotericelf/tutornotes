@@ -1342,10 +1342,19 @@ const MathPaperPage = () => {
                                     </Button>
                                 </Box>
                             )}
+
+
                             <QuestionDisplay
                                 question={selectedQuestion}
                                 questionTags={questionTags[selectedQuestion.id] || []}
                                 onTagClick={handlePopularTagClick}
+                                onQuestionChange={(newQuestion) => {
+                                    // Update the selected question when navigating
+                                    setSelectedQuestion(newQuestion);
+                                    // Load tags for the new question
+                                    const tags = getQuestionTagsFromData(newQuestion);
+                                    setQuestionTags({ [newQuestion.id]: tags });
+                                }}
                             />
 
                             {/* Discussion Section */}
