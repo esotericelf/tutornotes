@@ -41,6 +41,46 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.1.3",
+            date: "September 2025",
+            type: "patch",
+            title: "Enhanced Question Navigation",
+            description: "Improved navigation between DSE Math questions with larger, more intuitive controls and better visual design",
+            features: [
+                {
+                    icon: <Navigation color="primary" />,
+                    title: "Sequential Question Navigation",
+                    description: "Navigate through questions in logical order: earlier years → later years, Paper I → Paper II, ascending question numbers",
+                    type: "feature"
+                },
+                {
+                    icon: <Speed color="primary" />,
+                    title: "Smart Question Skipping",
+                    description: "Automatically skips missing questions (e.g., if Q6 doesn't exist, goes to Q30) for seamless navigation",
+                    type: "improvement"
+                },
+                {
+                    icon: <MobileFriendly color="primary" />,
+                    title: "Enhanced Visual Design",
+                    description: "Larger navigation arrows with professional styling, smooth hover effects, and better integration with the UI",
+                    type: "improvement"
+                },
+                {
+                    icon: <Search color="primary" />,
+                    title: "Intelligent Tooltips",
+                    description: "Hover over navigation buttons to see exactly which question you'll navigate to next",
+                    type: "feature"
+                }
+            ],
+            technical: [
+                "Created PostgreSQL functions for sequential question navigation logic",
+                "Implemented Composite Sort Key for efficient question ordering",
+                "Added QuestionNavigationService for backend integration",
+                "Enhanced CompactQuestionNavigation component with better UX",
+                "Fixed React hooks dependencies and linting issues"
+            ]
+        },
+        {
             version: "v2.1.2",
             date: "September 2025",
             type: "patch",
