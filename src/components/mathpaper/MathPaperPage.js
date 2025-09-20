@@ -848,18 +848,69 @@ const MathPaperPage = () => {
         );
     }
 
+    // Generate dynamic SEO data based on current state
+    const getSEOData = () => {
+        // Check if we're on a direct question URL but still loading
+        const questionParams = QuestionURLService.getQuestionParamsFromRouter(params);
+        const isDirectQuestionURL = questionParams !== null;
+
+        if (selectedQuestion) {
+            // Individual question page - question loaded
+            const questionTitle = `${selectedQuestion.year} DSE Maths Paper ${selectedQuestion.paper} Question ${selectedQuestion.question_no} | TutorNote`;
+            const questionDescription = selectedQuestion.meta_description ||
+                `Step-by-step solution to ${selectedQuestion.year} DSE Maths Paper ${selectedQuestion.paper} Question ${selectedQuestion.question_no}. Expert guide for exam preparation.`;
+            const questionKeywords = selectedQuestion.tags ?
+                `DSE Math, ${selectedQuestion.year}, Paper ${selectedQuestion.paper}, Question ${selectedQuestion.question_no}, ${selectedQuestion.tags.join(', ')}, Mathematics, Hong Kong, Exam Practice` :
+                `DSE Math, ${selectedQuestion.year}, Paper ${selectedQuestion.paper}, Question ${selectedQuestion.question_no}, Mathematics, Hong Kong, Exam Practice`;
+
+            return {
+                title: questionTitle,
+                description: questionDescription,
+                keywords: questionKeywords,
+                url: `/DSE_Math/${selectedQuestion.year}/${selectedQuestion.paper}/${selectedQuestion.question_no}`
+            };
+        } else if (isDirectQuestionURL) {
+            // Direct question URL - show loading state or fallback
+            const loadingDescription = loading ?
+                `Loading DSE Maths Paper ${questionParams.paper} Question ${questionParams.questionNo} solution...` :
+                `Step-by-step solution to ${questionParams.year} DSE Maths Paper ${questionParams.paper} Question ${questionParams.questionNo}. Expert guide for exam preparation.`;
+
+            return {
+                title: loading ? `Loading Question ${questionParams.questionNo} | TutorNote` : `${questionParams.year} DSE Maths Paper ${questionParams.paper} Question ${questionParams.questionNo} | TutorNote`,
+                description: loadingDescription,
+                keywords: `DSE Math, ${questionParams.year}, Paper ${questionParams.paper}, Question ${questionParams.questionNo}, Mathematics, Hong Kong`,
+                url: `/DSE_Math/${questionParams.year}/${questionParams.paper}/${questionParams.questionNo}`
+            };
+        } else {
+            // Main listing page
+            return {
+                title: "DSE Math Past Papers - Practice Questions & Solutions | TutorNote",
+                description: "Access comprehensive DSE Math past papers with detailed solutions. Practice with real exam questions, track your progress, and improve your mathematics skills for the Hong Kong DSE exam.",
+                keywords: "DSE Math, Past Papers, Mathematics, Hong Kong, Exam Practice, Solutions, HKDSE, Secondary School, Math Questions",
+                url: "/DSE_Math"
+            };
+        }
+    };
+
+    const seoData = getSEOData();
+
+    // Always render SEOHead - it will handle the dynamic content
+    const shouldRenderSEO = true;
+
     return (
         <>
-            <SEOHead
-                title="DSE Math Past Papers - Practice Questions & Solutions | TutorNote"
-                description="Access comprehensive DSE Math past papers with detailed solutions. Practice with real exam questions, track your progress, and improve your mathematics skills for the Hong Kong DSE exam."
-                keywords="DSE Math, Past Papers, Mathematics, Hong Kong, Exam Practice, Solutions, HKDSE, Secondary School, Math Questions"
-                url="/DSE_Math"
-                structuredData={[
-                    createCourseStructuredData(courseData),
-                    createBreadcrumbStructuredData(breadcrumbs)
-                ]}
-            />
+            {shouldRenderSEO && (
+                <SEOHead
+                    title={seoData.title}
+                    description={seoData.description}
+                    keywords={seoData.keywords}
+                    url={seoData.url}
+                    structuredData={[
+                        createCourseStructuredData(courseData),
+                        createBreadcrumbStructuredData(breadcrumbs)
+                    ]}
+                />
+            )}
             <Box sx={{
                 minHeight: '100vh',
                 backgroundColor: '#ffffff',
