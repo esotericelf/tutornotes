@@ -41,6 +41,47 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.1.4",
+            date: "September 2025",
+            type: "patch",
+            title: "Robust Back Button for Tag Search Navigation",
+            description: "Fixed navigation issue where users couldn't return to tag search results after clicking on specific questions",
+            features: [
+                {
+                    icon: <Navigation color="primary" />,
+                    title: "Smart Back Button Detection",
+                    description: "Back button now appears when navigating from tag search results to question pages, showing the correct search context",
+                    type: "feature"
+                },
+                {
+                    icon: <Search color="primary" />,
+                    title: "Triple-Layer Navigation State",
+                    description: "Uses URL parameters, sessionStorage, and document referrer for reliable navigation state detection",
+                    type: "improvement"
+                },
+                {
+                    icon: <Speed color="primary" />,
+                    title: "Enhanced User Experience",
+                    description: "Users can now easily return to their original tag search results with a single click",
+                    type: "improvement"
+                },
+                {
+                    icon: <Code color="primary" />,
+                    title: "Robust State Management",
+                    description: "Navigation state is embedded in URLs and automatically cleaned up to prevent conflicts",
+                    type: "improvement"
+                }
+            ],
+            technical: [
+                "Implemented URL parameter-based navigation state storage",
+                "Added sessionStorage fallback with timestamp validation (30-second expiry)",
+                "Enhanced document referrer parsing as last resort detection method",
+                "Added comprehensive debugging and logging for troubleshooting",
+                "Fixed navigation state persistence across different tag searches",
+                "Implemented automatic cleanup of stale navigation state"
+            ]
+        },
+        {
             version: "v2.1.3",
             date: "September 2025",
             type: "patch",
