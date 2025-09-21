@@ -109,6 +109,87 @@ const MathPaperPage = () => {
         try {
             console.log(`🔍 Loading specific question: ${year} Paper ${paper} Question ${questionNo}`);
 
+            // Check if user came from a tag search using multiple methods
+            const referrer = document.referrer;
+            const isFromTagSearchReferrer = referrer && referrer.includes('/DSE_Math?tags=');
+
+            // Check URL parameters for navigation state (most reliable)
+            const urlFromTagSearch = searchParams.get('fromTagSearch');
+            const urlTags = searchParams.get('tags');
+            const urlPage = searchParams.get('page');
+            let isFromTagSearchURL = false;
+            let urlTagsArray = [];
+            let urlPageNum = 1;
+
+            if (urlFromTagSearch === 'true' && urlTags) {
+                isFromTagSearchURL = true;
+                urlTagsArray = urlTags.split(',').filter(tag => tag.trim());
+                urlPageNum = urlPage ? parseInt(urlPage, 10) : 1;
+                console.log('🔍 Found navigation state in URL parameters:', { tags: urlTagsArray, page: urlPageNum });
+            }
+
+            // Also check sessionStorage for navigation state
+            const storedNavState = sessionStorage.getItem('tutornotes_navigation_state');
+            let isFromTagSearchStorage = false;
+            let storedTags = [];
+            let storedPage = 1;
+
+            if (storedNavState) {
+                try {
+                    const navState = JSON.parse(storedNavState);
+                    // Check if the navigation state is recent (within last 30 seconds)
+                    const isRecent = navState.timestamp && (Date.now() - navState.timestamp) < 30000;
+                    if (navState.fromTagSearch && navState.tags && navState.tags.length > 0 && isRecent) {
+                        isFromTagSearchStorage = true;
+                        storedTags = navState.tags;
+                        storedPage = navState.page || 1;
+                        console.log('🔍 Found recent navigation state in sessionStorage:', navState);
+                    } else if (navState.timestamp) {
+                        console.log('🔍 Found old navigation state in sessionStorage (ignoring):', navState);
+                    }
+                } catch (err) {
+                    console.warn('Could not parse navigation state from sessionStorage:', err);
+                }
+            }
+
+            if (isFromTagSearchURL) {
+                // Use URL parameters data (most reliable)
+                setOriginalSearchTags(urlTagsArray);
+                setOriginalSearchPage(urlPageNum);
+                setCameFromTagSearch(true);
+                console.log('✅ Set navigation state from URL parameters:', { tags: urlTagsArray, page: urlPageNum });
+            } else if (isFromTagSearchStorage) {
+                // Use sessionStorage data (fallback)
+                setOriginalSearchTags(storedTags);
+                setOriginalSearchPage(storedPage);
+                setCameFromTagSearch(true);
+                console.log('✅ Set navigation state from sessionStorage:', { tags: storedTags, page: storedPage });
+            } else if (isFromTagSearchReferrer) {
+                // Fallback to referrer parsing
+                console.log('🔍 User came from tag search, referrer:', referrer);
+                try {
+                    const referrerURL = new URL(referrer);
+                    const tagsParam = referrerURL.searchParams.get('tags');
+                    const pageParam = referrerURL.searchParams.get('page');
+
+                    if (tagsParam) {
+                        const tagsArray = tagsParam.split(',').filter(tag => tag.trim());
+                        setOriginalSearchTags(tagsArray);
+                        setOriginalSearchPage(pageParam ? parseInt(pageParam, 10) : 1);
+                        setCameFromTagSearch(true);
+                        console.log('✅ Set navigation state from referrer:', { tags: tagsArray, page: pageParam });
+                    }
+                } catch (err) {
+                    console.warn('Could not parse referrer URL:', err);
+                }
+            } else {
+                // Reset navigation state if not from tag search
+                console.log('🔍 No tag search navigation state found. Referrer:', referrer, 'SessionStorage:', storedNavState, 'URL params:', { fromTagSearch: urlFromTagSearch, tags: urlTags, page: urlPage });
+                setCameFromTagSearch(false);
+                setOriginalSearchTags([]);
+                setOriginalSearchPage(1);
+            }
+
             const result = await QuestionLoaderService.loadQuestion(year, paper, questionNo);
 
             if (result.error) {
@@ -153,13 +234,19 @@ const MathPaperPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [getQuestionTagsFromData]);
+    }, [getQuestionTagsFromData, searchParams]);
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
         console.log('🔍 handleTagSearchFromURL called with tags:', tags, 'page:', page);
 
         if (tags.length === 0) return;
+
+        // Clear any existing navigation state when starting a new tag search from URL
+        sessionStorage.removeItem('tutornotes_navigation_state');
+        setCameFromTagSearch(false);
+        setOriginalSearchTags([]);
+        setOriginalSearchPage(1);
 
         setIsTagSearchActive(true);
         setLoading(true);
@@ -238,6 +325,19 @@ const MathPaperPage = () => {
             // If exactly one result, navigate directly to the question detail page
             if (totalCount === 1 && matchingQuestions.length === 1) {
                 const question = matchingQuestions[0];
+
+                // Store navigation state for single result navigation
+                if (tags.length > 0) {
+                    const navState = {
+                        fromTagSearch: true,
+                        tags: tags,
+                        page: page,
+                        timestamp: Date.now()
+                    };
+                    sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+                    console.log('✅ Stored navigation state for single result navigation:', navState);
+                }
+
                 const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
@@ -339,6 +439,27 @@ const MathPaperPage = () => {
     const [questionTags, setQuestionTags] = useState({}); // Store tags for each question
     const [popularTags, setPopularTags] = useState([]);
     const [isTagSearchActive, setIsTagSearchActive] = useState(false); // Track if tag search is active
+
+    // Navigation state for back button functionality
+    const [cameFromTagSearch, setCameFromTagSearch] = useState(false);
+    const [originalSearchTags, setOriginalSearchTags] = useState([]);
+    const [originalSearchPage, setOriginalSearchPage] = useState(1);
+
+    // Handle going back to tag search results
+    const handleBackToTagSearch = useCallback(() => {
+        if (cameFromTagSearch && originalSearchTags.length > 0) {
+            // Clear the navigation state since we're going back
+            sessionStorage.removeItem('tutornotes_navigation_state');
+
+            const params = new URLSearchParams();
+            params.set('tags', originalSearchTags.join(','));
+            if (originalSearchPage > 1) {
+                params.set('page', originalSearchPage.toString());
+            }
+            const backURL = `/DSE_Math?${params.toString()}`;
+            navigate(backURL);
+        }
+    }, [cameFromTagSearch, originalSearchTags, originalSearchPage, navigate]);
 
     // Generate year options (2012-2025)
     const yearOptions = Array.from({ length: 14 }, (_, i) => 2012 + i);
@@ -634,6 +755,12 @@ const MathPaperPage = () => {
 
         if (tags.length === 0) return;
 
+        // Clear any existing navigation state when starting a new tag search
+        sessionStorage.removeItem('tutornotes_navigation_state');
+        setCameFromTagSearch(false);
+        setOriginalSearchTags([]);
+        setOriginalSearchPage(1);
+
         // Reset to page 1 for new tag search
         setCurrentPage(1);
         updateURLWithPagination(tags, 1);
@@ -715,6 +842,19 @@ const MathPaperPage = () => {
             // If exactly one result, navigate directly to the question detail page
             if (totalCount === 1 && matchingQuestions.length === 1) {
                 const question = matchingQuestions[0];
+
+                // Store navigation state for single result navigation
+                if (tags.length > 0) {
+                    const navState = {
+                        fromTagSearch: true,
+                        tags: tags,
+                        page: 1, // Tag search always starts from page 1
+                        timestamp: Date.now()
+                    };
+                    sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+                    console.log('✅ Stored navigation state for single result navigation:', navState);
+                }
+
                 const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
@@ -746,12 +886,36 @@ const MathPaperPage = () => {
 
     // Handle question click - navigate to direct question URL
     const handleQuestionClick = useCallback((question) => {
+        // Store navigation state if we're currently in a tag search OR if we have search tags
+        if ((isTagSearchActive || searchTags.length > 0) && searchTags.length > 0) {
+            const navState = {
+                fromTagSearch: true,
+                tags: searchTags,
+                page: currentPage,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+            console.log('✅ Stored navigation state for question click:', navState);
+
+            // Also store in URL parameters as a fallback
+            const questionURL = generateQuestionURL(question);
+            const urlWithNavState = `${questionURL}?fromTagSearch=true&tags=${searchTags.join(',')}&page=${currentPage}`;
+            navigate(urlWithNavState);
+            return;
+        }
+
         const questionURL = generateQuestionURL(question);
         navigate(questionURL);
-    }, [navigate, generateQuestionURL]);
+    }, [navigate, generateQuestionURL, isTagSearchActive, searchTags, currentPage]);
 
     // Handle popular tag click - set the tag and update URL
     const handlePopularTagClick = (tag) => {
+        // Clear any existing navigation state when starting a new tag search
+        sessionStorage.removeItem('tutornotes_navigation_state');
+        setCameFromTagSearch(false);
+        setOriginalSearchTags([]);
+        setOriginalSearchPage(1);
+
         const newTags = [tag];
         setSearchTags(newTags);
         setSearchInput('');
@@ -1382,17 +1546,29 @@ const MathPaperPage = () => {
                     {/* Question Display Section */}
                     {selectedQuestion && (
                         <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
-                            {questions.length > 1 && (
-                                <Box sx={{ mb: 3 }}>
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<ArrowBack />}
-                                        onClick={() => setSelectedQuestion(null)}
-                                    >
-                                        Back to Results ({questions.length} questions)
-                                    </Button>
-                                </Box>
-                            )}
+                            {/* Show back button if multiple questions OR if came from tag search */}
+                            {(() => {
+                                console.log('🔍 Back button condition check:', {
+                                    questionsLength: questions.length,
+                                    cameFromTagSearch,
+                                    originalSearchTags,
+                                    shouldShow: questions.length > 1 || cameFromTagSearch
+                                });
+                                return questions.length > 1 || cameFromTagSearch;
+                            })() && (
+                                    <Box sx={{ mb: 3 }}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<ArrowBack />}
+                                            onClick={cameFromTagSearch ? handleBackToTagSearch : () => setSelectedQuestion(null)}
+                                        >
+                                            {cameFromTagSearch
+                                                ? `Back to Tag Search (${originalSearchTags.join(', ')})`
+                                                : `Back to Results (${questions.length} questions)`
+                                            }
+                                        </Button>
+                                    </Box>
+                                )}
 
 
                             <QuestionDisplay
