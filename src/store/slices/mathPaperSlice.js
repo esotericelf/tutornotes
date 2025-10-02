@@ -1,7 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import TagService from '../../services/mathpaper/tagService'
-import QuestionLoaderService from '../../services/mathpaper/questionLoaderService'
-import QuestionNavigationService from '../../services/mathpaper/questionNavigationService'
+import { UnifiedTagService, UnifiedQuestionService } from '../../services/mathpaper'
 
 // Initial state
 const initialState = {
@@ -44,12 +42,15 @@ export const loadPopularTags = createAsyncThunk(
     'mathPaper/loadPopularTags',
     async (limit = 15, { rejectWithValue }) => {
         try {
-            const { data, error } = await TagService.getPopularTags(limit)
+            console.log('🔍 Redux thunk: loadPopularTags called with limit:', limit);
+            const { data, error } = await UnifiedTagService.getPopularTags(limit)
+            console.log('🔍 Redux thunk: loadPopularTags result:', { data: data?.length || 0, error });
             if (error) {
                 return rejectWithValue(error.message)
             }
             return data
         } catch (error) {
+            console.error('🔍 Redux thunk: loadPopularTags error:', error);
             return rejectWithValue(error.message)
         }
     }
@@ -59,7 +60,7 @@ export const searchTagsAutocomplete = createAsyncThunk(
     'mathPaper/searchTagsAutocomplete',
     async ({ searchTerm, limit = 20 }, { rejectWithValue }) => {
         try {
-            const { data, error } = await TagService.searchTagsAutocomplete(searchTerm, limit)
+            const { data, error } = await UnifiedTagService.searchTagsAutocomplete(searchTerm, limit)
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -74,13 +75,20 @@ export const getMathPapersByTags = createAsyncThunk(
     'mathPaper/getMathPapersByTags',
     async ({ tags, limit = 100, sortBy = 'year', sortAsc = false }, { rejectWithValue }) => {
         try {
-            const { data, error } = await TagService.getMathPapersByTags(tags, limit, sortBy, sortAsc)
-            if (error) {
-                return rejectWithValue(error.message)
+            console.log('🔍 Redux: Calling UnifiedTagService.getMathPapersByTags with:', { tags, limit, sortBy, sortAsc });
+            const result = await UnifiedTagService.getMathPapersByTags(tags, limit, sortBy, sortAsc);
+            console.log('🔍 Redux: UnifiedTagService result:', result);
+
+            if (result.error) {
+                console.error('🔍 Redux: Error from UnifiedTagService:', result.error);
+                return rejectWithValue(result.error.message || result.error);
             }
-            return data
+
+            console.log('🔍 Redux: Returning data:', result.data);
+            return result.data;
         } catch (error) {
-            return rejectWithValue(error.message)
+            console.error('🔍 Redux: Exception in getMathPapersByTags:', error);
+            return rejectWithValue(error.message || error);
         }
     }
 )
@@ -89,7 +97,7 @@ export const getMathPapersByExactTags = createAsyncThunk(
     'mathPaper/getMathPapersByExactTags',
     async ({ tags, limit = 100 }, { rejectWithValue }) => {
         try {
-            const { data, error } = await TagService.getMathPapersByExactTags(tags, limit)
+            const { data, error } = await UnifiedTagService.getMathPapersByExactTags(tags, limit)
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -104,7 +112,7 @@ export const getMathPapersByTagsAdvanced = createAsyncThunk(
     'mathPaper/getMathPapersByTagsAdvanced',
     async ({ tags, matchType = 'OR', limit = 100, sortBy = 'year', sortAsc = false }, { rejectWithValue }) => {
         try {
-            const { data, error } = await TagService.getMathPapersByTagsAdvanced(tags, matchType, limit, sortBy, sortAsc)
+            const { data, error } = await UnifiedTagService.getMathPapersByTagsAdvanced(tags, matchType, limit, sortBy, sortAsc)
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -119,7 +127,7 @@ export const loadQuestion = createAsyncThunk(
     'mathPaper/loadQuestion',
     async ({ year, paper, questionNo }, { rejectWithValue }) => {
         try {
-            const { data, error } = await QuestionLoaderService.loadQuestion(year, paper, questionNo)
+            const { data, error } = await UnifiedQuestionService.loadQuestion(year, paper, questionNo)
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -134,12 +142,15 @@ export const loadQuestionsByFilters = createAsyncThunk(
     'mathPaper/loadQuestionsByFilters',
     async ({ year, paper, questionNo }, { rejectWithValue }) => {
         try {
-            const { data, error } = await QuestionLoaderService.loadQuestionsByFilters(year, paper, questionNo)
+            console.log('🔍 Redux thunk: loadQuestionsByFilters called with:', { year, paper, questionNo });
+            const { data, error } = await UnifiedQuestionService.loadQuestionsByYearAndPaper(year, paper, questionNo)
+            console.log('🔍 Redux thunk: loadQuestionsByFilters result:', { data: data?.length || 0, error });
             if (error) {
                 return rejectWithValue(error.message)
             }
             return data
         } catch (error) {
+            console.error('🔍 Redux thunk: loadQuestionsByFilters error:', error);
             return rejectWithValue(error.message)
         }
     }
@@ -149,7 +160,7 @@ export const getQuestionNavigation = createAsyncThunk(
     'mathPaper/getQuestionNavigation',
     async ({ year, paper, questionNo }, { rejectWithValue }) => {
         try {
-            const { data, error } = await QuestionNavigationService.getQuestionNavigation(year, paper, questionNo)
+            const { data, error } = await UnifiedQuestionService.getQuestionNavigation(year, paper, questionNo)
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -369,9 +380,12 @@ const mathPaperSlice = createSlice({
                 state.error = ''
             })
             .addCase(loadQuestionsByFilters.fulfilled, (state, action) => {
+                console.log('🔍 Redux slice: loadQuestionsByFilters.fulfilled', { payload: action.payload });
                 state.questions = action.payload
+                state.totalQuestions = action.payload ? action.payload.length : 0
                 state.loading = false
                 state.error = ''
+                console.log('🔍 Redux slice: Updated state', { questions: state.questions.length, totalQuestions: state.totalQuestions });
             })
             .addCase(loadQuestionsByFilters.rejected, (state, action) => {
                 state.loading = false

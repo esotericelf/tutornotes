@@ -3,7 +3,7 @@
  * A dashboard component for creating and taking practice quizzes
  */
 
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box,
     Card,
@@ -28,11 +28,11 @@ import {
     School
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import AuthContext from '../../../contexts/AuthContext';
+import { useAuth } from '../../../store/hooks';
 import practiceQuizService from '../services/practiceQuizService';
 
 const PracticeQuizBlock = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     // State management

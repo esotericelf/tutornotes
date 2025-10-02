@@ -34,7 +34,7 @@ import {
     School as SchoolIcon,
     PlayCircleOutline as DemoIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '../../../store/hooks';
 import quizService from '../services/quizService';
 import { QuizSortOptions } from '../types/quiz.types';
 

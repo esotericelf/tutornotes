@@ -38,8 +38,7 @@ import { DiscussionSection } from '../discussion';
 import SEOHead from '../common/SEOHead';
 import { createCourseStructuredData, createBreadcrumbStructuredData } from '../../utils/structuredData';
 import { trackMathPaperEvent, trackSearch } from '../../utils/analytics';
-import QuestionURLService from '../../services/mathpaper/questionUrlService';
-import QuestionLoaderService from '../../services/mathpaper/questionLoaderService';
+import { UnifiedURLService, UnifiedQuestionService, UnifiedTagService } from '../../services/mathpaper';
 import { useMathPaper } from '../../store/hooks';
 import {
     setSelectedYear,
@@ -62,11 +61,13 @@ import {
     setLoading,
     setAvailableTags,
     setPopularTags,
+    setQuestionsCache,
+    setTagsCache,
     loadPopularTags as loadPopularTagsThunk,
+    loadQuestionsByFilters,
     searchTagsAutocomplete,
     getMathPapersByTags,
-    loadQuestion,
-    loadQuestionsByFilters
+    loadQuestion
 } from '../../store/slices/mathPaperSlice';
 
 const MathPaperPage = () => {
@@ -103,6 +104,7 @@ const MathPaperPage = () => {
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
     const tagsLoadedRef = useRef(false);
+    const [isFilterSearching, setIsFilterSearching] = useState(false);
     const [pageSize] = useState(10); // Fixed at 10 items per page
 
     useEffect(() => {
@@ -237,7 +239,7 @@ const MathPaperPage = () => {
                 setOriginalSearchPage(1);
             }
 
-            const result = await QuestionLoaderService.loadQuestion(year, paper, questionNo);
+            const result = await UnifiedQuestionService.loadQuestion(year, paper, questionNo);
 
             if (result.error) {
                 console.error('Error loading specific question:', result.error);
@@ -361,7 +363,9 @@ const MathPaperPage = () => {
                 // Update available tags from the loaded questions
                 const questionTags = extractTagsFromQuestions(matchingQuestions);
                 if (questionTags.length > 0) {
-                    dispatch(setAvailableTags(prev => [...new Set([...prev, ...questionTags])]));
+                    const currentAvailableTags = availableTags;
+                    const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
+                    dispatch(setAvailableTags(newAvailableTags));
                 }
             }
 
@@ -385,7 +389,7 @@ const MathPaperPage = () => {
                     console.log('✅ Stored navigation state for single result navigation:', navState);
                 }
 
-                const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
             }
@@ -425,10 +429,16 @@ const MathPaperPage = () => {
 
     // Initialize state from URL parameters
     useEffect(() => {
-        console.log('🔍 URL useEffect triggered - searchParams:', searchParams.toString(), 'params:', params);
+        console.log('🔍 URL useEffect triggered - searchParams:', searchParams.toString(), 'params:', params, 'isFilterSearching:', isFilterSearching);
+
+        // Skip if we're in the middle of a filter search
+        if (isFilterSearching) {
+            console.log('🔍 Skipping URL useEffect - filter search in progress');
+            return;
+        }
 
         // Check if this is a direct question URL
-        const questionParams = QuestionURLService.getQuestionParamsFromRouter(params);
+        const questionParams = UnifiedURLService.getQuestionParamsFromRouter(params);
 
         if (questionParams) {
             // Direct question URL - load specific question
@@ -452,19 +462,25 @@ const MathPaperPage = () => {
                     handleTagSearchFromURL(tagsArray, pageFromURL);
                 }
             } else {
-                // Clear tags if no URL parameters
-                console.log('🧹 Clearing search state - no URL parameters');
-                dispatch(setSearchTags([]));
-                dispatch(setQuestions([]));
-                dispatch(setSelectedQuestion(null));
-                dispatch(clearError());
-                dispatch(setTotalQuestions(0));
-                dispatch(setTotalPages(0));
+                // Clear tags if no URL parameters, but only if we're not in the middle of a filter search
+                const hasActiveFilters = selectedYear || selectedPaper || selectedQuestionNo;
+                if (!hasActiveFilters) {
+                    console.log('🧹 Clearing search state - no URL parameters and no active filters');
+                    dispatch(setSearchTags([]));
+                    dispatch(setQuestions([]));
+                    dispatch(setSelectedQuestion(null));
+                    dispatch(clearError());
+                    dispatch(setLoading(false));
+                    dispatch(setTotalQuestions(0));
+                    dispatch(setTotalPages(0));
+                } else {
+                    console.log('🔍 Skipping clear - active filter search detected');
+                }
             }
         }
         // Scroll to top when URL parameters change
         window.scrollTo(0, 0);
-    }, [searchParams, params]); // Removed function dependencies to prevent infinite loop
+    }, [searchParams, params, isFilterSearching]); // Added isFilterSearching to dependencies
 
 
 
@@ -668,6 +684,7 @@ const MathPaperPage = () => {
             return;
         }
 
+        setIsFilterSearching(true);
         dispatch(setLoading(true));
         dispatch(clearError());
         setIsTagSearchActive(false);
@@ -675,95 +692,24 @@ const MathPaperPage = () => {
         try {
             console.log('Fetching questions with filters:', { selectedYear, selectedPaper, selectedQuestionNo, page });
 
-            // Calculate offset for pagination
-            const offset = (page - 1) * pageSize;
+            // Use the Redux thunk instead of direct Supabase queries
+            const result = await dispatch(loadQuestionsByFilters({
+                year: selectedYear,
+                paper: selectedPaper,
+                questionNo: selectedQuestionNo
+            })).unwrap();
 
-            // First, get the total count with all filters applied
-            let countQuery = supabase
-                .from('Math_Past_Paper')
-                .select('*', { count: 'exact', head: true });
-
-            // Add all filters to the count query
-            if (selectedYear) {
-                countQuery = countQuery.eq('year', selectedYear);
-            }
-            if (selectedPaper) {
-                countQuery = countQuery.eq('paper', selectedPaper);
-            }
-            if (selectedQuestionNo) {
-                countQuery = countQuery.eq('question_no', parseInt(selectedQuestionNo));
-            }
-
-            const { count, error: countError } = await countQuery;
-
-            if (countError) {
-                console.error('Error getting count:', countError);
-                dispatch(clearError(`Failed to get results count: ${countError.message}`));
-                return;
-            }
-
-            const totalQuestions = count || 0;
-            dispatch(setTotalQuestions(totalQuestions));
-            setTotalPages(Math.ceil(totalQuestions / pageSize));
-
-            // Now get the paginated data with all filters applied
-            let query = supabase
-                .from('Math_Past_Paper')
-                .select('*')
-                .order('year', { ascending: false })
-                .order('question_no', { ascending: true })
-                .range(offset, offset + pageSize - 1);
-
-            // Add all filters to the data query
-            if (selectedYear) {
-                query = query.eq('year', selectedYear);
-            }
-            if (selectedPaper) {
-                query = query.eq('paper', selectedPaper);
-            }
-            if (selectedQuestionNo) {
-                query = query.eq('question_no', parseInt(selectedQuestionNo));
-            }
-
-            // Add timeout (like your reference code)
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 10000)
-            );
-
-            const { data, error } = await Promise.race([query, timeoutPromise]);
-
-            if (error) {
-                console.error('Error fetching questions:', error);
-                dispatch(clearError(`Failed to fetch questions: ${error.message}`));
-                return;
-            }
-
-            const filteredData = data || [];
-
-            dispatch(setQuestions(filteredData));
-
-            // Load tags for the questions
-            if (filteredData.length > 0) {
-                loadTagsForQuestions(filteredData);
-                // Update available tags from the loaded questions
-                const questionTags = extractTagsFromQuestions(filteredData);
-                if (questionTags.length > 0) {
-                    dispatch(setAvailableTags(prev => [...new Set([...prev, ...questionTags])]));
-                }
-            }
-
-            // Track search analytics
-            const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
-            trackSearch(searchTerm, totalQuestions);
+            console.log('🔍 Filter search results:', result);
+            console.log('🔍 Current Redux questions state:', questions);
+            console.log('🔍 Current Redux totalQuestions state:', totalQuestions);
 
             // If exactly one result, navigate directly to the question detail page
-            if (totalQuestions === 1 && filteredData.length === 1) {
-                const question = filteredData[0];
-                const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+            if (result && result.length === 1) {
+                const question = result[0];
+                console.log('🔍 Single result found, navigating to question:', question);
+                const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
-            } else {
-                dispatch(setSelectedQuestion(null));
             }
 
         } catch (err) {
@@ -771,6 +717,7 @@ const MathPaperPage = () => {
             dispatch(clearError(`Failed to fetch questions: ${err.message}`));
         } finally {
             dispatch(setLoading(false));
+            setIsFilterSearching(false);
         }
     }, [isTagSearchActive, selectedYear, selectedPaper, selectedQuestionNo, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate]);
 
@@ -857,7 +804,9 @@ const MathPaperPage = () => {
                 // Update available tags from the loaded questions
                 const questionTags = extractTagsFromQuestions(matchingQuestions);
                 if (questionTags.length > 0) {
-                    dispatch(setAvailableTags(prev => [...new Set([...prev, ...questionTags])]));
+                    const currentAvailableTags = availableTags;
+                    const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
+                    dispatch(setAvailableTags(newAvailableTags));
                 }
             }
 
@@ -881,7 +830,7 @@ const MathPaperPage = () => {
                     console.log('✅ Stored navigation state for single result navigation:', navState);
                 }
 
-                const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
             }
@@ -903,7 +852,7 @@ const MathPaperPage = () => {
     // Generate URL for a specific question
     const generateQuestionURL = useCallback((question) => {
         try {
-            return QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+            return UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
         } catch (error) {
             console.error('Error generating question URL:', error);
             return '/DSE_Math'; // Fallback to main page
@@ -981,25 +930,68 @@ const MathPaperPage = () => {
         // This prevents double loading when user selects tags
     };
 
+    // Test function to verify popular tags flow
+    const testPopularTagsFlow = async () => {
+        console.log('🧪 Testing popular tags flow...');
+        try {
+            // Test 1: Direct service call
+            console.log('🧪 Test 1: Direct service call');
+            const serviceResult = await UnifiedTagService.getPopularTags(5);
+            console.log('🧪 Service result:', serviceResult);
+
+            // Test 2: Redux thunk call
+            console.log('🧪 Test 2: Redux thunk call');
+            const thunkResult = await dispatch(loadPopularTagsThunk(5)).unwrap();
+            console.log('🧪 Thunk result:', thunkResult);
+
+            // Test 3: Check Redux state
+            console.log('🧪 Test 3: Redux state');
+            console.log('🧪 Current popularTags state:', popularTags);
+
+            return { serviceResult, thunkResult, state: popularTags };
+        } catch (error) {
+            console.error('🧪 Test failed:', error);
+            return { error: error.message };
+        }
+    };
+
+    // Make test function available globally for console testing
+    window.testPopularTagsFlow = testPopularTagsFlow;
+
     // Clear all filters
     const handleClearFilters = () => {
-        setSelectedYear('');
-        setSelectedPaper('');
+        setIsFilterSearching(false);
+        dispatch(setSelectedYear(''));
+        dispatch(setSelectedPaper(''));
         dispatch(setSelectedQuestionNo(''));
-        setSearchTags([]);
-        setSearchInput('');
+        dispatch(setSearchTags([]));
+        dispatch(setSearchInput(''));
         dispatch(setQuestions([]));
         dispatch(setSelectedQuestion(null));
         dispatch(setQuestionTags({}));
         dispatch(clearError());
-        setIsTagSearchActive(false);
+        dispatch(setLoading(false));
+        dispatch(setIsTagSearchActive(false));
+
+        // Clear tag-related state (but keep popular tags as they should persist)
+        dispatch(setAvailableTags([]));
+        // Note: Popular tags should not be cleared as they're a permanent feature
+
+        // Clear navigation state
+        dispatch(setCameFromTagSearch(false));
+        dispatch(setOriginalSearchTags([]));
+        dispatch(setOriginalSearchPage(1));
+
+        // Clear cache
+        dispatch(setQuestionsCache({}));
+        dispatch(setTagsCache({}));
 
         // Reset pagination
-        setCurrentPage(1);
+        dispatch(setCurrentPage(1));
         dispatch(setTotalQuestions(0));
-        setTotalPages(0);
+        dispatch(setTotalPages(0));
 
-        // Clear URL parameters
+        // Clear URL parameters and redirect to /DSE_Math
         clearURLParams();
 
         // Scroll to top when clearing filters
@@ -1041,7 +1033,7 @@ const MathPaperPage = () => {
     // Generate dynamic SEO data based on current state
     const getSEOData = () => {
         // Check if we're on a direct question URL but still loading
-        const questionParams = QuestionURLService.getQuestionParamsFromRouter(params);
+        const questionParams = UnifiedURLService.getQuestionParamsFromRouter(params);
         const isDirectQuestionURL = questionParams !== null;
 
         if (selectedQuestion) {

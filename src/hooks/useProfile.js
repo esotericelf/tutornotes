@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../store/hooks'
 import ProfileService from '../services/user/profileService'
 
 export const useProfile = (userId = null) => {
