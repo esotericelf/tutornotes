@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
     Box,
     Container,
@@ -15,7 +15,9 @@ import {
     Divider,
     Chip,
     IconButton,
-    CircularProgress
+    CircularProgress,
+    Alert,
+    Skeleton
 } from '@mui/material'
 import {
     School,
@@ -24,11 +26,13 @@ import {
     Favorite,
     Logout,
     TrendingUp,
-    Notifications
+    Notifications,
+    Refresh
 } from '@mui/icons-material'
-import { useAuth } from '../../store/hooks'
+import { useAuth, useDashboardData, useDashboardStats, useDashboardActivity } from '../../store/hooks'
 import { signOut } from '../../store/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../services/supabase'
 import ProfileDisplay from '../user/ProfileDisplay'
 import useProfile from '../../hooks/useProfile'
 import PracticeQuizBlock from '../quiz/components/PracticeQuizBlock'
@@ -37,6 +41,46 @@ const Dashboard = () => {
     const { user, loading, dispatch } = useAuth()
     const navigate = useNavigate()
     const { profile } = useProfile()
+
+    // Dashboard Redux hooks
+    const { loadUserStats, loadDashboardData, refreshDashboard } = useDashboardData()
+    const { userStats, quickStats, loading: statsLoading, errors: statsErrors } = useDashboardStats()
+    const { recentActivity, popularTags, recommendedPapers, loading: activityLoading, errors: activityErrors } = useDashboardActivity()
+
+    // Load dashboard data when component mounts
+    useEffect(() => {
+        if (user?.id) {
+            console.log('🔄 Dashboard: Loading dashboard data for user:', user.id)
+            loadUserStats(user.id)
+            loadDashboardData(user.id)
+        }
+    }, [user?.id, loadUserStats, loadDashboardData])
+
+    // Add a timeout to prevent infinite loading
+    useEffect(() => {
+        if (statsLoading.anyLoading || activityLoading.anyLoading) {
+            const timeout = setTimeout(() => {
+                console.log('⚠️ Dashboard: Loading timeout reached, forcing refresh')
+                if (user?.id) {
+                    refreshDashboard(user.id)
+                }
+            }, 15000) // 15 second timeout
+
+            return () => clearTimeout(timeout)
+        }
+    }, [statsLoading.anyLoading, activityLoading.anyLoading, user?.id, refreshDashboard])
+
+    // Auto-refresh dashboard data every 5 minutes
+    useEffect(() => {
+        if (!user?.id) return
+
+        const interval = setInterval(() => {
+            console.log('🔄 Dashboard: Auto-refreshing dashboard data')
+            refreshDashboard(user.id)
+        }, 5 * 60 * 1000) // 5 minutes
+
+        return () => clearInterval(interval)
+    }, [user?.id, refreshDashboard])
 
     // Show loading while authentication is being determined
     if (loading) {
@@ -64,16 +108,65 @@ const Dashboard = () => {
         return null
     }
 
+    // Handle refresh button click
+    const handleRefresh = () => {
+        if (user?.id) {
+            refreshDashboard(user.id)
+        }
+    }
+
     const handleLogout = async () => {
         try {
-            const result = await dispatch(signOut())
+            console.log('🚪 Starting logout process...')
+
+            // Try Redux logout first with shorter timeout
+            const logoutPromise = dispatch(signOut())
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Logout timeout')), 3000)
+            )
+
+            const result = await Promise.race([logoutPromise, timeoutPromise])
+
+            console.log('🚪 Logout result:', result)
+
             if (result.error) {
                 console.error('Logout error:', result.error)
                 // Still navigate to home even if there's an error
             }
+
+            console.log('🚪 Navigating to home...')
             navigate('/')
         } catch (err) {
             console.error('Logout error:', err)
+            console.log('🚪 Forcing direct logout due to timeout...')
+
+            // Direct logout without Redux - clear everything locally
+            try {
+                // Clear Supabase auth state directly
+                const { error } = await supabase.auth.signOut()
+                if (error) {
+                    console.warn('Direct Supabase logout failed:', error)
+                }
+            } catch (supabaseErr) {
+                console.warn('Direct Supabase logout exception:', supabaseErr)
+            }
+
+            // Force clear any local storage/auth state
+            try {
+                localStorage.removeItem('sb-pjcjnmqoaajtotqqqsxs-auth-token')
+                localStorage.removeItem('supabase.auth.token')
+                sessionStorage.clear()
+                // Clear any other auth-related storage
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('supabase') || key.includes('auth')) {
+                        localStorage.removeItem(key)
+                    }
+                })
+            } catch (storageErr) {
+                console.warn('Could not clear storage:', storageErr)
+            }
+
+            console.log('🚪 Forcing navigation to home...')
             navigate('/')
         }
     }
@@ -103,13 +196,6 @@ const Dashboard = () => {
             color: '#fff3e0',
             count: '12'
         }
-    ]
-
-    const recentActivity = [
-        { action: 'Viewed Math Paper 2023 Q5', time: '2 hours ago' },
-        { action: 'Added note to favorites', time: '1 day ago' },
-        { action: 'Joined discussion on Calculus', time: '2 days ago' },
-        { action: 'Completed practice quiz', time: '3 days ago' }
     ]
 
     return (
@@ -162,23 +248,62 @@ const Dashboard = () => {
             {/* Main Content */}
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 {/* Welcome Section */}
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h4" component="h2" fontWeight="bold" sx={{ mb: 1 }}>
-                        Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!
-                    </Typography>
-                    <Typography variant="h6" color="text.secondary">
-                        Continue your learning journey with our comprehensive resources
-                    </Typography>
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                        <Typography variant="h4" component="h2" fontWeight="bold" sx={{ mb: 1 }}>
+                            Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!
+                        </Typography>
+                        <Typography variant="h6" color="text.secondary">
+                            Continue your learning journey with our comprehensive resources
+                        </Typography>
+                    </Box>
+                    <IconButton
+                        onClick={handleRefresh}
+                        disabled={statsLoading.anyLoading || activityLoading.anyLoading}
+                        sx={{
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            '&:hover': { bgcolor: 'primary.dark' },
+                            '&:disabled': { bgcolor: 'grey.300' }
+                        }}
+                    >
+                        <Refresh />
+                    </IconButton>
                 </Box>
+
+                {/* Error Display */}
+                {(statsErrors.anyError || activityErrors.anyError) && (
+                    <Alert severity="warning" sx={{ mb: 3 }}>
+                        Some dashboard data could not be loaded. Click the refresh button to try again.
+                    </Alert>
+                )}
+
+                {/* Debug Info (only in development) */}
+                {process.env.NODE_ENV === 'development' && (
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                        <Typography variant="body2">
+                            <strong>Debug Info:</strong><br />
+                            User ID: {user?.id || 'Not available'}<br />
+                            Stats Loading: {statsLoading.anyLoading ? 'Yes' : 'No'}<br />
+                            Activity Loading: {activityLoading.anyLoading ? 'Yes' : 'No'}<br />
+                            Stats Errors: {statsErrors.anyError ? 'Yes' : 'No'}<br />
+                            Activity Errors: {activityErrors.anyError ? 'Yes' : 'No'}
+                        </Typography>
+                    </Alert>
+                )}
 
                 {/* Quick Stats */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <TrendingUp sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-                            <Typography variant="h4" component="div" fontWeight="bold" color="success.main">
-                                85%
-                            </Typography>
+                            {statsLoading.quickStats ? (
+                                <Skeleton variant="text" width="60%" height={40} sx={{ mx: 'auto' }} />
+                            ) : (
+                                <Typography variant="h4" component="div" fontWeight="bold" color="success.main">
+                                    {userStats?.progressScore || quickStats?.progressScore || 0}%
+                                </Typography>
+                            )}
                             <Typography variant="body2" color="text.secondary">
                                 Progress Score
                             </Typography>
@@ -187,9 +312,13 @@ const Dashboard = () => {
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Book sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                            <Typography variant="h4" component="div" fontWeight="bold" color="primary.main">
-                                24
-                            </Typography>
+                            {statsLoading.quickStats ? (
+                                <Skeleton variant="text" width="40%" height={40} sx={{ mx: 'auto' }} />
+                            ) : (
+                                <Typography variant="h4" component="div" fontWeight="bold" color="primary.main">
+                                    {userStats?.papersCompleted || quickStats?.papersCompleted || 0}
+                                </Typography>
+                            )}
                             <Typography variant="body2" color="text.secondary">
                                 Papers Completed
                             </Typography>
@@ -198,9 +327,13 @@ const Dashboard = () => {
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Forum sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-                            <Typography variant="h4" component="div" fontWeight="bold" color="info.main">
-                                8
-                            </Typography>
+                            {statsLoading.quickStats ? (
+                                <Skeleton variant="text" width="40%" height={40} sx={{ mx: 'auto' }} />
+                            ) : (
+                                <Typography variant="h4" component="div" fontWeight="bold" color="info.main">
+                                    {quickStats?.discussionsParticipated || 0}
+                                </Typography>
+                            )}
                             <Typography variant="body2" color="text.secondary">
                                 Discussions Joined
                             </Typography>
@@ -209,9 +342,13 @@ const Dashboard = () => {
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Favorite sx={{ fontSize: 40, color: 'error.main', mb: 1 }} />
-                            <Typography variant="h4" component="div" fontWeight="bold" color="error.main">
-                                12
-                            </Typography>
+                            {statsLoading.quickStats ? (
+                                <Skeleton variant="text" width="40%" height={40} sx={{ mx: 'auto' }} />
+                            ) : (
+                                <Typography variant="h4" component="div" fontWeight="bold" color="error.main">
+                                    {userStats?.favoriteTopics?.length || quickStats?.favoriteTopics || 0}
+                                </Typography>
+                            )}
                             <Typography variant="body2" color="text.secondary">
                                 Favorites Saved
                             </Typography>
@@ -315,19 +452,74 @@ const Dashboard = () => {
                                     Recent Activity
                                 </Typography>
                                 <Box>
-                                    {recentActivity.map((activity, index) => (
-                                        <Box key={index} sx={{ mb: 2 }}>
-                                            <Typography variant="body2" fontWeight="500">
-                                                {activity.action}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {activity.time}
-                                            </Typography>
-                                            {index < recentActivity.length - 1 && (
-                                                <Divider sx={{ mt: 2 }} />
-                                            )}
+                                    {activityLoading.recentActivity ? (
+                                        <Box>
+                                            {[1, 2, 3].map((i) => (
+                                                <Box key={i} sx={{ mb: 2 }}>
+                                                    <Skeleton variant="text" width="80%" height={20} />
+                                                    <Skeleton variant="text" width="60%" height={16} />
+                                                    {i < 3 && <Divider sx={{ mt: 1 }} />}
+                                                </Box>
+                                            ))}
                                         </Box>
-                                    ))}
+                                    ) : recentActivity && recentActivity.length > 0 ? (
+                                        recentActivity.map((activity, index) => (
+                                            <Box key={activity.id || index} sx={{ mb: 2 }}>
+                                                <Typography variant="body2" fontWeight="500">
+                                                    {activity.title}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {new Date(activity.timestamp).toLocaleDateString()} at {new Date(activity.timestamp).toLocaleTimeString()}
+                                                </Typography>
+                                                {activity.description && (
+                                                    <Typography variant="caption" color="text.secondary" display="block">
+                                                        {activity.description}
+                                                    </Typography>
+                                                )}
+                                                {index < recentActivity.length - 1 && (
+                                                    <Divider sx={{ mt: 2 }} />
+                                                )}
+                                            </Box>
+                                        ))
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                            No recent activity to show
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Paper>
+
+                            {/* Popular Tags */}
+                            <Paper sx={{ p: 3, mb: 3 }}>
+                                <Typography variant="h6" component="h3" fontWeight="600" sx={{ mb: 2 }}>
+                                    Popular Topics
+                                </Typography>
+                                <Box>
+                                    {activityLoading.popularTags ? (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {[1, 2, 3, 4, 5].map((i) => (
+                                                <Skeleton key={i} variant="rounded" width={80} height={32} />
+                                            ))}
+                                        </Box>
+                                    ) : popularTags && popularTags.length > 0 ? (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {popularTags.slice(0, 8).map((tag, index) => (
+                                                <Chip
+                                                    key={index}
+                                                    label={tag.tag}
+                                                    size="small"
+                                                    color="primary"
+                                                    variant="outlined"
+                                                    onClick={() => navigate(`/DSE_Math?tag=${encodeURIComponent(tag.tag)}`)}
+                                                    sx={{ cursor: 'pointer' }}
+                                                />
+                                            ))}
+                                        </Box>
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                            No popular topics available
+                                        </Typography>
+                                    )}
                                 </Box>
                             </Paper>
 

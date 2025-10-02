@@ -66,6 +66,95 @@ export const useUI = () => {
     }
 }
 
+export const useDashboard = () => {
+    const dispatch = useAppDispatch()
+    const dashboard = useAppSelector(state => state.dashboard)
+
+    return {
+        ...dashboard,
+        dispatch,
+    }
+}
+
+// Dashboard-specific hooks
+export const useDashboardData = () => {
+    const dispatch = useAppDispatch()
+    const dashboard = useAppSelector(state => state.dashboard)
+
+    const loadUserStats = useCallback((userId) => {
+        dispatch({ type: 'dashboard/loadUserStatistics', payload: userId })
+    }, [dispatch])
+
+    const loadDashboardData = useCallback((userId) => {
+        dispatch({ type: 'dashboard/loadDashboardData', payload: userId })
+    }, [dispatch])
+
+    const refreshDashboard = useCallback((userId) => {
+        dispatch({ type: 'dashboard/refreshDashboard', payload: userId })
+    }, [dispatch])
+
+    const updateProgress = useCallback((userId, progressData) => {
+        dispatch({ type: 'dashboard/updateUserProgress', payload: { userId, progressData } })
+    }, [dispatch])
+
+    return {
+        ...dashboard,
+        loadUserStats,
+        loadDashboardData,
+        refreshDashboard,
+        updateProgress,
+        dispatch,
+    }
+}
+
+export const useDashboardStats = () => {
+    const userStats = useAppSelector(state => state.dashboard.userStats)
+    const quickStats = useAppSelector(state => state.dashboard.dashboardData.quickStats)
+    const loading = useAppSelector(state => state.dashboard.loading)
+    const errors = useAppSelector(state => state.dashboard.errors)
+
+    return {
+        userStats,
+        quickStats,
+        loading: {
+            userStats: loading.userStats,
+            quickStats: loading.quickStats,
+            anyLoading: loading.userStats || loading.quickStats
+        },
+        errors: {
+            userStats: errors.userStats,
+            quickStats: errors.quickStats,
+            anyError: !!errors.userStats || !!errors.quickStats
+        }
+    }
+}
+
+export const useDashboardActivity = () => {
+    const recentActivity = useAppSelector(state => state.dashboard.dashboardData.recentActivity)
+    const popularTags = useAppSelector(state => state.dashboard.dashboardData.popularTags)
+    const recommendedPapers = useAppSelector(state => state.dashboard.dashboardData.recommendedPapers)
+    const loading = useAppSelector(state => state.dashboard.loading)
+    const errors = useAppSelector(state => state.dashboard.errors)
+
+    return {
+        recentActivity,
+        popularTags,
+        recommendedPapers,
+        loading: {
+            recentActivity: loading.recentActivity,
+            popularTags: loading.popularTags,
+            recommendedPapers: loading.recommendedPapers,
+            anyLoading: loading.recentActivity || loading.popularTags || loading.recommendedPapers
+        },
+        errors: {
+            recentActivity: errors.recentActivity,
+            popularTags: errors.popularTags,
+            recommendedPapers: errors.recommendedPapers,
+            anyError: !!errors.recentActivity || !!errors.popularTags || !!errors.recommendedPapers
+        }
+    }
+}
+
 // Utility hooks
 export const useLoading = () => {
     const loadingStates = useAppSelector(state => state.ui.loadingStates)

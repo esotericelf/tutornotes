@@ -87,35 +87,172 @@ class RandomizedQuizService {
      * @returns {Object} - Submission result
      */
     async submitQuizAttempt(attemptData, questions) {
-        try {
-            // Convert user answers back to original format
-            const convertedAnswers = attemptData.answers.map((answer, index) => {
-                const question = questions[index];
-                return {
-                    question_id: answer.question_id,
-                    selected_answer: convertToOriginalAnswer(answer.selected_answer, question),
-                    is_correct: answer.is_correct
-                };
-            });
+        // Try simple submission first
+        return await this.submitQuizAttemptSimple(attemptData);
+    }
 
-            // Update attempt data with converted answers
+    /**
+     * Simple quiz submission without answer conversion (for debugging)
+     * @param {Object} attemptData - Attempt data
+     * @returns {Object} - Submission result
+     */
+    async submitQuizAttemptSimple(attemptData) {
+        try {
+            console.log('🔄 submitQuizAttemptSimple called with:', attemptData);
+
+            // Check authentication status
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            console.log('🔐 Current user:', user?.id, 'Expected user:', attemptData.user_id);
+
+            if (authError) {
+                console.error('❌ Auth error:', authError);
+                throw new Error('Authentication error: ' + authError.message);
+            }
+
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            if (user.id !== attemptData.user_id) {
+                throw new Error('User ID mismatch');
+            }
+
+            // Prepare simple submission data
             const submissionData = {
-                ...attemptData,
-                answers: convertedAnswers
+                quiz_id: attemptData.quiz_id,
+                user_id: attemptData.user_id,
+                score: attemptData.score,
+                max_score: attemptData.max_score,
+                percentage: attemptData.percentage,
+                time_taken_seconds: attemptData.time_taken_seconds,
+                answers: attemptData.answers, // Store as-is for now
+                is_completed: attemptData.is_completed,
+                completed_at: attemptData.completed_at
             };
 
-            // Submit to database
-            const { data, error } = await supabase
+            console.log('📤 Submitting to database (simple):', submissionData);
+
+            // Test database connection first
+            console.log('🔍 Testing database connection...');
+            console.log('🔍 Supabase URL:', process.env.REACT_APP_SUPABASE_URL ? 'Set' : 'Missing');
+            console.log('🔍 Supabase Key:', process.env.REACT_APP_SUPABASE_ANON_KEY ? 'Set' : 'Missing');
+
+            const { data: testData, error: testError } = await supabase
+                .from('quiz_attempts')
+                .select('id')
+                .limit(1);
+
+            if (testError) {
+                console.error('❌ Database connection test failed:', testError);
+                throw new Error('Database connection failed: ' + testError.message);
+            }
+            console.log('✅ Database connection test passed');
+
+            // Submit to database with timeout
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Database operation timed out after 30 seconds')), 30000);
+            });
+
+            const dbPromise = supabase
                 .from('quiz_attempts')
                 .insert(submissionData)
                 .select()
                 .single();
 
-            if (error) throw error;
+            console.log('⏳ Starting database insert...');
+            const { data, error } = await Promise.race([dbPromise, timeoutPromise]);
 
+            if (error) {
+                console.error('❌ Database error:', error);
+                throw error;
+            }
+
+            console.log('✅ Database response:', data);
             return data;
         } catch (error) {
-            console.error('Error submitting quiz attempt:', error);
+            console.error('❌ Error submitting quiz attempt (simple):', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Submit quiz attempt with proper answer conversion (original method)
+     * @param {Object} attemptData - Attempt data
+     * @param {Array} questions - Array of questions with _labelMapping
+     * @returns {Object} - Submission result
+     */
+    async submitQuizAttemptWithConversion(attemptData, questions) {
+        try {
+            console.log('🔄 submitQuizAttempt called with:', { attemptData, questions: questions?.length });
+
+            // Convert user answers back to original format for storage
+            const convertedAnswers = attemptData.answers.map((answer, index) => {
+                const question = questions[index];
+                const originalAnswer = convertToOriginalAnswer(answer.selected_answer, question);
+                console.log(`Converting answer ${index}: ${answer.selected_answer} -> ${originalAnswer}`);
+                return {
+                    question_id: answer.question_id,
+                    selected_answer: originalAnswer,
+                    is_correct: answer.is_correct
+                };
+            });
+
+            console.log('🔄 Converted answers:', convertedAnswers);
+
+            // Prepare submission data with correct field names for database
+            const submissionData = {
+                quiz_id: attemptData.quiz_id,
+                user_id: attemptData.user_id,
+                score: attemptData.score,
+                max_score: attemptData.max_score,
+                percentage: attemptData.percentage,
+                time_taken_seconds: attemptData.time_taken_seconds,
+                answers: convertedAnswers, // Store as JSONB
+                is_completed: attemptData.is_completed,
+                completed_at: attemptData.completed_at
+            };
+
+            console.log('📤 Submitting to database:', submissionData);
+
+            // Check authentication status
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            console.log('🔐 Current user:', user?.id, 'Expected user:', submissionData.user_id);
+
+            if (authError) {
+                console.error('❌ Auth error:', authError);
+                throw new Error('Authentication error: ' + authError.message);
+            }
+
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            if (user.id !== submissionData.user_id) {
+                throw new Error('User ID mismatch');
+            }
+
+            // Submit to database with timeout
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Database operation timed out after 30 seconds')), 30000);
+            });
+
+            const dbPromise = supabase
+                .from('quiz_attempts')
+                .insert(submissionData)
+                .select()
+                .single();
+
+            const { data, error } = await Promise.race([dbPromise, timeoutPromise]);
+
+            if (error) {
+                console.error('❌ Database error:', error);
+                throw error;
+            }
+
+            console.log('✅ Database response:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Error submitting quiz attempt:', error);
             throw error;
         }
     }

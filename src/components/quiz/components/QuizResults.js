@@ -39,7 +39,10 @@ const QuizResults = () => {
     const location = useLocation();
 
     // Get results data from navigation state
-    const { test, attemptData, isPractice = false, attemptId } = location.state || {};
+    const { test, attemptData, isPractice = false, attemptId, calculatedResults } = location.state || {};
+
+    console.log('QuizResults - Location state:', location.state);
+    console.log('QuizResults - Extracted data:', { test, attemptData, isPractice, attemptId, calculatedResults });
 
     // State for loading attempt data
     const [loading, setLoading] = useState(false);
@@ -54,6 +57,35 @@ const QuizResults = () => {
             console.log('QuizResults useEffect - test:', test);
             console.log('QuizResults useEffect - attemptData:', attemptData);
 
+            // If we have attemptData directly, use it
+            if (attemptData) {
+                console.log('Using provided attemptData directly');
+                setLoadedAttemptData(attemptData);
+                setLoadedTest(test);
+                return;
+            }
+
+            // If we have calculated results but no attemptData, create a mock attemptData
+            if (calculatedResults && !attemptData) {
+                console.log('Using calculated results as fallback');
+                const mockAttemptData = {
+                    id: attemptId || 'calculated-' + Date.now(),
+                    quiz_id: test?.id,
+                    score: calculatedResults.score,
+                    max_score: calculatedResults.totalQuestions,
+                    percentage: calculatedResults.percentage,
+                    time_taken_seconds: calculatedResults.timeUsed,
+                    answers: calculatedResults.answers,
+                    is_completed: true,
+                    completed_at: new Date().toISOString(),
+                    _calculated: true
+                };
+                setLoadedAttemptData(mockAttemptData);
+                setLoadedTest(test);
+                return;
+            }
+
+            // If we only have attemptId, load the data
             if (attemptId && !attemptData) {
                 try {
                     setLoading(true);
@@ -89,7 +121,7 @@ const QuizResults = () => {
         };
 
         loadAttemptData();
-    }, [attemptId, test, attemptData]);
+    }, [attemptId, test, attemptData, calculatedResults]);
 
     // Show loading state
     if (loading) {
@@ -106,7 +138,7 @@ const QuizResults = () => {
         return (
             <Container maxWidth="md" sx={{ py: 4 }}>
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
+                    {typeof error === 'string' ? error : error?.message || 'An error occurred'}
                 </Alert>
                 <Button variant="contained" onClick={() => navigate('/dashboard')}>
                     Back to Dashboard
@@ -119,11 +151,21 @@ const QuizResults = () => {
     const finalTest = loadedTest || test;
     const finalAttemptData = loadedAttemptData || attemptData;
 
+    console.log('QuizResults render - finalTest:', finalTest);
+    console.log('QuizResults render - finalAttemptData:', finalAttemptData);
+    console.log('QuizResults render - loadedTest:', loadedTest);
+    console.log('QuizResults render - loadedAttemptData:', loadedAttemptData);
+
     if (!finalTest || !finalAttemptData) {
         return (
             <Container maxWidth="md" sx={{ py: 4 }}>
                 <Alert severity="error">
                     No results data found. Please complete a quiz first.
+                    <br />
+                    <small>
+                        Debug: Test: {finalTest ? 'Present' : 'Missing'},
+                        AttemptData: {finalAttemptData ? 'Present' : 'Missing'}
+                    </small>
                 </Alert>
             </Container>
         );
@@ -156,7 +198,7 @@ const QuizResults = () => {
         try {
             // First, split by newlines to handle line breaks
             const lines = text.split('\n');
-            
+
             return lines.map((line, lineIndex) => {
                 // Split each line by LaTeX delimiters
                 const parts = line.split(/(\$[^$]+\$)/);
@@ -177,11 +219,14 @@ const QuizResults = () => {
                     }
                 });
 
-                // Return each line as a div with proper line break
+                // Return each line as a span with proper line break
                 return (
-                    <div key={lineIndex} style={{ marginBottom: lineIndex < lines.length - 1 ? '0.5em' : '0' }}>
+                    <span key={lineIndex} style={{
+                        display: 'block',
+                        marginBottom: lineIndex < lines.length - 1 ? '0.5em' : '0'
+                    }}>
                         {lineContent}
-                    </div>
+                    </span>
                 );
             });
         } catch (error) {
@@ -228,7 +273,7 @@ const QuizResults = () => {
                         </Typography>
 
                         <Grid container spacing={3} sx={{ mb: 3 }}>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <Box>
                                     <Typography variant="body2" color="text.secondary">
                                         Score
@@ -238,7 +283,7 @@ const QuizResults = () => {
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <Box>
                                     <Typography variant="body2" color="text.secondary">
                                         Time Taken
@@ -248,7 +293,7 @@ const QuizResults = () => {
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <Box>
                                     <Typography variant="body2" color="text.secondary">
                                         Questions
@@ -258,7 +303,7 @@ const QuizResults = () => {
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <Box>
                                     <Typography variant="body2" color="text.secondary">
                                         Type
@@ -332,24 +377,24 @@ const QuizResults = () => {
                                         )}
                                     </Box>
 
-                                    <Typography variant="body1" sx={{ mb: 2 }}>
+                                    <Typography variant="body1" component="div" sx={{ mb: 2 }}>
                                         {renderWithLaTeX(question.question)}
                                     </Typography>
 
                                     <Grid container spacing={2}>
-                                        <Grid item xs={12} sm={6}>
+                                        <Grid size={{ xs: 12, sm: 6 }}>
                                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                                 Your Answer:
                                             </Typography>
-                                            <Typography variant="body1" color={isCorrect ? 'success.main' : 'error.main'}>
+                                            <Typography variant="body1" component="div" color={isCorrect ? 'success.main' : 'error.main'}>
                                                 {userAnswer ? `${userAnswer}. ` : 'No answer'}{userAnswer ? renderWithLaTeX(question[`option_${userAnswer.toLowerCase()}`]) : ''}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={12} sm={6}>
+                                        <Grid size={{ xs: 12, sm: 6 }}>
                                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                                 Correct Answer:
                                             </Typography>
-                                            <Typography variant="body1" color="success.main">
+                                            <Typography variant="body1" component="div" color="success.main">
                                                 {question.correct_answer}. {renderWithLaTeX(question[`option_${question.correct_answer.toLowerCase()}`])}
                                             </Typography>
                                         </Grid>
@@ -361,7 +406,7 @@ const QuizResults = () => {
                                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                                 Solution:
                                             </Typography>
-                                            <Typography variant="body1">
+                                            <Typography variant="body1" component="div">
                                                 {renderWithLaTeX(question.solution)}
                                             </Typography>
                                         </>

@@ -5,6 +5,7 @@ import quizSlice from './slices/quizSlice'
 import userSlice from './slices/userSlice'
 import discussionSlice from './slices/discussionSlice'
 import uiSlice from './slices/uiSlice'
+import dashboardSlice from './slices/dashboardSlice'
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
         user: userSlice,
         discussion: discussionSlice,
         ui: uiSlice,
+        dashboard: dashboardSlice,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

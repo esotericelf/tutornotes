@@ -182,7 +182,7 @@ const PracticeQuizBlock = () => {
                 {/* Error Display */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-                        {error}
+                        {typeof error === 'string' ? error : error?.message || 'An error occurred'}
                     </Alert>
                 )}
 

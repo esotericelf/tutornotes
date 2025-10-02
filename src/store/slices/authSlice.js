@@ -90,12 +90,19 @@ export const signOut = createAsyncThunk(
     'auth/signOut',
     async (_, { rejectWithValue }) => {
         try {
+            console.log('🚪 Auth slice: Starting signOut...')
             const { error } = await AuthService.signOut()
+            console.log('🚪 Auth slice: signOut result:', { error })
+
             if (error) {
+                console.error('🚪 Auth slice: signOut error:', error)
                 return rejectWithValue(error.message)
             }
+
+            console.log('🚪 Auth slice: signOut successful')
             return null
         } catch (error) {
+            console.error('🚪 Auth slice: signOut exception:', error)
             return rejectWithValue(error.message)
         }
     }

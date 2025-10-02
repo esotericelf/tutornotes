@@ -147,7 +147,7 @@ const QuizDashboard = () => {
                 </Typography>
                 <Grid container spacing={3}>
                     {[...Array(6)].map((_, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                             <Card>
                                 <CardContent>
                                     <Skeleton variant="text" width="60%" height={32} />
@@ -199,7 +199,7 @@ const QuizDashboard = () => {
             <Box sx={{ mb: 4 }}>
                 <Grid container spacing={2} alignItems="center">
                     {/* Search */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <TextField
                             fullWidth
                             placeholder="Search quizzes..."
@@ -216,7 +216,7 @@ const QuizDashboard = () => {
                     </Grid>
 
                     {/* Sort */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <FormControl fullWidth>
                             <InputLabel>Sort by</InputLabel>
                             <Select
@@ -235,7 +235,7 @@ const QuizDashboard = () => {
                     </Grid>
 
                     {/* Filter Toggle */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                             <Button
                                 variant={showFilters ? "contained" : "outlined"}
@@ -263,7 +263,7 @@ const QuizDashboard = () => {
                 {showFilters && (
                     <Box sx={{ mt: 3, p: 3, border: 1, borderColor: 'divider', borderRadius: 1 }}>
                         <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Subject Area</InputLabel>
                                     <Select
@@ -280,7 +280,7 @@ const QuizDashboard = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Difficulty</InputLabel>
                                     <Select
@@ -297,7 +297,7 @@ const QuizDashboard = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Visibility</InputLabel>
                                     <Select
@@ -311,7 +311,7 @@ const QuizDashboard = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Button
                                     variant="outlined"
                                     onClick={clearFilters}
@@ -328,7 +328,7 @@ const QuizDashboard = () => {
             {/* Error Alert */}
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
-                    {error}
+                    {typeof error === 'string' ? error : error?.message || 'An error occurred'}
                 </Alert>
             )}
 
@@ -345,7 +345,7 @@ const QuizDashboard = () => {
             ) : (
                 <Grid container spacing={3}>
                     {quizzes.map((quiz) => (
-                        <Grid item xs={12} sm={6} md={4} key={quiz.id}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={quiz.id}>
                             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 <CardContent sx={{ flexGrow: 1 }}>
                                     {/* Quiz Header */}

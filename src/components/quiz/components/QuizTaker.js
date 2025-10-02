@@ -95,17 +95,40 @@ const QuizTaker = () => {
                 timeRemaining
             }));
 
+            console.log('QuizTaker - Submit result:', result);
+
             if (result.error) {
                 dispatch(setError(result.error));
                 return;
             }
 
-            // Navigate to results
-            navigate('/quiz/results', {
-                state: {
-                    test: currentTest,
-                    isPractice
+            // Navigate to results with attempt data
+            const attemptData = result.payload?.results;
+            const attemptId = attemptData?.id;
+
+            console.log('QuizTaker - Navigating with:', { attemptId, attemptData });
+
+            // Create a comprehensive results object for the results page
+            const resultsData = {
+                test: currentTest,
+                isPractice,
+                attemptId,
+                attemptData,
+                // Also include calculated results as fallback
+                calculatedResults: {
+                    score: result.payload?.score || 0,
+                    percentage: result.payload?.percentage || 0,
+                    correctAnswers: result.payload?.correctAnswers || 0,
+                    totalQuestions: result.payload?.totalQuestions || 0,
+                    timeUsed: result.payload?.timeUsed || 0,
+                    answers: answers
                 }
+            };
+
+            console.log('QuizTaker - Full results data:', resultsData);
+
+            navigate('/quiz/results', {
+                state: resultsData
             });
 
         } catch (err) {
@@ -114,7 +137,7 @@ const QuizTaker = () => {
         } finally {
             dispatch(setIsSubmitting(false));
         }
-    }, [isSubmitting, test, answers, timeRemaining, user, navigate, isPractice]);
+    }, [isSubmitting, currentTest, answers, timeRemaining, user, navigate, isPractice, dispatch]);
 
     // Timer effect
     useEffect(() => {
@@ -212,7 +235,32 @@ const QuizTaker = () => {
         );
     }
 
-    const currentQuestion = currentTest?.questions[currentQuestionIndex];
+    // Show loading state while quiz is being initialized
+    if (!currentTest || !currentTest.questions || currentTest.questions.length === 0) {
+        return (
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+                    <CircularProgress />
+                    <Typography variant="h6" sx={{ ml: 2 }}>
+                        Loading quiz...
+                    </Typography>
+                </Box>
+            </Container>
+        );
+    }
+
+    const currentQuestion = currentTest.questions[currentQuestionIndex];
+
+    // Additional safety check for current question
+    if (!currentQuestion) {
+        return (
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                <Alert severity="error">
+                    Question not found. Please try refreshing the page or start a new quiz.
+                </Alert>
+            </Container>
+        );
+    }
 
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
@@ -308,8 +356,8 @@ const QuizTaker = () => {
             {/* Main Content */}
             <Container maxWidth="md" sx={{ py: 4 }}>
                 {error && (
-                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-                        {error}
+                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => dispatch(clearError())}>
+                        {typeof error === 'string' ? error : error?.message || 'An error occurred'}
                     </Alert>
                 )}
 
@@ -340,7 +388,7 @@ const QuizTaker = () => {
                                         control={<Radio />}
                                         label={
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                <Typography variant="body1">
+                                                <Typography variant="body1" component="div">
                                                     {renderWithLaTeX(currentQuestion[`option_${option.toLowerCase()}`])}
                                                 </Typography>
                                                 {currentQuestion[`option_${option.toLowerCase()}_diagram`] && (
@@ -446,7 +494,7 @@ const QuizTaker = () => {
                 {/* Quick Stats */}
                 <Paper sx={{ p: 2, mt: 3 }}>
                     <Grid container spacing={2}>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Typography variant="body2" color="text.secondary">
                                 Progress
                             </Typography>
@@ -454,7 +502,7 @@ const QuizTaker = () => {
                                 {Math.round(getProgress())}%
                             </Typography>
                         </Grid>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Typography variant="body2" color="text.secondary">
                                 Answered
                             </Typography>
@@ -462,7 +510,7 @@ const QuizTaker = () => {
                                 {getAnsweredCount()}/{currentTest?.questions.length}
                             </Typography>
                         </Grid>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Typography variant="body2" color="text.secondary">
                                 Time Left
                             </Typography>
@@ -470,7 +518,7 @@ const QuizTaker = () => {
                                 {formatTime(timeRemaining)}
                             </Typography>
                         </Grid>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Typography variant="body2" color="text.secondary">
                                 Type
                             </Typography>

@@ -205,10 +205,33 @@ export class AuthService {
     // Sign out
     static async signOut() {
         try {
-            const { error } = await supabase.auth.signOut()
-            if (error) throw error
+            console.log('🚪 AuthService: Starting signOut...')
+
+            // Add timeout to Supabase call to prevent hanging
+            const signOutPromise = supabase.auth.signOut()
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Supabase signOut timeout')), 3000)
+            )
+
+            const { error } = await Promise.race([signOutPromise, timeoutPromise])
+            console.log('🚪 AuthService: signOut response:', { error })
+
+            if (error) {
+                console.error('🚪 AuthService: signOut error:', error)
+                throw error
+            }
+
+            console.log('🚪 AuthService: signOut successful')
             return { error: null }
         } catch (error) {
+            console.error('🚪 AuthService: signOut exception:', error)
+
+            // If it's a timeout, we'll still return success since we can clear local state
+            if (error.message === 'Supabase signOut timeout') {
+                console.log('🚪 AuthService: Supabase timeout, but continuing with local cleanup')
+                return { error: null }
+            }
+
             return { error }
         }
     }

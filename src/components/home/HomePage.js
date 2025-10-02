@@ -25,6 +25,7 @@ import {
 import { useAuth } from '../../store/hooks'
 import { signOut } from '../../store/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../services/supabase'
 import SEOHead from '../common/SEOHead'
 import { createWebsiteStructuredData, createOrganizationStructuredData } from '../../utils/structuredData'
 
@@ -34,13 +35,55 @@ const HomePage = () => {
 
     const handleLogout = async () => {
         try {
-            const result = await dispatch(signOut())
+            console.log('🚪 Starting logout process...')
+
+            // Try Redux logout first with shorter timeout
+            const logoutPromise = dispatch(signOut())
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Logout timeout')), 3000)
+            )
+
+            const result = await Promise.race([logoutPromise, timeoutPromise])
+
+            console.log('🚪 Logout result:', result)
+
             if (result.error) {
                 console.error('Logout error:', result.error)
             }
+
+            console.log('🚪 Navigating to home...')
             navigate('/')
         } catch (err) {
             console.error('Logout error:', err)
+            console.log('🚪 Forcing direct logout due to timeout...')
+
+            // Direct logout without Redux - clear everything locally
+            try {
+                // Clear Supabase auth state directly
+                const { error } = await supabase.auth.signOut()
+                if (error) {
+                    console.warn('Direct Supabase logout failed:', error)
+                }
+            } catch (supabaseErr) {
+                console.warn('Direct Supabase logout exception:', supabaseErr)
+            }
+
+            // Force clear any local storage/auth state
+            try {
+                localStorage.removeItem('sb-pjcjnmqoaajtotqqqsxs-auth-token')
+                localStorage.removeItem('supabase.auth.token')
+                sessionStorage.clear()
+                // Clear any other auth-related storage
+                Object.keys(localStorage).forEach(key => {
+                    if (key.includes('supabase') || key.includes('auth')) {
+                        localStorage.removeItem(key)
+                    }
+                })
+            } catch (storageErr) {
+                console.warn('Could not clear storage:', storageErr)
+            }
+
+            console.log('🚪 Forcing navigation to home...')
             navigate('/')
         }
     }
