@@ -40,6 +40,34 @@ import { createCourseStructuredData, createBreadcrumbStructuredData } from '../.
 import { trackMathPaperEvent, trackSearch } from '../../utils/analytics';
 import QuestionURLService from '../../services/mathpaper/questionUrlService';
 import QuestionLoaderService from '../../services/mathpaper/questionLoaderService';
+import { useMathPaper } from '../../store/hooks';
+import {
+    setSelectedYear,
+    setSelectedPaper,
+    setSelectedQuestionNo,
+    setSearchTags,
+    setSearchInput,
+    setSelectedQuestion,
+    setQuestions,
+    setQuestionTags,
+    setCameFromTagSearch,
+    setOriginalSearchTags,
+    setOriginalSearchPage,
+    setIsTagSearchActive,
+    setCurrentPage,
+    setTotalPages,
+    setTotalQuestions,
+    clearSearch,
+    clearError,
+    setLoading,
+    setAvailableTags,
+    setPopularTags,
+    loadPopularTags as loadPopularTagsThunk,
+    searchTagsAutocomplete,
+    getMathPapersByTags,
+    loadQuestion,
+    loadQuestionsByFilters
+} from '../../store/slices/mathPaperSlice';
 
 const MathPaperPage = () => {
     const navigate = useNavigate();
@@ -47,16 +75,35 @@ const MathPaperPage = () => {
     const params = useParams(); // Get URL parameters for direct question access
     const questionDetailsRef = React.useRef(null);
 
+    // Redux state and dispatch
+    const {
+        selectedYear,
+        selectedPaper,
+        selectedQuestionNo,
+        searchTags,
+        availableTags,
+        searchInput,
+        questions,
+        selectedQuestion,
+        loading,
+        error,
+        questionTags,
+        popularTags,
+        isTagSearchActive,
+        cameFromTagSearch,
+        originalSearchTags,
+        originalSearchPage,
+        currentPage,
+        totalPages,
+        totalQuestions,
+        dispatch
+    } = useMathPaper();
+
 
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
     const tagsLoadedRef = useRef(false);
-
-    // Pagination states (declared early to avoid initialization order issues)
-    const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10); // Fixed at 10 items per page
-    const [totalCount, setTotalCount] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         setComponentMounted(true);
@@ -98,13 +145,13 @@ const MathPaperPage = () => {
             const tags = getQuestionTagsFromData(question);
             tagsMap[question.id] = tags;
         }
-        setQuestionTags(tagsMap);
+        dispatch(setQuestionTags(tagsMap));
     }, [getQuestionTagsFromData]);
 
     // Load a specific question by year, paper, and question number
     const loadSpecificQuestion = useCallback(async (year, paper, questionNo) => {
-        setLoading(true);
-        setError('');
+        dispatch(setLoading(true));
+        dispatch(clearError());
 
         try {
             console.log(`🔍 Loading specific question: ${year} Paper ${paper} Question ${questionNo}`);
@@ -194,19 +241,19 @@ const MathPaperPage = () => {
 
             if (result.error) {
                 console.error('Error loading specific question:', result.error);
-                setError(result.error.message);
-                setSelectedQuestion(null);
-                setQuestions([]);
+                dispatch(clearError());
+                dispatch(setSelectedQuestion(null));
+                dispatch(setQuestions([]));
                 return;
             }
 
             if (result.data) {
-                setSelectedQuestion(result.data);
-                setQuestions([result.data]); // Show single question in results
+                dispatch(setSelectedQuestion(result.data));
+                dispatch(setQuestions([result.data])); // Show single question in results
 
                 // Load tags for the question
                 const tags = getQuestionTagsFromData(result.data);
-                setQuestionTags({ [result.data.id]: tags });
+                dispatch(setQuestionTags({ [result.data.id]: tags }));
 
                 // Track the question view
                 trackMathPaperEvent('question_viewed', year, paper, questionNo);
@@ -221,18 +268,18 @@ const MathPaperPage = () => {
 
                 console.log(`✅ Successfully loaded question: ${result.data.id}`);
             } else {
-                setError(`Question not found: ${year} Paper ${paper} Question ${questionNo}`);
-                setSelectedQuestion(null);
-                setQuestions([]);
+                dispatch(clearError());
+                dispatch(setSelectedQuestion(null));
+                dispatch(setQuestions([]));
             }
 
         } catch (err) {
             console.error('Unexpected error loading specific question:', err);
-            setError(`Failed to load question: ${err.message}`);
-            setSelectedQuestion(null);
-            setQuestions([]);
+            dispatch(clearError());
+            dispatch(setSelectedQuestion(null));
+            dispatch(setQuestions([]));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
         }
     }, [getQuestionTagsFromData, searchParams]);
 
@@ -249,8 +296,8 @@ const MathPaperPage = () => {
         setOriginalSearchPage(1);
 
         setIsTagSearchActive(true);
-        setLoading(true);
-        setError('');
+        dispatch(setLoading(true));
+        dispatch(clearError());
 
         try {
             console.log('Searching for tags from URL:', tags, 'Page:', page);
@@ -271,13 +318,13 @@ const MathPaperPage = () => {
 
             if (countError) {
                 console.error('Error getting count:', countError);
-                setError(`Failed to get results count: ${countError.message}`);
+                dispatch(clearError(`Failed to get results count: ${countError.message}`));
                 return;
             }
 
-            const totalCount = count || 0;
-            setTotalCount(totalCount);
-            setTotalPages(Math.ceil(totalCount / pageSize));
+            const totalQuestions = count || 0;
+            dispatch(setTotalQuestions(totalQuestions));
+            setTotalPages(Math.ceil(totalQuestions / pageSize));
 
             // Now get the paginated data
             let query = supabase
@@ -301,12 +348,12 @@ const MathPaperPage = () => {
 
             if (error) {
                 console.error('Error in URL tag search:', error);
-                setError(`Failed to search by tags: ${error.message}`);
+                dispatch(clearError(`Failed to search by tags: ${error.message}`));
                 return;
             }
 
             const matchingQuestions = data || [];
-            setQuestions(matchingQuestions);
+            dispatch(setQuestions(matchingQuestions));
 
             // Load tags for the matching questions
             if (matchingQuestions.length > 0) {
@@ -314,16 +361,16 @@ const MathPaperPage = () => {
                 // Update available tags from the loaded questions
                 const questionTags = extractTagsFromQuestions(matchingQuestions);
                 if (questionTags.length > 0) {
-                    setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
+                    dispatch(setAvailableTags(prev => [...new Set([...prev, ...questionTags])]));
                 }
             }
 
-            if (matchingQuestions.length === 0 && totalCount === 0) {
-                setError(`No questions found with tags: ${tags.join(', ')}`);
+            if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
             }
 
             // If exactly one result, navigate directly to the question detail page
-            if (totalCount === 1 && matchingQuestions.length === 1) {
+            if (totalQuestions === 1 && matchingQuestions.length === 1) {
                 const question = matchingQuestions[0];
 
                 // Store navigation state for single result navigation
@@ -345,9 +392,9 @@ const MathPaperPage = () => {
 
         } catch (err) {
             console.error('Error searching by tags from URL:', err);
-            setError(`Failed to search by tags: ${err.message}`);
+            dispatch(clearError(`Failed to search by tags: ${err.message}`));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
             setTimeout(() => {
                 setIsTagSearchActive(false);
             }, 1000);
@@ -398,7 +445,7 @@ const MathPaperPage = () => {
 
             if (urlTags) {
                 const tagsArray = urlTags.split(',').filter(tag => tag.trim());
-                setSearchTags(tagsArray);
+                dispatch(setSearchTags(tagsArray));
                 // Automatically trigger tag search if tags are in URL
                 if (tagsArray.length > 0) {
                     console.log('🔄 Triggering tag search from URL:', tagsArray);
@@ -407,43 +454,21 @@ const MathPaperPage = () => {
             } else {
                 // Clear tags if no URL parameters
                 console.log('🧹 Clearing search state - no URL parameters');
-                setSearchTags([]);
-                setQuestions([]);
-                setSelectedQuestion(null);
-                setError('');
-                setTotalCount(0);
-                setTotalPages(0);
+                dispatch(setSearchTags([]));
+                dispatch(setQuestions([]));
+                dispatch(setSelectedQuestion(null));
+                dispatch(clearError());
+                dispatch(setTotalQuestions(0));
+                dispatch(setTotalPages(0));
             }
         }
         // Scroll to top when URL parameters change
         window.scrollTo(0, 0);
-    }, [searchParams, params, handleTagSearchFromURL, loadSpecificQuestion]);
+    }, [searchParams, params]); // Removed function dependencies to prevent infinite loop
 
 
 
-    // Filter states
-    const [selectedYear, setSelectedYear] = useState('');
-    const [selectedPaper, setSelectedPaper] = useState('');
-    const [selectedQuestionNo, setSelectedQuestionNo] = useState('');
-
-    // Search states
-    const [searchTags, setSearchTags] = useState([]);
-    const [availableTags, setAvailableTags] = useState([]);
-    const [searchInput, setSearchInput] = useState('');
-
-    // Data states
-    const [questions, setQuestions] = useState([]);
-    const [selectedQuestion, setSelectedQuestion] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [questionTags, setQuestionTags] = useState({}); // Store tags for each question
-    const [popularTags, setPopularTags] = useState([]);
-    const [isTagSearchActive, setIsTagSearchActive] = useState(false); // Track if tag search is active
-
-    // Navigation state for back button functionality
-    const [cameFromTagSearch, setCameFromTagSearch] = useState(false);
-    const [originalSearchTags, setOriginalSearchTags] = useState([]);
-    const [originalSearchPage, setOriginalSearchPage] = useState(1);
+    // All state is now managed by Redux
 
     // Handle going back to tag search results
     const handleBackToTagSearch = useCallback(() => {
@@ -499,7 +524,7 @@ const MathPaperPage = () => {
             if (error) {
                 console.error('Error loading questions for tags:', error);
                 // Fallback to sample tags
-                setAvailableTags(getSampleAvailableTags());
+                dispatch(setAvailableTags(getSampleAvailableTags()));
                 return;
             }
 
@@ -515,14 +540,14 @@ const MathPaperPage = () => {
 
             if (uniqueTags.length === 0) {
                 // If no tags found, use sample tags for testing
-                setAvailableTags(getSampleAvailableTags());
+                dispatch(setAvailableTags(getSampleAvailableTags()));
             } else {
-                setAvailableTags(uniqueTags);
+                dispatch(setAvailableTags(uniqueTags));
             }
         } catch (err) {
             console.error('Error loading tags:', err);
             // For testing, use sample tags
-            setAvailableTags(getSampleAvailableTags());
+            dispatch(setAvailableTags(getSampleAvailableTags()));
         }
     }, [getSampleAvailableTags]);
 
@@ -566,7 +591,7 @@ const MathPaperPage = () => {
             if (error) {
                 console.error('Error fetching tags:', error);
                 const sampleTags = getSamplePopularTags();
-                setPopularTags(shuffleArray(sampleTags));
+                dispatch(setPopularTags(shuffleArray(sampleTags)));
                 return;
             }
 
@@ -599,16 +624,16 @@ const MathPaperPage = () => {
 
             if (popularTagsArray.length === 0) {
                 const sampleTags = getSamplePopularTags();
-                setPopularTags(shuffleArray(sampleTags));
+                dispatch(setPopularTags(shuffleArray(sampleTags)));
             } else {
                 // Shuffle the popular tags array to randomize display order
-                setPopularTags(shuffleArray(popularTagsArray));
+                dispatch(setPopularTags(shuffleArray(popularTagsArray)));
             }
 
         } catch (err) {
             console.error('Error fetching popular tags:', err);
             const sampleTags = getSamplePopularTags();
-            setPopularTags(shuffleArray(sampleTags));
+            dispatch(setPopularTags(shuffleArray(sampleTags)));
         }
     }, [getSamplePopularTags]);
 
@@ -617,9 +642,10 @@ const MathPaperPage = () => {
         if (!tagsLoadedRef.current) {
             tagsLoadedRef.current = true;
             loadAvailableTags();
-            loadPopularTags();
+            // Dispatch the async thunk properly
+            dispatch(loadPopularTagsThunk());
         }
-    }, [loadAvailableTags, loadPopularTags]);
+    }, [loadAvailableTags, dispatch]);
 
     // Debug: Monitor questions state changes
     // useEffect(() => {
@@ -642,8 +668,8 @@ const MathPaperPage = () => {
             return;
         }
 
-        setLoading(true);
-        setError('');
+        dispatch(setLoading(true));
+        dispatch(clearError());
         setIsTagSearchActive(false);
 
         try {
@@ -672,13 +698,13 @@ const MathPaperPage = () => {
 
             if (countError) {
                 console.error('Error getting count:', countError);
-                setError(`Failed to get results count: ${countError.message}`);
+                dispatch(clearError(`Failed to get results count: ${countError.message}`));
                 return;
             }
 
-            const totalCount = count || 0;
-            setTotalCount(totalCount);
-            setTotalPages(Math.ceil(totalCount / pageSize));
+            const totalQuestions = count || 0;
+            dispatch(setTotalQuestions(totalQuestions));
+            setTotalPages(Math.ceil(totalQuestions / pageSize));
 
             // Now get the paginated data with all filters applied
             let query = supabase
@@ -708,13 +734,13 @@ const MathPaperPage = () => {
 
             if (error) {
                 console.error('Error fetching questions:', error);
-                setError(`Failed to fetch questions: ${error.message}`);
+                dispatch(clearError(`Failed to fetch questions: ${error.message}`));
                 return;
             }
 
             const filteredData = data || [];
 
-            setQuestions(filteredData);
+            dispatch(setQuestions(filteredData));
 
             // Load tags for the questions
             if (filteredData.length > 0) {
@@ -722,29 +748,29 @@ const MathPaperPage = () => {
                 // Update available tags from the loaded questions
                 const questionTags = extractTagsFromQuestions(filteredData);
                 if (questionTags.length > 0) {
-                    setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
+                    dispatch(setAvailableTags(prev => [...new Set([...prev, ...questionTags])]));
                 }
             }
 
             // Track search analytics
             const searchTerm = `${selectedYear || 'All'} ${selectedPaper || 'All'} ${selectedQuestionNo || 'All'}`;
-            trackSearch(searchTerm, totalCount);
+            trackSearch(searchTerm, totalQuestions);
 
             // If exactly one result, navigate directly to the question detail page
-            if (totalCount === 1 && filteredData.length === 1) {
+            if (totalQuestions === 1 && filteredData.length === 1) {
                 const question = filteredData[0];
                 const questionURL = QuestionURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
             } else {
-                setSelectedQuestion(null);
+                dispatch(setSelectedQuestion(null));
             }
 
         } catch (err) {
             console.error('Error fetching questions:', err);
-            setError(`Failed to fetch questions: ${err.message}`);
+            dispatch(clearError(`Failed to fetch questions: ${err.message}`));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
         }
     }, [isTagSearchActive, selectedYear, selectedPaper, selectedQuestionNo, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate]);
 
@@ -766,8 +792,8 @@ const MathPaperPage = () => {
         updateURLWithPagination(tags, 1);
 
         setIsTagSearchActive(true);
-        setLoading(true);
-        setError('');
+        dispatch(setLoading(true));
+        dispatch(clearError());
 
         try {
             console.log('Searching for tags:', tags);
@@ -788,13 +814,13 @@ const MathPaperPage = () => {
 
             if (countError) {
                 console.error('Error getting count:', countError);
-                setError(`Failed to get results count: ${countError.message}`);
+                dispatch(clearError(`Failed to get results count: ${countError.message}`));
                 return;
             }
 
-            const totalCount = count || 0;
-            setTotalCount(totalCount);
-            setTotalPages(Math.ceil(totalCount / pageSize));
+            const totalQuestions = count || 0;
+            dispatch(setTotalQuestions(totalQuestions));
+            setTotalPages(Math.ceil(totalQuestions / pageSize));
 
             // Now get the paginated data
             let query = supabase
@@ -818,12 +844,12 @@ const MathPaperPage = () => {
 
             if (error) {
                 console.error('Error in tag search:', error);
-                setError(`Failed to search by tags: ${error.message}`);
+                dispatch(clearError(`Failed to search by tags: ${error.message}`));
                 return;
             }
 
             const matchingQuestions = data || [];
-            setQuestions(matchingQuestions);
+            dispatch(setQuestions(matchingQuestions));
 
             // Load tags for the matching questions
             if (matchingQuestions.length > 0) {
@@ -831,16 +857,16 @@ const MathPaperPage = () => {
                 // Update available tags from the loaded questions
                 const questionTags = extractTagsFromQuestions(matchingQuestions);
                 if (questionTags.length > 0) {
-                    setAvailableTags(prev => [...new Set([...prev, ...questionTags])]);
+                    dispatch(setAvailableTags(prev => [...new Set([...prev, ...questionTags])]));
                 }
             }
 
-            if (matchingQuestions.length === 0 && totalCount === 0) {
-                setError(`No questions found with tags: ${tags.join(', ')}`);
+            if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
             }
 
             // If exactly one result, navigate directly to the question detail page
-            if (totalCount === 1 && matchingQuestions.length === 1) {
+            if (totalQuestions === 1 && matchingQuestions.length === 1) {
                 const question = matchingQuestions[0];
 
                 // Store navigation state for single result navigation
@@ -862,9 +888,9 @@ const MathPaperPage = () => {
 
         } catch (err) {
             console.error('Error searching by tags:', err);
-            setError(`Failed to search by tags: ${err.message}`);
+            dispatch(clearError(`Failed to search by tags: ${err.message}`));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
             // Reset tag search flag after a longer delay to prevent conflicts
             setTimeout(() => {
                 setIsTagSearchActive(false);
@@ -917,21 +943,21 @@ const MathPaperPage = () => {
         setOriginalSearchPage(1);
 
         const newTags = [tag];
-        setSearchTags(newTags);
-        setSearchInput('');
+        dispatch(setSearchTags(newTags));
+        dispatch(setSearchInput(''));
 
         // Clear dropdown filters when using tags
-        setSelectedYear('');
-        setSelectedPaper('');
-        setSelectedQuestionNo('');
+        dispatch(setSelectedYear(''));
+        dispatch(setSelectedPaper(''));
+        dispatch(setSelectedQuestionNo(''));
 
         // Reset pagination for new tag search
-        setCurrentPage(1);
+        dispatch(setCurrentPage(1));
 
         // Clear any previous results
-        setQuestions([]);
-        setSelectedQuestion(null);
-        setError('');
+        dispatch(setQuestions([]));
+        dispatch(setSelectedQuestion(null));
+        dispatch(clearError());
 
         // Update URL with the new tag search (this will navigate to /DSE_Math)
         updateURLWithPagination(newTags, 1);
@@ -947,7 +973,7 @@ const MathPaperPage = () => {
         // Clear dropdown filters when using tags
         setSelectedYear('');
         setSelectedPaper('');
-        setSelectedQuestionNo('');
+        dispatch(setSelectedQuestionNo(''));
 
         // Reset pagination when tags change
         setCurrentPage(1);
@@ -959,18 +985,18 @@ const MathPaperPage = () => {
     const handleClearFilters = () => {
         setSelectedYear('');
         setSelectedPaper('');
-        setSelectedQuestionNo('');
+        dispatch(setSelectedQuestionNo(''));
         setSearchTags([]);
         setSearchInput('');
-        setQuestions([]);
-        setSelectedQuestion(null);
-        setQuestionTags({});
-        setError('');
+        dispatch(setQuestions([]));
+        dispatch(setSelectedQuestion(null));
+        dispatch(setQuestionTags({}));
+        dispatch(clearError());
         setIsTagSearchActive(false);
 
         // Reset pagination
         setCurrentPage(1);
-        setTotalCount(0);
+        dispatch(setTotalQuestions(0));
         setTotalPages(0);
 
         // Clear URL parameters
@@ -1141,10 +1167,10 @@ const MathPaperPage = () => {
                                         value={selectedYear}
                                         label="Year"
                                         onChange={(e) => {
-                                            setSelectedYear(e.target.value);
+                                            dispatch(setSelectedYear(e.target.value));
                                             // Clear tags when using dropdown filters
-                                            setSearchTags([]);
-                                            setSearchInput('');
+                                            dispatch(setSearchTags([]));
+                                            dispatch(setSearchInput(''));
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1171,11 +1197,11 @@ const MathPaperPage = () => {
                                         value={selectedPaper}
                                         label="Paper"
                                         onChange={(e) => {
-                                            setSelectedPaper(e.target.value);
-                                            setSelectedQuestionNo(''); // Reset question number when paper changes
+                                            dispatch(setSelectedPaper(e.target.value));
+                                            dispatch(setSelectedQuestionNo('')); // Reset question number when paper changes
                                             // Clear tags when using dropdown filters
-                                            setSearchTags([]);
-                                            setSearchInput('');
+                                            dispatch(setSearchTags([]));
+                                            dispatch(setSearchInput(''));
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1202,10 +1228,10 @@ const MathPaperPage = () => {
                                         value={selectedQuestionNo}
                                         label="Question Number"
                                         onChange={(e) => {
-                                            setSelectedQuestionNo(e.target.value);
+                                            dispatch(setSelectedQuestionNo(e.target.value));
                                             // Clear tags when using dropdown filters
-                                            setSearchTags([]);
-                                            setSearchInput('');
+                                            dispatch(setSearchTags([]));
+                                            dispatch(setSearchInput(''));
                                         }}
                                         disabled={!selectedPaper}
                                         MenuProps={{
@@ -1231,7 +1257,7 @@ const MathPaperPage = () => {
                                     value={searchTags}
                                     onChange={(event, newValue) => handleTagSelection(newValue)}
                                     inputValue={searchInput}
-                                    onInputChange={(event, newInputValue) => setSearchInput(newInputValue)}
+                                    onInputChange={(event, newInputValue) => dispatch(setSearchInput(newInputValue))}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -1380,7 +1406,7 @@ const MathPaperPage = () => {
                             <Typography variant="h6" gutterBottom sx={{
                                 fontSize: { xs: '1.1rem', sm: '1.25rem' }
                             }}>
-                                Results ({totalCount} questions found)
+                                Results ({totalQuestions} questions found)
                                 {totalPages > 1 && (
                                     <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                                         (Page {currentPage} of {totalPages})
@@ -1560,7 +1586,7 @@ const MathPaperPage = () => {
                                         <Button
                                             variant="outlined"
                                             startIcon={<ArrowBack />}
-                                            onClick={cameFromTagSearch ? handleBackToTagSearch : () => setSelectedQuestion(null)}
+                                            onClick={cameFromTagSearch ? handleBackToTagSearch : () => dispatch(setSelectedQuestion(null))}
                                         >
                                             {cameFromTagSearch
                                                 ? `Back to Tag Search (${originalSearchTags.join(', ')})`
@@ -1577,10 +1603,10 @@ const MathPaperPage = () => {
                                 onTagClick={handlePopularTagClick}
                                 onQuestionChange={(newQuestion) => {
                                     // Update the selected question when navigating
-                                    setSelectedQuestion(newQuestion);
+                                    dispatch(setSelectedQuestion(newQuestion));
                                     // Load tags for the new question
                                     const tags = getQuestionTagsFromData(newQuestion);
-                                    setQuestionTags({ [newQuestion.id]: tags });
+                                    dispatch(setQuestionTags({ [newQuestion.id]: tags }));
                                 }}
                             />
 

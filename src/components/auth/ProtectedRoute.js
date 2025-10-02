@@ -1,10 +1,10 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
-import AuthContext from '../../contexts/AuthContext'
+import { useAuth } from '../../store/hooks'
 
 const ProtectedRoute = ({ children }) => {
-    const { user, loading } = useContext(AuthContext)
+    const { user, loading } = useAuth()
     const location = useLocation()
 
     if (loading) {

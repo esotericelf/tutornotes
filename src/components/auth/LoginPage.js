@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Box,
     Paper,
@@ -28,7 +28,8 @@ import {
     ArrowBack,
     Google
 } from '@mui/icons-material'
-import AuthContext from '../../contexts/AuthContext'
+import { useAuth } from '../../store/hooks'
+import { signIn, signUp, signInWithGoogle, signInWithDiscord } from '../../store/slices/authSlice'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
 import { trackLogin, trackSignup, trackError } from '../../utils/analytics'
@@ -55,7 +56,7 @@ const LoginPage = () => {
     const [success, setSuccess] = useState('')
     const [connectionError, setConnectionError] = useState('')
 
-    const { signIn, signUp, signInWithGoogle, signInWithDiscord, user, loading: authLoading } = useContext(AuthContext)
+    const { user, loading: authLoading, dispatch } = useAuth()
     const navigate = useNavigate()
 
     // Redirect if already authenticated
@@ -116,7 +117,7 @@ const LoginPage = () => {
         setSuccess('')
 
         try {
-            const result = await signInWithGoogle()
+            const result = await dispatch(signInWithGoogle())
 
             if (result.error) {
                 console.error('Google login error:', result.error)
@@ -139,7 +140,7 @@ const LoginPage = () => {
         setSuccess('')
 
         try {
-            const result = await signInWithDiscord()
+            const result = await dispatch(signInWithDiscord())
 
             if (result.error) {
                 console.error('Discord login error:', result.error)
@@ -167,7 +168,7 @@ const LoginPage = () => {
         try {
             if (activeTab === 0) {
                 // Login
-                const result = await signIn(formData.email, formData.password)
+                const result = await dispatch(signIn({ email: formData.email, password: formData.password }))
 
                 if (result.error) {
                     console.error('Login error:', result.error)
@@ -194,7 +195,7 @@ const LoginPage = () => {
                     return
                 }
 
-                const result = await signUp(formData.email, formData.password)
+                const result = await dispatch(signUp({ email: formData.email, password: formData.password, userData: {} }))
 
                 if (result.error) {
                     console.error('Registration error:', result.error)

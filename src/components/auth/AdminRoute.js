@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Box, CircularProgress, Typography, Alert } from '@mui/material'
-import AuthContext from '../../contexts/AuthContext'
+import { useAuth } from '../../store/hooks'
 import { ProfileService } from '../../services/user/profileService'
 
 const AdminRoute = ({ children }) => {
-    const { user, loading } = useContext(AuthContext)
+    const { user, loading } = useAuth()
     const location = useLocation()
     const [profileLoading, setProfileLoading] = useState(true)
     const [isAdmin, setIsAdmin] = useState(false)
@@ -20,7 +20,7 @@ const AdminRoute = ({ children }) => {
 
             try {
                 const { data: profile, error } = await ProfileService.getProfile(user.id)
-                
+
                 if (error) {
                     console.error('Error fetching profile:', error)
                     setProfileError('Failed to verify admin status')

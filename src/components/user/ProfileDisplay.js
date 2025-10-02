@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
     Box,
     Card,
@@ -15,13 +15,21 @@ import {
 import { Person, Email, CalendarToday, Update, Quiz, TrendingUp, Visibility } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import useProfile from '../../hooks/useProfile'
-import AuthContext from '../../contexts/AuthContext'
+import { useAuth, useUser } from '../../store/hooks'
+import {
+    loadUserStatistics
+} from '../../store/slices/userSlice'
 import practiceQuizService from '../quiz/services/practiceQuizService'
 
 const ProfileDisplay = ({ userId = null, showEmail = false, userEmail = null }) => {
     const { profile, loading, error, isOwnProfile } = useProfile(userId)
-    const { user } = useContext(AuthContext)
+    const { user } = useAuth()
     const navigate = useNavigate()
+
+    // Redux state for user statistics
+    const {
+        dispatch
+    } = useUser()
 
     // State for practice quiz history
     const [recentTests, setRecentTests] = useState([])
@@ -46,6 +54,13 @@ const ProfileDisplay = ({ userId = null, showEmail = false, userEmail = null }) 
             loadPracticeQuizHistory()
         }
     }, [isOwnProfile, user?.id, loadPracticeQuizHistory])
+
+    // Load user statistics
+    useEffect(() => {
+        if (user?.id) {
+            dispatch(loadUserStatistics(user.id))
+        }
+    }, [user?.id, dispatch])
 
     const handleViewQuizResults = (test) => {
         // Navigate to quiz results if there's an attempt

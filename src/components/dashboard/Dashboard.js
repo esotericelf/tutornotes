@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import {
     Box,
     Container,
@@ -26,14 +26,15 @@ import {
     TrendingUp,
     Notifications
 } from '@mui/icons-material'
-import AuthContext from '../../contexts/AuthContext'
+import { useAuth } from '../../store/hooks'
+import { signOut } from '../../store/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
 import ProfileDisplay from '../user/ProfileDisplay'
 import useProfile from '../../hooks/useProfile'
 import PracticeQuizBlock from '../quiz/components/PracticeQuizBlock'
 
 const Dashboard = () => {
-    const { user, signOut, loading } = useContext(AuthContext)
+    const { user, loading, dispatch } = useAuth()
     const navigate = useNavigate()
     const { profile } = useProfile()
 
@@ -65,7 +66,7 @@ const Dashboard = () => {
 
     const handleLogout = async () => {
         try {
-            const result = await signOut()
+            const result = await dispatch(signOut())
             if (result.error) {
                 console.error('Logout error:', result.error)
                 // Still navigate to home even if there's an error

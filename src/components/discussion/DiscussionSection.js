@@ -1,31 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { DiscussionService } from '../../services/discussion/discussionService'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth, useDiscussion } from '../../store/hooks'
+import {
+    loadDiscussionsWithUsers,
+    createDiscussion,
+    setNewDiscussionContent,
+    clearNewDiscussion
+} from '../../store/slices/discussionSlice'
 import './DiscussionSection.css'
 
 const DiscussionSection = ({ questionId }) => {
-    const [discussions, setDiscussions] = useState([])
-    const [newComment, setNewComment] = useState('')
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
     const { user } = useAuth()
+    const {
+        currentQuestionDiscussions: discussions,
+        newDiscussion,
+        loading,
+        error,
+        dispatch
+    } = useDiscussion()
 
     const loadDiscussions = useCallback(async () => {
-        try {
-            setLoading(true)
-            const { data, error } = await DiscussionService.getDiscussionsWithUsers(questionId)
-
-            if (error) {
-                setError(error.message)
-            } else {
-                setDiscussions(data || [])
-            }
-        } catch (err) {
-            setError('Failed to load discussions')
-        } finally {
-            setLoading(false)
+        if (questionId) {
+            dispatch(loadDiscussionsWithUsers(questionId))
         }
-    }, [questionId])
+    }, [questionId, dispatch])
 
     // Load discussions when component mounts or questionId changes
     useEffect(() => {
@@ -37,7 +35,7 @@ const DiscussionSection = ({ questionId }) => {
     const handleSubmitComment = async (e) => {
         e.preventDefault()
 
-        if (!newComment.trim() || !user) {
+        if (!newDiscussion.content.trim() || !user) {
             return
         }
 
@@ -45,21 +43,21 @@ const DiscussionSection = ({ questionId }) => {
             const discussionData = {
                 question_id: questionId,
                 user_id: user.id,
-                comment: newComment.trim(),
+                comment: newDiscussion.content.trim(),
                 votes_count: 0
             }
 
-            const { error } = await DiscussionService.createDiscussion(discussionData)
+            const result = await dispatch(createDiscussion(discussionData))
 
-            if (error) {
-                setError(error.message)
+            if (result.error) {
+                dispatch(setError(result.error))
             } else {
-                setNewComment('')
+                dispatch(clearNewDiscussion())
                 // Reload discussions to show the new comment
                 loadDiscussions()
             }
         } catch (err) {
-            setError('Failed to post comment')
+            dispatch(setError('Failed to post comment'))
         }
     }
 
@@ -126,13 +124,13 @@ const DiscussionSection = ({ questionId }) => {
             {user && (
                 <form onSubmit={handleSubmitComment} className="comment-form">
                     <textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
+                        value={newDiscussion.content}
+                        onChange={(e) => dispatch(setNewDiscussionContent(e.target.value))}
                         placeholder="Add a comment..."
                         rows="3"
                         required
                     />
-                    <button type="submit" disabled={!newComment.trim()}>
+                    <button type="submit" disabled={!newDiscussion.content.trim()}>
                         Post Comment
                     </button>
                 </form>

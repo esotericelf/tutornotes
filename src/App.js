@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
 import { HelmetProvider } from 'react-helmet-async'
-import { AuthProvider } from './contexts/AuthContext'
+import { ReduxProvider } from './store/ReduxProvider'
 import { initializeAnalytics, trackRouteChange } from './utils/analytics'
 import HomePage from './components/home/HomePage'
 import LoginPage from './components/auth/LoginPage'
@@ -187,7 +187,7 @@ function App() {
     <HelmetProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
+        <ReduxProvider>
           <Router>
             <AnalyticsTracker />
             <div className="App">
@@ -245,7 +245,7 @@ function App() {
               </Routes>
             </div>
           </Router>
-        </AuthProvider>
+        </ReduxProvider>
       </ThemeProvider>
     </HelmetProvider>
   )

@@ -3,7 +3,7 @@
  * Handles taking quizzes with randomized questions and answer options
  */
 
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
     Box,
     Container,
@@ -35,24 +35,39 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import AuthContext from '../../../contexts/AuthContext';
-import randomizedQuizService from '../services/randomizedQuizService';
+import { useAuth, useQuiz } from '../../../store/hooks';
+import {
+    initializeQuiz,
+    submitQuiz,
+    setCurrentQuestionIndex,
+    nextQuestion,
+    previousQuestion,
+    setAnswer,
+    setTimeRemaining,
+    setIsSubmitting,
+    setError,
+    clearError
+} from '../../../store/slices/quizSlice';
 
 const QuizTaker = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
     // Get test data from navigation state
     const { test, isPractice = false } = location.state || {};
 
-    // State management
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState({});
-    const [timeRemaining, setTimeRemaining] = useState(30 * 60); // 30 minutes in seconds
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState(null);
-    const [quizStarted, setQuizStarted] = useState(false);
+    // Redux state and dispatch
+    const {
+        currentTest,
+        currentQuestionIndex,
+        answers,
+        timeRemaining,
+        isSubmitting,
+        error,
+        quizStarted,
+        dispatch
+    } = useQuiz();
 
     // Initialize quiz
     useEffect(() => {
@@ -61,75 +76,43 @@ const QuizTaker = () => {
             return;
         }
 
-        setQuizStarted(true);
-        // Initialize answers object
-        const initialAnswers = {};
-        test.questions.forEach((question, index) => {
-            initialAnswers[index] = null;
-        });
-        setAnswers(initialAnswers);
-    }, [test, navigate]);
+        // Initialize quiz with Redux
+        dispatch(initializeQuiz({ ...test, isPractice }));
+    }, [test, isPractice, navigate, dispatch]);
 
     const handleSubmitQuiz = useCallback(async () => {
         if (isSubmitting) return;
 
         try {
-            setIsSubmitting(true);
-            setError(null);
+            dispatch(setIsSubmitting(true));
+            dispatch(clearError());
 
-            // Calculate score
-            let correctAnswers = 0;
-            const quizAnswers = [];
+            // Submit quiz using Redux action
+            const result = await dispatch(submitQuiz({
+                test: currentTest,
+                answers,
+                userId: user.id,
+                timeRemaining
+            }));
 
-            test.questions.forEach((question, index) => {
-                const userAnswer = answers[index];
-                const isCorrect = userAnswer === question.correct_answer;
-
-                if (isCorrect) {
-                    correctAnswers++;
-                }
-
-                quizAnswers.push({
-                    question_id: question.id,
-                    selected_answer: userAnswer,
-                    is_correct: isCorrect
-                });
-            });
-
-            const percentage = Math.round((correctAnswers / test.questions.length) * 100);
-
-            // Create attempt data
-            const attemptData = {
-                user_id: user?.id,
-                quiz_id: test.id,
-                score: correctAnswers,
-                max_score: test.questions.length,
-                percentage: percentage,
-                time_taken_seconds: (30 * 60) - timeRemaining,
-                answers: quizAnswers,
-                completed_at: new Date().toISOString(),
-                is_completed: true
-            };
-
-            // Submit attempt
-            if (user) {
-                await randomizedQuizService.submitQuizAttempt(attemptData, test.questions);
+            if (result.error) {
+                dispatch(setError(result.error));
+                return;
             }
 
             // Navigate to results
             navigate('/quiz/results', {
                 state: {
-                    test,
-                    attemptData,
+                    test: currentTest,
                     isPractice
                 }
             });
 
         } catch (err) {
-            setError(err.message || 'Failed to submit quiz');
+            dispatch(setError(err.message || 'Failed to submit quiz'));
             console.error('Error submitting quiz:', err);
         } finally {
-            setIsSubmitting(false);
+            dispatch(setIsSubmitting(false));
         }
     }, [isSubmitting, test, answers, timeRemaining, user, navigate, isPractice]);
 
@@ -138,17 +121,14 @@ const QuizTaker = () => {
         if (!quizStarted || timeRemaining <= 0) return;
 
         const timer = setInterval(() => {
-            setTimeRemaining(prev => {
-                if (prev <= 1) {
-                    handleSubmitQuiz();
-                    return 0;
-                }
-                return prev - 1;
-            });
+            dispatch(setTimeRemaining(timeRemaining - 1));
+            if (timeRemaining <= 1) {
+                handleSubmitQuiz();
+            }
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [quizStarted, timeRemaining, handleSubmitQuiz]);
+    }, [quizStarted, timeRemaining, handleSubmitQuiz, dispatch]);
 
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
@@ -157,27 +137,24 @@ const QuizTaker = () => {
     };
 
     const handleAnswerChange = (questionIndex, answer) => {
-        setAnswers(prev => ({
-            ...prev,
-            [questionIndex]: answer
-        }));
+        dispatch(setAnswer({ questionIndex, answer }));
     };
 
     const handleNextQuestion = () => {
-        if (currentQuestionIndex < test.questions.length - 1) {
-            setCurrentQuestionIndex(prev => prev + 1);
+        if (currentQuestionIndex < currentTest?.questions.length - 1) {
+            dispatch(nextQuestion());
         }
     };
 
     const handlePreviousQuestion = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev - 1);
+            dispatch(previousQuestion());
         }
     };
 
 
     const getProgress = () => {
-        return ((currentQuestionIndex + 1) / test.questions.length) * 100;
+        return ((currentQuestionIndex + 1) / (currentTest?.questions.length || 1)) * 100;
     };
 
     const getAnsweredCount = () => {
@@ -191,7 +168,7 @@ const QuizTaker = () => {
         try {
             // First, split by newlines to handle line breaks
             const lines = text.split('\n');
-            
+
             return lines.map((line, lineIndex) => {
                 // Split each line by LaTeX delimiters
                 const parts = line.split(/(\$[^$]+\$)/);
@@ -235,7 +212,7 @@ const QuizTaker = () => {
         );
     }
 
-    const currentQuestion = test.questions[currentQuestionIndex];
+    const currentQuestion = currentTest?.questions[currentQuestionIndex];
 
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
@@ -277,14 +254,14 @@ const QuizTaker = () => {
                                 whiteSpace: 'nowrap'
                             }}
                         >
-                            {test.title}
+                            {currentTest?.title}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="text.secondary"
                             sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                         >
-                            Question {currentQuestionIndex + 1} of {test.questions.length}
+                            Question {currentQuestionIndex + 1} of {currentTest?.questions.length}
                         </Typography>
                     </Box>
                     <Box sx={{
@@ -308,7 +285,7 @@ const QuizTaker = () => {
                             }}
                         />
                         <Chip
-                            label={`${getAnsweredCount()}/${test.questions.length} answered`}
+                            label={`${getAnsweredCount()}/${currentTest?.questions.length} answered`}
                             color="info"
                             variant="outlined"
                             size="small"
@@ -421,12 +398,12 @@ const QuizTaker = () => {
                         overflowX: { xs: 'auto', sm: 'visible' },
                         pb: { xs: 1, sm: 0 }
                     }}>
-                        {test.questions.map((_, index) => (
+                        {currentTest?.questions.map((_, index) => (
                             <Button
                                 key={index}
                                 variant={index === currentQuestionIndex ? 'contained' : 'outlined'}
                                 size="small"
-                                onClick={() => setCurrentQuestionIndex(index)}
+                                onClick={() => dispatch(setCurrentQuestionIndex(index))}
                                 sx={{
                                     minWidth: { xs: 32, sm: 40 },
                                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
@@ -438,7 +415,7 @@ const QuizTaker = () => {
                         ))}
                     </Box>
 
-                    {currentQuestionIndex === test.questions.length - 1 ? (
+                    {currentQuestionIndex === (currentTest?.questions.length || 0) - 1 ? (
                         <Button
                             variant="contained"
                             endIcon={isSubmitting ? <CircularProgress size={20} /> : <CheckCircle />}
@@ -482,7 +459,7 @@ const QuizTaker = () => {
                                 Answered
                             </Typography>
                             <Typography variant="h6">
-                                {getAnsweredCount()}/{test.questions.length}
+                                {getAnsweredCount()}/{currentTest?.questions.length}
                             </Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import {
     Box,
     Container,
@@ -22,18 +22,19 @@ import {
     Logout,
     PlayCircleOutline
 } from '@mui/icons-material'
-import AuthContext from '../../contexts/AuthContext'
+import { useAuth } from '../../store/hooks'
+import { signOut } from '../../store/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
 import SEOHead from '../common/SEOHead'
 import { createWebsiteStructuredData, createOrganizationStructuredData } from '../../utils/structuredData'
 
 const HomePage = () => {
-    const { user, signOut } = useContext(AuthContext)
+    const { user, dispatch } = useAuth()
     const navigate = useNavigate()
 
     const handleLogout = async () => {
         try {
-            const result = await signOut()
+            const result = await dispatch(signOut())
             if (result.error) {
                 console.error('Logout error:', result.error)
             }
