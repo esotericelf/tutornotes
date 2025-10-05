@@ -28,14 +28,7 @@ export { default as TagCacheService } from './tagCacheService';
 export { default as TagValidationService } from './tagValidationService';
 export { default as TagErrorHandler } from './tagErrorHandler';
 
-// Legacy Services (deprecated - use unified services instead)
-export { default as TagService } from './tagService';
-export { default as EnhancedTagService } from './enhancedTagService';
-export { default as TagAnalyticsService } from './tagAnalyticsService';
-export { default as URLTagService } from './urlTagService';
-export { default as QuestionNavigationService } from './questionNavigationService';
-export { default as QuestionLoaderService } from './questionLoaderService';
-export { default as QuestionURLService } from './questionUrlService';
+// Specialized Services (for specific use cases)
 export { default as PaginatedSearchService } from './paginatedSearchService';
 
 /**

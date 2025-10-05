@@ -111,10 +111,12 @@ const MathPaperPage = () => {
         setComponentMounted(true);
         // Scroll to top on component mount
         window.scrollTo(0, 0);
+        // Reset search input on component mount to prevent autocomplete from retaining previous values
+        dispatch(setSearchInput(''));
         return () => {
             setComponentMounted(false);
         };
-    }, []);
+    }, [dispatch]);
 
 
     // Convert question tags array to the format expected by the UI
@@ -458,6 +460,8 @@ const MathPaperPage = () => {
             if (urlTags) {
                 const tagsArray = urlTags.split(',').filter(tag => tag.trim());
                 dispatch(setSearchTags(tagsArray));
+                // Clear search input when loading from URL to prevent autocomplete from showing the tag value
+                dispatch(setSearchInput(''));
                 // Automatically trigger tag search if tags are in URL
                 if (tagsArray.length > 0) {
                     console.log('🔄 Triggering tag search from URL:', tagsArray);
@@ -469,6 +473,7 @@ const MathPaperPage = () => {
                 if (!hasActiveFilters) {
                     console.log('🧹 Clearing search state - no URL parameters and no active filters');
                     dispatch(setSearchTags([]));
+                    dispatch(setSearchInput(''));
                     dispatch(setQuestions([]));
                     dispatch(setSelectedQuestion(null));
                     dispatch(clearError());
@@ -961,9 +966,8 @@ const MathPaperPage = () => {
         dispatch(setLoading(false));
         dispatch(setIsTagSearchActive(false));
 
-        // Clear tag-related state (but keep popular tags as they should persist)
-        dispatch(setAvailableTags([]));
-        // Note: Popular tags should not be cleared as they're a permanent feature
+        // Clear tag-related state (but keep available tags and popular tags as they should persist)
+        // Note: Available tags and popular tags should not be cleared as they're permanent features
 
         // Clear navigation state
         dispatch(setCameFromTagSearch(false));
@@ -1232,6 +1236,7 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Autocomplete
+                                    key={`${searchTags.join(',')}-${searchInput}`} // Force remount when search state changes
                                     options={availableTags}
                                     value={searchTags.length > 0 ? searchTags[0] : null}
                                     onChange={(event, newValue) => {
@@ -1243,6 +1248,7 @@ const MathPaperPage = () => {
                                         } else {
                                             console.log('🔄 Clearing tags');
                                             dispatch(setSearchTags([]));
+                                            dispatch(setSearchInput(''));
                                         }
 
                                         // Clear dropdown filters when using tags
@@ -1266,11 +1272,14 @@ const MathPaperPage = () => {
                                             sx={{ minWidth: '200px' }}
                                         />
                                     )}
-                                    renderOption={(props, option) => (
-                                        <Box component="li" {...props}>
-                                            {option}
-                                        </Box>
-                                    )}
+                                    renderOption={(props, option) => {
+                                        const { key, ...otherProps } = props;
+                                        return (
+                                            <Box component="li" key={key} {...otherProps}>
+                                                {option}
+                                            </Box>
+                                        );
+                                    }}
                                     freeSolo={false}
                                     filterOptions={(options, params) => {
                                         const filtered = options.filter(option =>

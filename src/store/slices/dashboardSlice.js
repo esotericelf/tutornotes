@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import DashboardService from '../../services/dashboard/dashboardService'
-import SimpleDashboardService from '../../services/dashboard/simpleDashboardService'
+import UnifiedDashboardService from '../../services/dashboard/UnifiedDashboardService'
 
 // Helper function to add timeout to async operations
 const withTimeout = (promise, timeoutMs = 10000) => {
@@ -71,14 +70,8 @@ export const loadUserStatistics = createAsyncThunk(
         try {
             console.log('🔄 Loading user statistics for:', userId)
 
-            // Try the main service first with timeout
-            let result = await withTimeout(DashboardService.getUserStatistics(userId), 8000)
-
-            // If it fails, use the simple service as fallback
-            if (result.error) {
-                console.log('⚠️ Main service failed, using simple service fallback')
-                result = await withTimeout(SimpleDashboardService.getUserStatistics(userId), 5000)
-            }
+            // Use unified service with timeout
+            const result = await withTimeout(UnifiedDashboardService.getUserStatistics(userId), 8000)
 
             if (result.error) {
                 return rejectWithValue(result.error.message)
@@ -88,16 +81,7 @@ export const loadUserStatistics = createAsyncThunk(
             return result.data
         } catch (error) {
             console.error('❌ Error loading user statistics:', error)
-            // If everything fails, return fallback data
-            try {
-                const fallbackResult = await SimpleDashboardService.getUserStatistics(userId)
-                if (!fallbackResult.error) {
-                    console.log('✅ Using fallback data for user statistics')
-                    return fallbackResult.data
-                }
-            } catch (fallbackError) {
-                console.error('❌ Even fallback failed:', fallbackError)
-            }
+            // Unified service handles fallback internally
             return rejectWithValue(error.message)
         }
     }
@@ -107,7 +91,7 @@ export const loadDashboardData = createAsyncThunk(
     'dashboard/loadDashboardData',
     async (userId, { rejectWithValue }) => {
         try {
-            const result = await DashboardService.getDashboardData(userId)
+            const result = await UnifiedDashboardService.getDashboardData(userId)
             if (result.error) {
                 return rejectWithValue(result.error.message)
             }
@@ -124,14 +108,8 @@ export const loadQuickStats = createAsyncThunk(
         try {
             console.log('🔄 Loading quick stats for:', userId)
 
-            // Try the main service first
-            let result = await DashboardService.getQuickStats(userId)
-
-            // If it fails, use the simple service as fallback
-            if (result.error) {
-                console.log('⚠️ Main service failed, using simple service fallback')
-                result = await SimpleDashboardService.getQuickStats(userId)
-            }
+            // Use unified service
+            const result = await UnifiedDashboardService.getQuickStats(userId)
 
             if (result.error) {
                 return rejectWithValue(result.error.message)
@@ -152,14 +130,8 @@ export const loadRecentActivity = createAsyncThunk(
         try {
             console.log('🔄 Loading recent activity for:', userId)
 
-            // Try the main service first
-            let result = await DashboardService.getRecentActivity(userId)
-
-            // If it fails, use the simple service as fallback
-            if (result.error) {
-                console.log('⚠️ Main service failed, using simple service fallback')
-                result = await SimpleDashboardService.getRecentActivity(userId)
-            }
+            // Use unified service
+            const result = await UnifiedDashboardService.getRecentActivity(userId)
 
             if (result.error) {
                 return rejectWithValue(result.error.message)
@@ -180,14 +152,8 @@ export const loadPopularTags = createAsyncThunk(
         try {
             console.log('🔄 Loading popular tags, limit:', limit)
 
-            // Try the main service first
-            let result = await DashboardService.getPopularTags(limit)
-
-            // If it fails, use the simple service as fallback
-            if (result.error) {
-                console.log('⚠️ Main service failed, using simple service fallback')
-                result = await SimpleDashboardService.getPopularTags(limit)
-            }
+            // Use unified service
+            const result = await UnifiedDashboardService.getPopularTags(limit)
 
             if (result.error) {
                 return rejectWithValue(result.error.message)
@@ -206,7 +172,7 @@ export const loadRecommendedPapers = createAsyncThunk(
     'dashboard/loadRecommendedPapers',
     async (userId, { rejectWithValue }) => {
         try {
-            const result = await DashboardService.getRecommendedPapers(userId)
+            const result = await UnifiedDashboardService.getRecommendedPapers(userId)
             if (result.error) {
                 return rejectWithValue(result.error.message)
             }
@@ -221,7 +187,7 @@ export const updateUserProgress = createAsyncThunk(
     'dashboard/updateUserProgress',
     async ({ userId, progressData }, { rejectWithValue }) => {
         try {
-            const result = await DashboardService.updateUserProgress(userId, progressData)
+            const result = await UnifiedDashboardService.updateUserProgress(userId, progressData)
             if (result.error) {
                 return rejectWithValue(result.error.message)
             }
@@ -238,11 +204,11 @@ export const refreshDashboard = createAsyncThunk(
         try {
             // Load all dashboard data in parallel
             const results = await Promise.allSettled([
-                DashboardService.getUserStatistics(userId),
-                DashboardService.getQuickStats(userId),
-                DashboardService.getRecentActivity(userId),
-                DashboardService.getPopularTags(10),
-                DashboardService.getRecommendedPapers(userId)
+                UnifiedDashboardService.getUserStatistics(userId),
+                UnifiedDashboardService.getQuickStats(userId),
+                UnifiedDashboardService.getRecentActivity(userId),
+                UnifiedDashboardService.getPopularTags(10),
+                UnifiedDashboardService.getRecommendedPapers(userId)
             ])
 
             const [userStats, quickStats, recentActivity, popularTags, recommendedPapers] = results

@@ -278,19 +278,6 @@ const Dashboard = () => {
                     </Alert>
                 )}
 
-                {/* Debug Info (only in development) */}
-                {process.env.NODE_ENV === 'development' && (
-                    <Alert severity="info" sx={{ mb: 3 }}>
-                        <Typography variant="body2">
-                            <strong>Debug Info:</strong><br />
-                            User ID: {user?.id || 'Not available'}<br />
-                            Stats Loading: {statsLoading.anyLoading ? 'Yes' : 'No'}<br />
-                            Activity Loading: {activityLoading.anyLoading ? 'Yes' : 'No'}<br />
-                            Stats Errors: {statsErrors.anyError ? 'Yes' : 'No'}<br />
-                            Activity Errors: {activityErrors.anyError ? 'Yes' : 'No'}
-                        </Typography>
-                    </Alert>
-                )}
 
                 {/* Quick Stats */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>

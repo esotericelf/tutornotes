@@ -94,16 +94,15 @@ export const signOut = createAsyncThunk(
             const { error } = await AuthService.signOut()
             console.log('🚪 Auth slice: signOut result:', { error })
 
-            if (error) {
-                console.error('🚪 Auth slice: signOut error:', error)
-                return rejectWithValue(error.message)
-            }
-
+            // Always return success for signOut to ensure local state is cleared
+            // The AuthService handles timeouts and errors gracefully
             console.log('🚪 Auth slice: signOut successful')
             return null
         } catch (error) {
             console.error('🚪 Auth slice: signOut exception:', error)
-            return rejectWithValue(error.message)
+            // Even if there's an exception, we should clear local state
+            console.log('🚪 Auth slice: Clearing local state despite error')
+            return null
         }
     }
 )

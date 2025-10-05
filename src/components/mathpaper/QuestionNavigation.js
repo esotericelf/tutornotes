@@ -13,8 +13,7 @@ import {
     LastPage
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import QuestionNavigationService from '../../services/mathpaper/questionNavigationService';
-import QuestionURLService from '../../services/mathpaper/questionUrlService';
+import { UnifiedQuestionService } from '../../services/mathpaper';
 
 const QuestionNavigation = ({ currentQuestion, onQuestionChange }) => {
     const navigate = useNavigate();
@@ -35,7 +34,7 @@ const QuestionNavigation = ({ currentQuestion, onQuestionChange }) => {
         setError('');
 
         try {
-            const result = await QuestionNavigationService.getAllNavigationInfo(
+            const result = await UnifiedQuestionService.getAllNavigationInfo(
                 currentQuestion.year,
                 currentQuestion.paper,
                 currentQuestion.question_no
@@ -57,7 +56,7 @@ const QuestionNavigation = ({ currentQuestion, onQuestionChange }) => {
     const handleNavigation = (question) => {
         if (!question) return;
 
-        const questionURL = QuestionURLService.generateQuestionURL(
+        const questionURL = UnifiedQuestionService.generateQuestionURL(
             question.year,
             question.paper,
             question.question_no
