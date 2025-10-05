@@ -116,6 +116,7 @@ const MathPaperPage = () => {
         };
     }, []);
 
+
     // Convert question tags array to the format expected by the UI
     const getQuestionTagsFromData = useCallback((question) => {
         if (!question || !question.tags || !Array.isArray(question.tags)) {
@@ -175,6 +176,7 @@ const MathPaperPage = () => {
                 urlTagsArray = urlTags.split(',').filter(tag => tag.trim());
                 urlPageNum = urlPage ? parseInt(urlPage, 10) : 1;
                 console.log('🔍 Found navigation state in URL parameters:', { tags: urlTagsArray, page: urlPageNum });
+            } else {
             }
 
             // Also check sessionStorage for navigation state
@@ -203,15 +205,15 @@ const MathPaperPage = () => {
 
             if (isFromTagSearchURL) {
                 // Use URL parameters data (most reliable)
-                setOriginalSearchTags(urlTagsArray);
-                setOriginalSearchPage(urlPageNum);
-                setCameFromTagSearch(true);
+                dispatch(setOriginalSearchTags(urlTagsArray));
+                dispatch(setOriginalSearchPage(urlPageNum));
+                dispatch(setCameFromTagSearch(true));
                 console.log('✅ Set navigation state from URL parameters:', { tags: urlTagsArray, page: urlPageNum });
             } else if (isFromTagSearchStorage) {
                 // Use sessionStorage data (fallback)
-                setOriginalSearchTags(storedTags);
-                setOriginalSearchPage(storedPage);
-                setCameFromTagSearch(true);
+                dispatch(setOriginalSearchTags(storedTags));
+                dispatch(setOriginalSearchPage(storedPage));
+                dispatch(setCameFromTagSearch(true));
                 console.log('✅ Set navigation state from sessionStorage:', { tags: storedTags, page: storedPage });
             } else if (isFromTagSearchReferrer) {
                 // Fallback to referrer parsing
@@ -223,9 +225,9 @@ const MathPaperPage = () => {
 
                     if (tagsParam) {
                         const tagsArray = tagsParam.split(',').filter(tag => tag.trim());
-                        setOriginalSearchTags(tagsArray);
-                        setOriginalSearchPage(pageParam ? parseInt(pageParam, 10) : 1);
-                        setCameFromTagSearch(true);
+                        dispatch(setOriginalSearchTags(tagsArray));
+                        dispatch(setOriginalSearchPage(pageParam ? parseInt(pageParam, 10) : 1));
+                        dispatch(setCameFromTagSearch(true));
                         console.log('✅ Set navigation state from referrer:', { tags: tagsArray, page: pageParam });
                     }
                 } catch (err) {
@@ -234,9 +236,9 @@ const MathPaperPage = () => {
             } else {
                 // Reset navigation state if not from tag search
                 console.log('🔍 No tag search navigation state found. Referrer:', referrer, 'SessionStorage:', storedNavState, 'URL params:', { fromTagSearch: urlFromTagSearch, tags: urlTags, page: urlPage });
-                setCameFromTagSearch(false);
-                setOriginalSearchTags([]);
-                setOriginalSearchPage(1);
+                dispatch(setCameFromTagSearch(false));
+                dispatch(setOriginalSearchTags([]));
+                dispatch(setOriginalSearchPage(1));
             }
 
             const result = await UnifiedQuestionService.loadQuestion(year, paper, questionNo);
@@ -497,7 +499,7 @@ const MathPaperPage = () => {
             if (originalSearchPage > 1) {
                 params.set('page', originalSearchPage.toString());
             }
-            const backURL = `/DSE_Math?${params.toString()}`;
+            const backURL = `/mathpaper?${params.toString()}`;
             navigate(backURL);
         }
     }, [cameFromTagSearch, originalSearchTags, originalSearchPage, navigate]);
@@ -915,20 +917,6 @@ const MathPaperPage = () => {
         handleTagSearch(newTags);
     };
 
-    // Handle tag selection from autocomplete
-    const handleTagSelection = (newTags) => {
-        setSearchTags(newTags);
-
-        // Clear dropdown filters when using tags
-        setSelectedYear('');
-        setSelectedPaper('');
-        dispatch(setSelectedQuestionNo(''));
-
-        // Reset pagination when tags change
-        setCurrentPage(1);
-        // Don't update URL here - let the Search button handle it
-        // This prevents double loading when user selects tags
-    };
 
     // Test function to verify popular tags flow
     const testPopularTagsFlow = async () => {
@@ -1244,12 +1232,30 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Autocomplete
-                                    multiple
                                     options={availableTags}
-                                    value={searchTags}
-                                    onChange={(event, newValue) => handleTagSelection(newValue)}
+                                    value={searchTags.length > 0 ? searchTags[0] : null}
+                                    onChange={(event, newValue) => {
+                                        console.log('🔄 Autocomplete onChange - event:', event, 'newValue:', newValue);
+                                        if (newValue) {
+                                            console.log('🔄 Setting tag:', newValue);
+                                            dispatch(setSearchTags([newValue]));
+                                            dispatch(setSearchInput(''));
+                                        } else {
+                                            console.log('🔄 Clearing tags');
+                                            dispatch(setSearchTags([]));
+                                        }
+
+                                        // Clear dropdown filters when using tags
+                                        setSelectedYear('');
+                                        setSelectedPaper('');
+                                        dispatch(setSelectedQuestionNo(''));
+                                        setCurrentPage(1);
+                                    }}
                                     inputValue={searchInput}
-                                    onInputChange={(event, newInputValue) => dispatch(setSearchInput(newInputValue))}
+                                    onInputChange={(event, newInputValue, reason) => {
+                                        console.log('🔄 Autocomplete onInputChange:', newInputValue, 'reason:', reason);
+                                        dispatch(setSearchInput(newInputValue));
+                                    }}
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
@@ -1260,22 +1266,12 @@ const MathPaperPage = () => {
                                             sx={{ minWidth: '200px' }}
                                         />
                                     )}
-                                    renderTags={(value, getTagProps) =>
-                                        value.map((option, index) => {
-                                            const { key, ...tagProps } = getTagProps({ index });
-                                            return (
-                                                <Chip
-                                                    key={key}
-                                                    label={option}
-                                                    {...tagProps}
-                                                    color="primary"
-                                                    variant="outlined"
-                                                    size="small"
-                                                />
-                                            );
-                                        })
-                                    }
-                                    freeSolo
+                                    renderOption={(props, option) => (
+                                        <Box component="li" {...props}>
+                                            {option}
+                                        </Box>
+                                    )}
+                                    freeSolo={false}
                                     filterOptions={(options, params) => {
                                         const filtered = options.filter(option =>
                                             option.toLowerCase().includes(params.inputValue.toLowerCase())
@@ -1564,29 +1560,7 @@ const MathPaperPage = () => {
                     {/* Question Display Section */}
                     {selectedQuestion && (
                         <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
-                            {/* Show back button if multiple questions OR if came from tag search */}
-                            {(() => {
-                                console.log('🔍 Back button condition check:', {
-                                    questionsLength: questions.length,
-                                    cameFromTagSearch,
-                                    originalSearchTags,
-                                    shouldShow: questions.length > 1 || cameFromTagSearch
-                                });
-                                return questions.length > 1 || cameFromTagSearch;
-                            })() && (
-                                    <Box sx={{ mb: 3 }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<ArrowBack />}
-                                            onClick={cameFromTagSearch ? handleBackToTagSearch : () => dispatch(setSelectedQuestion(null))}
-                                        >
-                                            {cameFromTagSearch
-                                                ? `Back to Tag Search (${originalSearchTags.join(', ')})`
-                                                : `Back to Results (${questions.length} questions)`
-                                            }
-                                        </Button>
-                                    </Box>
-                                )}
+                            {/* Back button removed as requested */}
 
 
                             <QuestionDisplay
