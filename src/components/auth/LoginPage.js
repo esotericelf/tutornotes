@@ -254,36 +254,6 @@ const LoginPage = () => {
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
             <Container maxWidth="sm">
-                {/* Navigation */}
-                <AppBar position="static" sx={{ mb: 3, borderRadius: 2 }}>
-                    <Toolbar>
-                        <IconButton
-                            edge="start"
-                            color="inherit"
-                            component={RouterLink}
-                            to="/"
-                            sx={{ mr: 2 }}
-                        >
-                            <ArrowBack />
-                        </IconButton>
-                        <Breadcrumbs aria-label="breadcrumb" sx={{ color: 'white' }}>
-                            <Link
-                                component={RouterLink}
-                                to="/"
-                                color="inherit"
-                                underline="hover"
-                                sx={{ display: 'flex', alignItems: 'center' }}
-                            >
-                                <Home sx={{ mr: 0.5 }} />
-                                Home
-                            </Link>
-                            <Typography color="inherit" sx={{ display: 'flex', alignItems: 'center' }}>
-                                <School sx={{ mr: 0.5 }} />
-                                {activeTab === 0 ? 'Login' : 'Register'}
-                            </Typography>
-                        </Breadcrumbs>
-                    </Toolbar>
-                </AppBar>
 
                 {/* Main Content */}
                 <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>

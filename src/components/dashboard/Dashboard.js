@@ -200,50 +200,6 @@ const Dashboard = () => {
 
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
-            {/* Navigation Bar */}
-            <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white', borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Toolbar>
-                    <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                        <School sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
-                        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-                            Tutor Notes
-                        </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <IconButton color="primary">
-                            <Notifications />
-                        </IconButton>
-                        <Avatar
-                            src={profile?.avatar_url}
-                            alt={profile?.full_name || user?.email || 'User'}
-                            sx={{
-                                bgcolor: profile?.avatar_url ? 'transparent' : 'primary.main',
-                                width: 40,
-                                height: 40
-                            }}
-                        >
-                            {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() :
-                                user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                        </Avatar>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            <Typography variant="body2" color="text.secondary">
-                                Welcome back,
-                            </Typography>
-                            <Typography variant="body1" fontWeight="500">
-                                {profile?.full_name || user?.email || 'User'}
-                            </Typography>
-                        </Box>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Logout />}
-                            onClick={handleLogout}
-                            sx={{ ml: 2 }}
-                        >
-                            Logout
-                        </Button>
-                    </Box>
-                </Toolbar>
-            </AppBar>
 
             {/* Main Content */}
             <Container maxWidth="lg" sx={{ py: 4 }}>

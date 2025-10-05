@@ -15,6 +15,7 @@ import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
 import { QuizTaker, QuizResults } from './components/quiz'
 import TopicTagsDebug from './components/debug/TopicTagsDebug'
 import ChangelogPage from './components/common/ChangelogPage'
+import Layout from './components/common/Layout'
 
 import './App.css'
 
@@ -191,58 +192,60 @@ function App() {
           <Router>
             <AnalyticsTracker />
             <div className="App">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/changelog" element={<ChangelogPage />} />
-                <Route path="/DSE_Math/:year/:paper/:questionNo" element={<MathPaperPage />} />
-                <Route path="/DSE_Math" element={<MathPaperPage />} />
-                <Route
-                  path="/question-demo"
-                  element={
-                    <AdminRoute>
-                      <QuestionDisplayDemo />
-                    </AdminRoute>
-                  }
-                />
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/changelog" element={<ChangelogPage />} />
+                  <Route path="/DSE_Math/:year/:paper/:questionNo" element={<MathPaperPage />} />
+                  <Route path="/DSE_Math" element={<MathPaperPage />} />
+                  <Route
+                    path="/question-demo"
+                    element={
+                      <AdminRoute>
+                        <QuestionDisplayDemo />
+                      </AdminRoute>
+                    }
+                  />
 
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* Quiz Routes */}
-                <Route
-                  path="/quiz/take"
-                  element={
-                    <ProtectedRoute>
-                      <QuizTaker />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/quiz/results"
-                  element={
-                    <ProtectedRoute>
-                      <QuizResults />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* Quiz Routes */}
+                  <Route
+                    path="/quiz/take"
+                    element={
+                      <ProtectedRoute>
+                        <QuizTaker />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/quiz/results"
+                    element={
+                      <ProtectedRoute>
+                        <QuizResults />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* Debug Routes */}
-                <Route
-                  path="/debug/topic-tags"
-                  element={
-                    <ProtectedRoute>
-                      <TopicTagsDebug />
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
+                  {/* Debug Routes */}
+                  <Route
+                    path="/debug/topic-tags"
+                    element={
+                      <ProtectedRoute>
+                        <TopicTagsDebug />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Routes>
+              </Layout>
             </div>
           </Router>
         </ReduxProvider>

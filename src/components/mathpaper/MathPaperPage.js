@@ -1102,16 +1102,6 @@ const MathPaperPage = () => {
                     transition: 'none !important'
                 }
             }}>
-                <AppBar position="static" elevation={0} sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid', borderColor: '#dee2e6' }}>
-                    <Toolbar>
-                        <IconButton edge="start" color="primary" onClick={() => navigate('/')} sx={{ mr: 2 }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                            DSE Math
-                        </Typography>
-                    </Toolbar>
-                </AppBar>
 
                 <Container maxWidth="lg" sx={{ py: 4 }}>
                     {/* Breadcrumb */}
