@@ -5,7 +5,8 @@ import {
     loadDiscussionsWithUsers,
     createDiscussion,
     setNewDiscussionContent,
-    clearNewDiscussion
+    clearNewDiscussion,
+    setError
 } from '../../store/slices/discussionSlice'
 import './DiscussionSection.css'
 
