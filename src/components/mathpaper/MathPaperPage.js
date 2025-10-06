@@ -120,27 +120,36 @@ const MathPaperPage = () => {
 
     // Convert question tags array to the format expected by the UI
     const getQuestionTagsFromData = useCallback((question) => {
-        if (!question || !question.tags || !Array.isArray(question.tags)) {
+        if (!question) {
+            return [];
+        }
+
+        // Use Chinese tags when in Chinese mode, otherwise use English tags
+        const tagsArray = isChinese() ? question.tags_ch : question.tags;
+
+        if (!tagsArray || !Array.isArray(tagsArray)) {
             return [];
         }
 
         // Convert array of tag strings to objects with topic and tag properties
-        return question.tags.map(tag => ({
+        return tagsArray.map(tag => ({
             topic: 'General', // Default topic since we don't have topic info in the tags array
             tag: tag
         }));
-    }, []);
+    }, [isChinese]);
 
     // Extract unique tags from all questions for autocomplete
     const extractTagsFromQuestions = useCallback((questionsList) => {
         const allTags = new Set();
         questionsList.forEach(question => {
-            if (question.tags && Array.isArray(question.tags)) {
-                question.tags.forEach(tag => allTags.add(tag));
+            // Use Chinese tags when in Chinese mode, otherwise use English tags
+            const tagsArray = isChinese() ? question.tags_ch : question.tags;
+            if (tagsArray && Array.isArray(tagsArray)) {
+                tagsArray.forEach(tag => allTags.add(tag));
             }
         });
         return Array.from(allTags);
-    }, []);
+    }, [isChinese]);
 
     // Load tags for all questions in the current results
     const loadTagsForQuestions = useCallback(async (questionsList) => {
@@ -614,41 +623,54 @@ const MathPaperPage = () => {
     // Load available tags from actual questions in the database
     const loadAvailableTags = useCallback(async () => {
         try {
-            // Get all questions to extract their tags
-            const { data: allQuestions, error } = await supabase
-                .from('Math_Past_Paper')
-                .select('tags')
-                .not('tags', 'is', null);
-
-            if (error) {
-                console.error('Error loading questions for tags:', error);
-                // Fallback to sample tags
-                dispatch(setAvailableTags(getSampleAvailableTags()));
-                return;
-            }
-
-            // Extract all unique tags from questions
-            const allTags = new Set();
-            allQuestions.forEach(question => {
-                if (question.tags && Array.isArray(question.tags)) {
-                    question.tags.forEach(tag => allTags.add(tag));
+            if (isChinese()) {
+                // Use Chinese autocomplete for Chinese mode
+                const { data, error } = await UnifiedTagService.searchChineseTagsAutocomplete('', 100);
+                if (error) {
+                    console.error('Error loading Chinese tags:', error);
+                    dispatch(setAvailableTags(getSampleAvailableTags()));
+                    return;
                 }
-            });
-
-            const uniqueTags = Array.from(allTags).sort();
-
-            if (uniqueTags.length === 0) {
-                // If no tags found, use sample tags for testing
-                dispatch(setAvailableTags(getSampleAvailableTags()));
+                // Convert to simple array format for autocomplete
+                const chineseTags = (data || []).map(tagData => tagData.tag);
+                dispatch(setAvailableTags(chineseTags));
             } else {
-                dispatch(setAvailableTags(uniqueTags));
+                // Get all questions to extract their tags for English mode
+                const { data: allQuestions, error } = await supabase
+                    .from('Math_Past_Paper')
+                    .select('tags')
+                    .not('tags', 'is', null);
+
+                if (error) {
+                    console.error('Error loading questions for tags:', error);
+                    // Fallback to sample tags
+                    dispatch(setAvailableTags(getSampleAvailableTags()));
+                    return;
+                }
+
+                // Extract all unique tags from questions
+                const allTags = new Set();
+                allQuestions.forEach(question => {
+                    if (question.tags && Array.isArray(question.tags)) {
+                        question.tags.forEach(tag => allTags.add(tag));
+                    }
+                });
+
+                const uniqueTags = Array.from(allTags).sort();
+
+                if (uniqueTags.length === 0) {
+                    // If no tags found, use sample tags for testing
+                    dispatch(setAvailableTags(getSampleAvailableTags()));
+                } else {
+                    dispatch(setAvailableTags(uniqueTags));
+                }
             }
         } catch (err) {
             console.error('Error loading tags:', err);
             // For testing, use sample tags
             dispatch(setAvailableTags(getSampleAvailableTags()));
         }
-    }, [getSampleAvailableTags]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dispatch, isChinese, getSampleAvailableTags]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
     // Sample popular tags for testing

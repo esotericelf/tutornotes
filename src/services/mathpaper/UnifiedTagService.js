@@ -251,6 +251,55 @@ class UnifiedTagService extends BaseService {
     }
 
     /**
+     * Search Chinese tags with autocomplete functionality and caching
+     * @param {string} searchTerm - Search term to match against Chinese tags
+     * @param {number} limit - Maximum number of results (default: 20)
+     * @returns {Promise<{data: Array, error: Error|null, fromCache: boolean}>}
+     */
+    static async searchChineseTagsAutocomplete(searchTerm, limit = 20) {
+        try {
+            if (!searchTerm || searchTerm.trim().length === 0) {
+                return { data: [], error: null, fromCache: false };
+            }
+
+            const trimmedTerm = searchTerm.trim();
+
+            // Check cache first
+            const cacheKey = `zh_${trimmedTerm}`;
+            const cached = TagCacheService.getCachedAutocompleteResults(cacheKey);
+            if (cached) {
+                return {
+                    data: cached.slice(0, limit),
+                    error: null,
+                    fromCache: true
+                };
+            }
+
+            // Use Chinese topic tags function
+            const result = await this.executeRPC('get_popular_tags_zh', {
+                limit_count: limit
+            });
+
+            if (result.error) {
+                return { data: null, error: result.error, fromCache: false };
+            }
+
+            // Filter results based on search term
+            const filteredData = result.data.filter(tag =>
+                tag.tag.toLowerCase().includes(trimmedTerm.toLowerCase())
+            );
+
+            // Cache the results
+            TagCacheService.cacheAutocompleteResults(cacheKey, filteredData);
+
+            return { data: filteredData, error: null, fromCache: false };
+        } catch (err) {
+            console.error('Unexpected error searching Chinese tags autocomplete:', err);
+            return { data: null, error: err, fromCache: false };
+        }
+    }
+
+    /**
      * Get math papers by tags with caching
      * @param {Array<string>} tags - Array of tags to search for
      * @param {number} limit - Maximum number of results (default: 100)

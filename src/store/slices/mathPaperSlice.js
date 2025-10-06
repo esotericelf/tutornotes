@@ -90,6 +90,21 @@ export const searchTagsAutocomplete = createAsyncThunk(
     }
 )
 
+export const searchChineseTagsAutocomplete = createAsyncThunk(
+    'mathPaper/searchChineseTagsAutocomplete',
+    async ({ searchTerm, limit = 20 }, { rejectWithValue }) => {
+        try {
+            const { data, error } = await UnifiedTagService.searchChineseTagsAutocomplete(searchTerm, limit)
+            if (error) {
+                return rejectWithValue(error.message)
+            }
+            return data
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
+
 export const getMathPapersByTags = createAsyncThunk(
     'mathPaper/getMathPapersByTags',
     async ({ tags, limit = 100, sortBy = 'year', sortAsc = false }, { rejectWithValue }) => {
@@ -341,6 +356,21 @@ const mathPaperSlice = createSlice({
                 state.error = ''
             })
             .addCase(searchTagsAutocomplete.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
+            })
+
+            // Search Chinese tags autocomplete
+            .addCase(searchChineseTagsAutocomplete.pending, (state) => {
+                state.loading = true
+                state.error = ''
+            })
+            .addCase(searchChineseTagsAutocomplete.fulfilled, (state, action) => {
+                state.availableTags = action.payload
+                state.loading = false
+                state.error = ''
+            })
+            .addCase(searchChineseTagsAutocomplete.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload
             })
