@@ -450,12 +450,15 @@ const MathPaperPage = () => {
             loadSpecificQuestion(questionParams.year, questionParams.paper, questionParams.questionNo);
         } else {
             // Regular tag-based or filter-based search
+            // Clear selectedQuestion since we're not on a direct question URL
+            dispatch(setSelectedQuestion(null));
+
             const urlTags = searchParams.get('tags');
             const urlPage = searchParams.get('page');
 
             // Set pagination from URL (default to page 1 if not specified)
             const pageFromURL = urlPage ? parseInt(urlPage, 10) : 1;
-            setCurrentPage(pageFromURL);
+            dispatch(setCurrentPage(pageFromURL));
 
             if (urlTags) {
                 const tagsArray = urlTags.split(',').filter(tag => tag.trim());
@@ -487,7 +490,7 @@ const MathPaperPage = () => {
         }
         // Scroll to top when URL parameters change
         window.scrollTo(0, 0);
-    }, [searchParams, params, isFilterSearching]); // Added isFilterSearching to dependencies
+    }, [searchParams, params, isFilterSearching, loadSpecificQuestion, handleTagSearchFromURL, dispatch, selectedYear, selectedPaper, selectedQuestionNo]); // Added all dependencies to prevent infinite loops
 
 
 
@@ -495,6 +498,12 @@ const MathPaperPage = () => {
 
     // Handle going back to tag search results
     const handleBackToTagSearch = useCallback(() => {
+        console.log('🔍 handleBackToTagSearch called with state:', {
+            cameFromTagSearch,
+            originalSearchTags,
+            originalSearchPage
+        });
+
         if (cameFromTagSearch && originalSearchTags.length > 0) {
             // Clear the navigation state since we're going back
             sessionStorage.removeItem('tutornotes_navigation_state');
@@ -504,8 +513,14 @@ const MathPaperPage = () => {
             if (originalSearchPage > 1) {
                 params.set('page', originalSearchPage.toString());
             }
-            const backURL = `/mathpaper?${params.toString()}`;
+            const backURL = `/DSE_Math?${params.toString()}`;
+            console.log('🔍 Navigating back to:', backURL);
             navigate(backURL);
+        } else {
+            console.log('🔍 Back navigation conditions not met:', {
+                cameFromTagSearch,
+                originalSearchTagsLength: originalSearchTags.length
+            });
         }
     }, [cameFromTagSearch, originalSearchTags, originalSearchPage, navigate]);
 
@@ -742,7 +757,7 @@ const MathPaperPage = () => {
         setOriginalSearchPage(1);
 
         // Reset to page 1 for new tag search
-        setCurrentPage(1);
+        dispatch(setCurrentPage(1));
         updateURLWithPagination(tags, 1);
 
         setIsTagSearchActive(true);
@@ -879,6 +894,12 @@ const MathPaperPage = () => {
             sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
             console.log('✅ Stored navigation state for question click:', navState);
 
+            // Set Redux state for back navigation
+            dispatch(setCameFromTagSearch(true));
+            dispatch(setOriginalSearchTags(searchTags));
+            dispatch(setOriginalSearchPage(currentPage));
+            console.log('✅ Set Redux navigation state:', { cameFromTagSearch: true, originalSearchTags: searchTags, originalSearchPage: currentPage });
+
             // Also store in URL parameters as a fallback
             const questionURL = generateQuestionURL(question);
             const urlWithNavState = `${questionURL}?fromTagSearch=true&tags=${searchTags.join(',')}&page=${currentPage}`;
@@ -888,7 +909,7 @@ const MathPaperPage = () => {
 
         const questionURL = generateQuestionURL(question);
         navigate(questionURL);
-    }, [navigate, generateQuestionURL, isTagSearchActive, searchTags, currentPage]);
+    }, [navigate, generateQuestionURL, isTagSearchActive, searchTags, currentPage, dispatch]);
 
     // Handle popular tag click - set the tag and update URL
     const handlePopularTagClick = (tag) => {
@@ -992,7 +1013,7 @@ const MathPaperPage = () => {
 
     // Handle page change
     const handlePageChange = useCallback((event, newPage) => {
-        setCurrentPage(newPage);
+        dispatch(setCurrentPage(newPage));
         updateURLWithPagination(searchTags, newPage);
 
         // Re-run the current search with new page
@@ -1245,7 +1266,7 @@ const MathPaperPage = () => {
                                         setSelectedYear('');
                                         setSelectedPaper('');
                                         dispatch(setSelectedQuestionNo(''));
-                                        setCurrentPage(1);
+                                        dispatch(setCurrentPage(1));
                                     }}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue, reason) => {
@@ -1293,7 +1314,7 @@ const MathPaperPage = () => {
                                         console.log('🔍 Search button clicked - searchTags:', searchTags);
 
                                         // Reset pagination for new search
-                                        setCurrentPage(1);
+                                        dispatch(setCurrentPage(1));
 
                                         // If tags are selected, do tag search; otherwise do filter search
                                         if (searchTags.length > 0) {
@@ -1559,8 +1580,38 @@ const MathPaperPage = () => {
                     {/* Question Display Section */}
                     {selectedQuestion && (
                         <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
-                            {/* Back button removed as requested */}
-
+                            {/* Back to Search Results Button */}
+                            {(() => {
+                                console.log('🔍 Back button render check:', {
+                                    cameFromTagSearch,
+                                    originalSearchTags,
+                                    originalSearchTagsLength: originalSearchTags.length
+                                });
+                                return cameFromTagSearch && originalSearchTags.length > 0;
+                            })() && (
+                                    <Box sx={{ mb: 3 }}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<ArrowBack />}
+                                            onClick={handleBackToTagSearch}
+                                            sx={{
+                                                backgroundColor: 'background.paper',
+                                                borderColor: 'primary.main',
+                                                color: 'primary.main',
+                                                '&:hover': {
+                                                    backgroundColor: 'primary.main',
+                                                    color: 'white',
+                                                    borderColor: 'primary.main'
+                                                },
+                                                fontWeight: 'bold',
+                                                px: 3,
+                                                py: 1
+                                            }}
+                                        >
+                                            Back to Search Results
+                                        </Button>
+                                    </Box>
+                                )}
 
                             <QuestionDisplay
                                 question={selectedQuestion}
