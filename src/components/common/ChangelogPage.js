@@ -41,27 +41,33 @@ const ChangelogPage = () => {
     const changelogEntries = [
         {
             version: "v2.1.5",
-            date: "December 2024",
+            date: "January 2025",
             type: "patch",
-            title: "Enhanced Build Stability & Performance",
-            description: "Improved application stability and deployment reliability with cleaner code and better performance",
+            title: "Redux Integration & Build Optimization",
+            description: "Successfully merged Redux state management and resolved all build issues for smooth deployment",
             features: [
                 {
+                    icon: <Code color="primary" />,
+                    title: "Redux State Management",
+                    description: "Integrated Redux Toolkit for centralized state management across the application",
+                    type: "feature"
+                },
+                {
                     icon: <Speed color="primary" />,
-                    title: "Faster Build Process",
-                    description: "Optimized build process for quicker deployment and better development experience",
+                    title: "Build Process Optimization",
+                    description: "Fixed all ESLint warnings and build errors to ensure successful Netlify deployment",
                     type: "improvement"
                 },
                 {
                     icon: <Security color="primary" />,
-                    title: "Enhanced Code Quality",
-                    description: "Cleaned up unused code and improved overall code quality for better maintainability",
+                    title: "Code Quality Improvements",
+                    description: "Cleaned up unused imports and functions for better maintainability and performance",
                     type: "improvement"
                 },
                 {
                     icon: <MobileFriendly color="primary" />,
-                    title: "Better Deployment",
-                    description: "Fixed build warnings to ensure smooth deployment to production environments",
+                    title: "Deployment Ready",
+                    description: "Application now builds successfully without warnings, ready for production deployment",
                     type: "improvement"
                 }
             ]
