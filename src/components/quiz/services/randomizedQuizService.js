@@ -137,7 +137,7 @@ class RandomizedQuizService {
             console.log('🔍 Supabase URL:', process.env.REACT_APP_SUPABASE_URL ? 'Set' : 'Missing');
             console.log('🔍 Supabase Key:', process.env.REACT_APP_SUPABASE_ANON_KEY ? 'Set' : 'Missing');
 
-            const { data: testData, error: testError } = await supabase
+            const { error: testError } = await supabase
                 .from('quiz_attempts')
                 .select('id')
                 .limit(1);

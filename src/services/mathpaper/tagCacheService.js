@@ -113,7 +113,7 @@ class TagCacheService {
         let expiredCount = 0;
         let validCount = 0;
 
-        for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+        for (const [, timestamp] of this.cacheTimestamps.entries()) {
             if (now - timestamp > this.defaultTTL) {
                 expiredCount++;
             } else {

@@ -12,9 +12,6 @@ import {
     Tab,
     InputAdornment,
     IconButton,
-    AppBar,
-    Toolbar,
-    Breadcrumbs,
     Link,
     Divider
 } from '@mui/material'
@@ -24,13 +21,11 @@ import {
     Email,
     Lock,
     School,
-    Home,
-    ArrowBack,
     Google
 } from '@mui/icons-material'
 import { useAuth } from '../../store/hooks'
 import { signIn, signUp, signInWithGoogle, signInWithDiscord } from '../../store/slices/authSlice'
-import { useNavigate, Link as RouterLink } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
 import { trackLogin, trackSignup, trackError } from '../../utils/analytics'
 

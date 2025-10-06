@@ -6,7 +6,6 @@
 
 import { supabase } from '../supabase'
 import UnifiedTagService from '../mathpaper/UnifiedTagService'
-import UnifiedAnalyticsService from '../mathpaper/UnifiedAnalyticsService'
 
 class UnifiedDashboardService {
     /**
@@ -231,7 +230,7 @@ class UnifiedDashboardService {
             console.log('📊 UnifiedDashboardService: Updating user progress')
 
             // Update user statistics in database
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('user_statistics')
                 .upsert({
                     user_id: userId,

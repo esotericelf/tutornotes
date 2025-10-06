@@ -59,7 +59,7 @@ class TagValidationService {
         }
 
         // Check for special characters that might cause issues
-        const specialChars = /[!@#$%^&*()+=\[\]{};':"\\|,.<>?]/;
+        const specialChars = /[!@#$%^&*()+=[\]{};':"\\|,.<>?]/;
         if (specialChars.test(trimmedTag)) {
             warnings.push('Tag contains special characters that might affect search');
         }

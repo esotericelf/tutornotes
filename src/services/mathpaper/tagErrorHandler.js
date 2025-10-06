@@ -83,7 +83,6 @@ class TagErrorHandler {
         }
 
         const message = error.message?.toLowerCase() || '';
-        const name = error.name || '';
 
         // Network/Connection errors
         if (message.includes('network') || message.includes('connection') ||

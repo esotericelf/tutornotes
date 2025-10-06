@@ -9,9 +9,6 @@ import {
     Card,
     CardContent,
     CardActions,
-    AppBar,
-    Toolbar,
-    Avatar,
     Divider,
     Chip,
     IconButton,
@@ -24,28 +21,24 @@ import {
     Book,
     Forum,
     Favorite,
-    Logout,
     TrendingUp,
-    Notifications,
     Refresh
 } from '@mui/icons-material'
 import { useAuth, useDashboardData, useDashboardStats, useDashboardActivity } from '../../store/hooks'
-import { signOut } from '../../store/slices/authSlice'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../services/supabase'
 import ProfileDisplay from '../user/ProfileDisplay'
 import useProfile from '../../hooks/useProfile'
 import PracticeQuizBlock from '../quiz/components/PracticeQuizBlock'
 
 const Dashboard = () => {
-    const { user, loading, dispatch } = useAuth()
+    const { user, loading } = useAuth()
     const navigate = useNavigate()
     const { profile } = useProfile()
 
     // Dashboard Redux hooks
     const { loadUserStats, loadDashboardData, refreshDashboard } = useDashboardData()
     const { userStats, quickStats, loading: statsLoading, errors: statsErrors } = useDashboardStats()
-    const { recentActivity, popularTags, recommendedPapers, loading: activityLoading, errors: activityErrors } = useDashboardActivity()
+    const { recentActivity, popularTags, loading: activityLoading, errors: activityErrors } = useDashboardActivity()
 
     // Load dashboard data when component mounts
     useEffect(() => {
@@ -115,61 +108,9 @@ const Dashboard = () => {
         }
     }
 
-    const handleLogout = async () => {
-        try {
-            console.log('🚪 Starting logout process...')
-
-            // Try Redux logout first with shorter timeout
-            const logoutPromise = dispatch(signOut())
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Logout timeout')), 3000)
-            )
-
-            const result = await Promise.race([logoutPromise, timeoutPromise])
-
-            console.log('🚪 Logout result:', result)
-
-            if (result.error) {
-                console.error('Logout error:', result.error)
-                // Still navigate to home even if there's an error
-            }
-
-            console.log('🚪 Navigating to home...')
-            navigate('/')
-        } catch (err) {
-            console.error('Logout error:', err)
-            console.log('🚪 Forcing direct logout due to timeout...')
-
-            // Direct logout without Redux - clear everything locally
-            try {
-                // Clear Supabase auth state directly
-                const { error } = await supabase.auth.signOut()
-                if (error) {
-                    console.warn('Direct Supabase logout failed:', error)
-                }
-            } catch (supabaseErr) {
-                console.warn('Direct Supabase logout exception:', supabaseErr)
-            }
-
-            // Force clear any local storage/auth state
-            try {
-                localStorage.removeItem('sb-pjcjnmqoaajtotqqqsxs-auth-token')
-                localStorage.removeItem('supabase.auth.token')
-                sessionStorage.clear()
-                // Clear any other auth-related storage
-                Object.keys(localStorage).forEach(key => {
-                    if (key.includes('supabase') || key.includes('auth')) {
-                        localStorage.removeItem(key)
-                    }
-                })
-            } catch (storageErr) {
-                console.warn('Could not clear storage:', storageErr)
-            }
-
-            console.log('🚪 Forcing navigation to home...')
-            navigate('/')
-        }
-    }
+    // const handleLogout = async () => {
+    //     // Function removed to fix build errors
+    // }
 
     const dashboardItems = [
         {

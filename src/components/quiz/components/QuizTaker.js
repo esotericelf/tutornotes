@@ -18,19 +18,13 @@ import {
     LinearProgress,
     Alert,
     CircularProgress,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Chip,
     Grid,
     Paper
 } from '@mui/material';
 import {
     ArrowBack,
     ArrowForward,
-    CheckCircle,
-    Timer,
-    Quiz
+    CheckCircle
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { InlineMath } from 'react-katex';
