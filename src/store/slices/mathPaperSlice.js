@@ -20,6 +20,7 @@ const initialState = {
     error: '',
     questionTags: {},
     popularTags: [],
+    popularTagsChinese: [],
     isTagSearchActive: false,
 
     // Navigation state for back button functionality
@@ -51,6 +52,24 @@ export const loadPopularTags = createAsyncThunk(
             return data
         } catch (error) {
             console.error('🔍 Redux thunk: loadPopularTags error:', error);
+            return rejectWithValue(error.message)
+        }
+    }
+)
+
+export const loadPopularTagsChinese = createAsyncThunk(
+    'mathPaper/loadPopularTagsChinese',
+    async (limit = 15, { rejectWithValue }) => {
+        try {
+            console.log('🔍 Redux thunk: loadPopularTagsChinese called with limit:', limit);
+            const { data, error } = await UnifiedTagService.getPopularTagsChinese(limit)
+            console.log('🔍 Redux thunk: loadPopularTagsChinese result:', { data: data?.length || 0, error });
+            if (error) {
+                return rejectWithValue(error.message)
+            }
+            return data
+        } catch (error) {
+            console.error('🔍 Redux thunk: loadPopularTagsChinese error:', error);
             return rejectWithValue(error.message)
         }
     }
@@ -292,6 +311,21 @@ const mathPaperSlice = createSlice({
                 state.error = ''
             })
             .addCase(loadPopularTags.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
+            })
+
+            // Load popular Chinese tags
+            .addCase(loadPopularTagsChinese.pending, (state) => {
+                state.loading = true
+                state.error = ''
+            })
+            .addCase(loadPopularTagsChinese.fulfilled, (state, action) => {
+                state.popularTagsChinese = action.payload
+                state.loading = false
+                state.error = ''
+            })
+            .addCase(loadPopularTagsChinese.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload
             })

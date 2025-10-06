@@ -36,6 +36,7 @@ import { createCourseStructuredData, createBreadcrumbStructuredData } from '../.
 import { trackMathPaperEvent } from '../../utils/analytics';
 import { UnifiedURLService, UnifiedQuestionService, UnifiedTagService } from '../../services/mathpaper';
 import { useMathPaper } from '../../store/hooks';
+import { useTranslation } from '../../hooks/useTranslation';
 import {
     setSelectedYear,
     setSelectedPaper,
@@ -60,6 +61,7 @@ import {
     setQuestionsCache,
     setTagsCache,
     loadPopularTags as loadPopularTagsThunk,
+    loadPopularTagsChinese as loadPopularTagsChineseThunk,
     loadQuestionsByFilters
 } from '../../store/slices/mathPaperSlice';
 
@@ -68,6 +70,9 @@ const MathPaperPage = () => {
     const [searchParams] = useSearchParams();
     const params = useParams(); // Get URL parameters for direct question access
     const questionDetailsRef = React.useRef(null);
+
+    // Translation hook
+    const { t, isChinese, getCurrentLanguage } = useTranslation();
 
     // Redux state and dispatch
     const {
@@ -83,6 +88,7 @@ const MathPaperPage = () => {
         error,
         questionTags,
         popularTags,
+        popularTagsChinese,
         isTagSearchActive,
         cameFromTagSearch,
         originalSearchTags,
@@ -284,7 +290,7 @@ const MathPaperPage = () => {
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
-        console.log('🔍 handleTagSearchFromURL called with tags:', tags, 'page:', page);
+        console.log('🔍 handleTagSearchFromURL called with tags:', tags, 'page:', page, 'isChinese:', isChinese());
 
         if (tags.length === 0) return;
 
@@ -299,96 +305,158 @@ const MathPaperPage = () => {
         dispatch(clearError());
 
         try {
-            console.log('Searching for tags from URL:', tags, 'Page:', page);
+            console.log('Searching for tags from URL:', tags, 'Page:', page, 'Language:', isChinese() ? 'Chinese' : 'English');
 
-            // Calculate offset for pagination
-            const offset = (page - 1) * pageSize;
+            if (isChinese()) {
+                // Use Chinese tag search with Supabase function
+                console.log('🔍 Using Chinese tag search function for URL');
 
-            // First, get the total count
-            let countQuery = supabase
-                .from('Math_Past_Paper')
-                .select('*', { count: 'exact', head: true });
+                const result = await UnifiedTagService.searchByChineseTagsPaginated(tags, page, pageSize);
 
-            if (tags.length > 0) {
-                countQuery = countQuery.contains('tags', tags);
-            }
-
-            const { count, error: countError } = await countQuery;
-
-            if (countError) {
-                console.error('Error getting count:', countError);
-                dispatch(clearError(`Failed to get results count: ${countError.message}`));
-                return;
-            }
-
-            const totalQuestions = count || 0;
-            dispatch(setTotalQuestions(totalQuestions));
-            setTotalPages(Math.ceil(totalQuestions / pageSize));
-
-            // Now get the paginated data
-            let query = supabase
-                .from('Math_Past_Paper')
-                .select('*')
-                .order('year', { ascending: false })
-                .order('question_no', { ascending: true })
-                .range(offset, offset + pageSize - 1);
-
-            // Add tag filtering (like your reference code)
-            if (tags.length > 0) {
-                query = query.contains('tags', tags);
-            }
-
-            // Add timeout (like your reference code)
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 10000)
-            );
-
-            const { data, error } = await Promise.race([query, timeoutPromise]);
-
-            if (error) {
-                console.error('Error in URL tag search:', error);
-                dispatch(clearError(`Failed to search by tags: ${error.message}`));
-                return;
-            }
-
-            const matchingQuestions = data || [];
-            dispatch(setQuestions(matchingQuestions));
-
-            // Load tags for the matching questions
-            if (matchingQuestions.length > 0) {
-                loadTagsForQuestions(matchingQuestions);
-                // Update available tags from the loaded questions
-                const questionTags = extractTagsFromQuestions(matchingQuestions);
-                if (questionTags.length > 0) {
-                    const currentAvailableTags = availableTags;
-                    const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
-                    dispatch(setAvailableTags(newAvailableTags));
+                if (result.error) {
+                    console.error('Error in Chinese tag search from URL:', result.error);
+                    dispatch(clearError(`Failed to search by Chinese tags: ${result.error.message}`));
+                    return;
                 }
-            }
 
-            if (matchingQuestions.length === 0 && totalQuestions === 0) {
-                dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
-            }
+                const searchResult = result.data;
+                const matchingQuestions = searchResult.questions || [];
+                const totalQuestions = searchResult.total_count || 0;
+                const totalPages = searchResult.total_pages || 0;
 
-            // If exactly one result, navigate directly to the question detail page
-            if (totalQuestions === 1 && matchingQuestions.length === 1) {
-                const question = matchingQuestions[0];
+                dispatch(setQuestions(matchingQuestions));
+                dispatch(setTotalQuestions(totalQuestions));
+                dispatch(setTotalPages(totalPages));
 
-                // Store navigation state for single result navigation
+                // Load tags for the matching questions
+                if (matchingQuestions.length > 0) {
+                    loadTagsForQuestions(matchingQuestions);
+                    // Update available tags from the loaded questions
+                    const questionTags = extractTagsFromQuestions(matchingQuestions);
+                    if (questionTags.length > 0) {
+                        const currentAvailableTags = availableTags;
+                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
+                        dispatch(setAvailableTags(newAvailableTags));
+                    }
+                }
+
+                if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                    dispatch(clearError(`No questions found with Chinese tags: ${tags.join(', ')}`));
+                }
+
+                // If exactly one result, navigate directly to the question detail page
+                if (totalQuestions === 1 && matchingQuestions.length === 1) {
+                    const question = matchingQuestions[0];
+
+                    // Store navigation state for single result navigation
+                    if (tags.length > 0) {
+                        const navState = {
+                            fromTagSearch: true,
+                            tags: tags,
+                            page: page,
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+                        console.log('✅ Stored navigation state for single result navigation:', navState);
+                    }
+
+                    const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                    navigate(questionURL);
+                    return; // Exit early since we're navigating away
+                }
+            } else {
+                // Use English tag search (existing logic)
+                console.log('🔍 Using English tag search for URL');
+
+                // Calculate offset for pagination
+                const offset = (page - 1) * pageSize;
+
+                // First, get the total count
+                let countQuery = supabase
+                    .from('Math_Past_Paper')
+                    .select('*', { count: 'exact', head: true });
+
                 if (tags.length > 0) {
-                    const navState = {
-                        fromTagSearch: true,
-                        tags: tags,
-                        page: page,
-                        timestamp: Date.now()
-                    };
-                    sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-                    console.log('✅ Stored navigation state for single result navigation:', navState);
+                    countQuery = countQuery.contains('tags', tags);
                 }
 
-                const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
-                navigate(questionURL);
-                return; // Exit early since we're navigating away
+                const { count, error: countError } = await countQuery;
+
+                if (countError) {
+                    console.error('Error getting count:', countError);
+                    dispatch(clearError(`Failed to get results count: ${countError.message}`));
+                    return;
+                }
+
+                const totalQuestions = count || 0;
+                dispatch(setTotalQuestions(totalQuestions));
+                setTotalPages(Math.ceil(totalQuestions / pageSize));
+
+                // Now get the paginated data
+                let query = supabase
+                    .from('Math_Past_Paper')
+                    .select('*')
+                    .order('year', { ascending: false })
+                    .order('question_no', { ascending: true })
+                    .range(offset, offset + pageSize - 1);
+
+                // Add tag filtering (like your reference code)
+                if (tags.length > 0) {
+                    query = query.contains('tags', tags);
+                }
+
+                // Add timeout (like your reference code)
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Request timeout')), 10000)
+                );
+
+                const { data, error } = await Promise.race([query, timeoutPromise]);
+
+                if (error) {
+                    console.error('Error in URL tag search:', error);
+                    dispatch(clearError(`Failed to search by tags: ${error.message}`));
+                    return;
+                }
+
+                const matchingQuestions = data || [];
+                dispatch(setQuestions(matchingQuestions));
+
+                // Load tags for the matching questions
+                if (matchingQuestions.length > 0) {
+                    loadTagsForQuestions(matchingQuestions);
+                    // Update available tags from the loaded questions
+                    const questionTags = extractTagsFromQuestions(matchingQuestions);
+                    if (questionTags.length > 0) {
+                        const currentAvailableTags = availableTags;
+                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
+                        dispatch(setAvailableTags(newAvailableTags));
+                    }
+                }
+
+                if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                    dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
+                }
+
+                // If exactly one result, navigate directly to the question detail page
+                if (totalQuestions === 1 && matchingQuestions.length === 1) {
+                    const question = matchingQuestions[0];
+
+                    // Store navigation state for single result navigation
+                    if (tags.length > 0) {
+                        const navState = {
+                            fromTagSearch: true,
+                            tags: tags,
+                            page: page,
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+                        console.log('✅ Stored navigation state for single result navigation:', navState);
+                    }
+
+                    const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                    navigate(questionURL);
+                    return; // Exit early since we're navigating away
+                }
             }
 
         } catch (err) {
@@ -400,7 +468,7 @@ const MathPaperPage = () => {
                 setIsTagSearchActive(false);
             }, 1000);
         }
-    }, [loadTagsForQuestions, extractTagsFromQuestions, pageSize, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [loadTagsForQuestions, extractTagsFromQuestions, pageSize, navigate, isChinese]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Clear URL parameters and reset to general search
     const clearURLParams = useCallback(() => {
@@ -603,10 +671,25 @@ const MathPaperPage = () => {
         if (!tagsLoadedRef.current) {
             tagsLoadedRef.current = true;
             loadAvailableTags();
-            // Dispatch the async thunk properly
-            dispatch(loadPopularTagsThunk());
+            // Dispatch the appropriate popular tags thunk based on language
+            if (isChinese()) {
+                dispatch(loadPopularTagsChineseThunk());
+            } else {
+                dispatch(loadPopularTagsThunk());
+            }
         }
-    }, [loadAvailableTags, dispatch]);
+    }, [loadAvailableTags, dispatch, isChinese]);
+
+    // Reload popular tags when language changes
+    useEffect(() => {
+        if (tagsLoadedRef.current) {
+            if (isChinese()) {
+                dispatch(loadPopularTagsChineseThunk());
+            } else {
+                dispatch(loadPopularTagsThunk());
+            }
+        }
+    }, [isChinese, dispatch]);
 
     // Debug: Monitor questions state changes
     // useEffect(() => {
@@ -669,7 +752,7 @@ const MathPaperPage = () => {
     // Handle tag search (simplified like your reference code)
     const handleTagSearch = useCallback(async (tagsToSearch = null) => {
         const tags = tagsToSearch || searchTags;
-        console.log('🔍 handleTagSearch called with tags:', tags);
+        console.log('🔍 handleTagSearch called with tags:', tags, 'isChinese:', isChinese());
 
         if (tags.length === 0) return;
 
@@ -688,96 +771,159 @@ const MathPaperPage = () => {
         dispatch(clearError());
 
         try {
-            console.log('Searching for tags:', tags);
+            console.log('Searching for tags:', tags, 'Language:', isChinese() ? 'Chinese' : 'English');
 
             // Calculate offset for pagination (always page 1 for new search)
             const offset = 0;
 
-            // First, get the total count
-            let countQuery = supabase
-                .from('Math_Past_Paper')
-                .select('*', { count: 'exact', head: true });
+            if (isChinese()) {
+                // Use Chinese tag search with Supabase function
+                console.log('🔍 Using Chinese tag search function');
 
-            if (tags.length > 0) {
-                countQuery = countQuery.contains('tags', tags);
-            }
+                // Use the Chinese paginated search function
+                const result = await UnifiedTagService.searchByChineseTagsPaginated(tags, 1, pageSize);
 
-            const { count, error: countError } = await countQuery;
-
-            if (countError) {
-                console.error('Error getting count:', countError);
-                dispatch(clearError(`Failed to get results count: ${countError.message}`));
-                return;
-            }
-
-            const totalQuestions = count || 0;
-            dispatch(setTotalQuestions(totalQuestions));
-            setTotalPages(Math.ceil(totalQuestions / pageSize));
-
-            // Now get the paginated data
-            let query = supabase
-                .from('Math_Past_Paper')
-                .select('*')
-                .order('year', { ascending: false })
-                .order('question_no', { ascending: true })
-                .range(offset, offset + pageSize - 1);
-
-            // Add tag filtering (like your reference code)
-            if (tags.length > 0) {
-                query = query.contains('tags', tags);
-            }
-
-            // Add timeout (like your reference code)
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 10000)
-            );
-
-            const { data, error } = await Promise.race([query, timeoutPromise]);
-
-            if (error) {
-                console.error('Error in tag search:', error);
-                dispatch(clearError(`Failed to search by tags: ${error.message}`));
-                return;
-            }
-
-            const matchingQuestions = data || [];
-            dispatch(setQuestions(matchingQuestions));
-
-            // Load tags for the matching questions
-            if (matchingQuestions.length > 0) {
-                loadTagsForQuestions(matchingQuestions);
-                // Update available tags from the loaded questions
-                const questionTags = extractTagsFromQuestions(matchingQuestions);
-                if (questionTags.length > 0) {
-                    const currentAvailableTags = availableTags;
-                    const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
-                    dispatch(setAvailableTags(newAvailableTags));
+                if (result.error) {
+                    console.error('Error in Chinese tag search:', result.error);
+                    dispatch(clearError(`Failed to search by Chinese tags: ${result.error.message}`));
+                    return;
                 }
-            }
 
-            if (matchingQuestions.length === 0 && totalQuestions === 0) {
-                dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
-            }
+                const searchResult = result.data;
+                const matchingQuestions = searchResult.questions || [];
+                const totalQuestions = searchResult.total_count || 0;
+                const totalPages = searchResult.total_pages || 0;
 
-            // If exactly one result, navigate directly to the question detail page
-            if (totalQuestions === 1 && matchingQuestions.length === 1) {
-                const question = matchingQuestions[0];
+                dispatch(setQuestions(matchingQuestions));
+                dispatch(setTotalQuestions(totalQuestions));
+                dispatch(setTotalPages(totalPages));
 
-                // Store navigation state for single result navigation
+                // Load tags for the matching questions
+                if (matchingQuestions.length > 0) {
+                    loadTagsForQuestions(matchingQuestions);
+                    // Update available tags from the loaded questions
+                    const questionTags = extractTagsFromQuestions(matchingQuestions);
+                    if (questionTags.length > 0) {
+                        const currentAvailableTags = availableTags;
+                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
+                        dispatch(setAvailableTags(newAvailableTags));
+                    }
+                }
+
+                if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                    dispatch(clearError(`No questions found with Chinese tags: ${tags.join(', ')}`));
+                }
+
+                // If exactly one result, navigate directly to the question detail page
+                if (totalQuestions === 1 && matchingQuestions.length === 1) {
+                    const question = matchingQuestions[0];
+
+                    // Store navigation state for single result navigation
+                    if (tags.length > 0) {
+                        const navState = {
+                            fromTagSearch: true,
+                            tags: tags,
+                            page: 1, // Tag search always starts from page 1
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+                        console.log('✅ Stored navigation state for single result navigation:', navState);
+                    }
+
+                    const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                    navigate(questionURL);
+                    return; // Exit early since we're navigating away
+                }
+            } else {
+                // Use English tag search (existing logic)
+                console.log('🔍 Using English tag search');
+
+                // First, get the total count
+                let countQuery = supabase
+                    .from('Math_Past_Paper')
+                    .select('*', { count: 'exact', head: true });
+
                 if (tags.length > 0) {
-                    const navState = {
-                        fromTagSearch: true,
-                        tags: tags,
-                        page: 1, // Tag search always starts from page 1
-                        timestamp: Date.now()
-                    };
-                    sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-                    console.log('✅ Stored navigation state for single result navigation:', navState);
+                    countQuery = countQuery.contains('tags', tags);
                 }
 
-                const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
-                navigate(questionURL);
-                return; // Exit early since we're navigating away
+                const { count, error: countError } = await countQuery;
+
+                if (countError) {
+                    console.error('Error getting count:', countError);
+                    dispatch(clearError(`Failed to get results count: ${countError.message}`));
+                    return;
+                }
+
+                const totalQuestions = count || 0;
+                dispatch(setTotalQuestions(totalQuestions));
+                setTotalPages(Math.ceil(totalQuestions / pageSize));
+
+                // Now get the paginated data
+                let query = supabase
+                    .from('Math_Past_Paper')
+                    .select('*')
+                    .order('year', { ascending: false })
+                    .order('question_no', { ascending: true })
+                    .range(offset, offset + pageSize - 1);
+
+                // Add tag filtering (like your reference code)
+                if (tags.length > 0) {
+                    query = query.contains('tags', tags);
+                }
+
+                // Add timeout (like your reference code)
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Request timeout')), 10000)
+                );
+
+                const { data, error } = await Promise.race([query, timeoutPromise]);
+
+                if (error) {
+                    console.error('Error in tag search:', error);
+                    dispatch(clearError(`Failed to search by tags: ${error.message}`));
+                    return;
+                }
+
+                const matchingQuestions = data || [];
+                dispatch(setQuestions(matchingQuestions));
+
+                // Load tags for the matching questions
+                if (matchingQuestions.length > 0) {
+                    loadTagsForQuestions(matchingQuestions);
+                    // Update available tags from the loaded questions
+                    const questionTags = extractTagsFromQuestions(matchingQuestions);
+                    if (questionTags.length > 0) {
+                        const currentAvailableTags = availableTags;
+                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
+                        dispatch(setAvailableTags(newAvailableTags));
+                    }
+                }
+
+                if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                    dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
+                }
+
+                // If exactly one result, navigate directly to the question detail page
+                if (totalQuestions === 1 && matchingQuestions.length === 1) {
+                    const question = matchingQuestions[0];
+
+                    // Store navigation state for single result navigation
+                    if (tags.length > 0) {
+                        const navState = {
+                            fromTagSearch: true,
+                            tags: tags,
+                            page: 1, // Tag search always starts from page 1
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
+                        console.log('✅ Stored navigation state for single result navigation:', navState);
+                    }
+
+                    const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                    navigate(questionURL);
+                    return; // Exit early since we're navigating away
+                }
             }
 
         } catch (err) {
@@ -790,7 +936,7 @@ const MathPaperPage = () => {
                 setIsTagSearchActive(false);
             }, 1000);
         }
-    }, [searchTags, updateURLWithPagination, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [searchTags, updateURLWithPagination, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate, isChinese]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -948,13 +1094,13 @@ const MathPaperPage = () => {
     }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL, handleFilterSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const breadcrumbs = [
-        { name: 'Home', url: '/' },
-        { name: 'DSE Math', url: '/DSE_Math' }
+        { name: t('breadcrumbs.home'), url: '/' },
+        { name: t('breadcrumbs.dseMath'), url: '/DSE_Math' }
     ];
 
     const courseData = {
-        name: 'DSE Math Past Papers',
-        description: 'Comprehensive collection of DSE Mathematics past papers with detailed solutions and explanations for Hong Kong students'
+        name: t('courseData.name'),
+        description: t('courseData.description')
     };
 
     // Safety check - don't render if component isn't mounted
@@ -1052,19 +1198,19 @@ const MathPaperPage = () => {
                     <Box sx={{ mb: 3 }}>
                         <Breadcrumbs aria-label="breadcrumb">
                             <Link component={RouterLink} to="/" color="inherit" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Home sx={{ mr: 0.5 }} fontSize="small" /> Home
+                                <Home sx={{ mr: 0.5 }} fontSize="small" /> {t('breadcrumbs.home')}
                             </Link>
-                            <Typography color="text.primary">DSE Math</Typography>
+                            <Typography color="text.primary">{t('breadcrumbs.dseMath')}</Typography>
                         </Breadcrumbs>
                     </Box>
 
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                             <School sx={{ mr: 1 }} color="primary" />
-                            DSE Math
+                            {t('pageTitle.main')}
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
-                            Filter and search through DSE mathematics examination papers
+                            {t('pageTitle.description')}
                         </Typography>
                     </Box>
 
@@ -1072,18 +1218,18 @@ const MathPaperPage = () => {
                     <Paper sx={{ p: 3, mb: 4 }}>
                         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                             <FilterList sx={{ mr: 1 }} />
-                            Filter Questions
+                            {t('filters.title')}
                         </Typography>
 
                         <Grid container spacing={3} alignItems="center">
                             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                                 <FormControl fullWidth>
-                                    <InputLabel id="year-select-label">Year</InputLabel>
+                                    <InputLabel id="year-select-label">{t('filters.year.label')}</InputLabel>
                                     <Select
                                         labelId="year-select-label"
                                         id="year-select"
                                         value={selectedYear}
-                                        label="Year"
+                                        label={t('filters.year.label')}
                                         onChange={(e) => {
                                             dispatch(setSelectedYear(e.target.value));
                                             // Clear tags when using dropdown filters
@@ -1098,7 +1244,7 @@ const MathPaperPage = () => {
                                             }
                                         }}
                                     >
-                                        <MenuItem value="">All Years</MenuItem>
+                                        <MenuItem value="">{t('filters.year.allYears')}</MenuItem>
                                         {yearOptions.map((year) => (
                                             <MenuItem key={year} value={year}>{year}</MenuItem>
                                         ))}
@@ -1108,12 +1254,12 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                                 <FormControl fullWidth>
-                                    <InputLabel id="paper-select-label">Paper</InputLabel>
+                                    <InputLabel id="paper-select-label">{t('filters.paper.label')}</InputLabel>
                                     <Select
                                         labelId="paper-select-label"
                                         id="paper-select"
                                         value={selectedPaper}
-                                        label="Paper"
+                                        label={t('filters.paper.label')}
                                         onChange={(e) => {
                                             dispatch(setSelectedPaper(e.target.value));
                                             dispatch(setSelectedQuestionNo('')); // Reset question number when paper changes
@@ -1129,9 +1275,9 @@ const MathPaperPage = () => {
                                             }
                                         }}
                                     >
-                                        <MenuItem value="">All Papers</MenuItem>
+                                        <MenuItem value="">{t('filters.paper.allPapers')}</MenuItem>
                                         {paperOptions.map((paper) => (
-                                            <MenuItem key={paper} value={paper}>Paper {paper}</MenuItem>
+                                            <MenuItem key={paper} value={paper}>{t('filters.paper.paperPrefix')} {paper}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -1139,12 +1285,12 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                                 <FormControl fullWidth>
-                                    <InputLabel id="question-select-label">Question Number</InputLabel>
+                                    <InputLabel id="question-select-label">{t('filters.questionNumber.label')}</InputLabel>
                                     <Select
                                         labelId="question-select-label"
                                         id="question-select"
                                         value={selectedQuestionNo}
-                                        label="Question Number"
+                                        label={t('filters.questionNumber.label')}
                                         onChange={(e) => {
                                             dispatch(setSelectedQuestionNo(e.target.value));
                                             // Clear tags when using dropdown filters
@@ -1160,7 +1306,7 @@ const MathPaperPage = () => {
                                             }
                                         }}
                                     >
-                                        <MenuItem value="">All Questions</MenuItem>
+                                        <MenuItem value="">{t('filters.questionNumber.allQuestions')}</MenuItem>
                                         {getQuestionNumberOptions(selectedPaper).map((num) => (
                                             <MenuItem key={num} value={num}>{num}</MenuItem>
                                         ))}
@@ -1200,9 +1346,8 @@ const MathPaperPage = () => {
                                         <TextField
                                             {...params}
                                             id="tags-autocomplete"
-                                            label="Search by tags"
-                                            placeholder="Type to search tags..."
-                                            helperText=""
+                                            label={t('filters.tags.label')}
+                                            placeholder={t('filters.tags.placeholder')}
                                             sx={{ minWidth: '200px' }}
                                         />
                                     )}
@@ -1255,7 +1400,7 @@ const MathPaperPage = () => {
                                     disabled={loading}
                                     sx={{ height: 56 }}
                                 >
-                                    {loading ? <CircularProgress size={24} /> : 'Search'}
+                                    {loading ? <CircularProgress size={24} /> : t('filters.buttons.search')}
                                 </Button>
                             </Grid>
 
@@ -1267,7 +1412,7 @@ const MathPaperPage = () => {
                                     disabled={loading}
                                     sx={{ height: 56 }}
                                 >
-                                    Clear
+                                    {t('filters.buttons.clear')}
                                 </Button>
                             </Grid>
                         </Grid>
@@ -1275,7 +1420,7 @@ const MathPaperPage = () => {
                     </Paper>
 
                     {/* Popular Tags Section */}
-                    {popularTags.length > 0 && (
+                    {(isChinese() ? popularTagsChinese : popularTags).length > 0 && (
                         <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
                             <Typography variant="h6" gutterBottom sx={{
                                 display: 'flex',
@@ -1284,20 +1429,20 @@ const MathPaperPage = () => {
                                 fontSize: { xs: '1.1rem', sm: '1.25rem' }
                             }}>
                                 <Search sx={{ mr: 1, fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
-                                Popular Tags
+                                {t('popularTags.title')}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{
                                 mb: 2,
                                 fontSize: { xs: '0.8rem', sm: '0.875rem' }
                             }}>
-                                Click on a tag to search for related questions
+                                {t('popularTags.description')}
                             </Typography>
                             <Box sx={{
                                 display: 'flex',
                                 flexWrap: 'wrap',
                                 gap: { xs: 0.5, sm: 1 }
                             }}>
-                                {popularTags.map((tagData, index) => (
+                                {(isChinese() ? popularTagsChinese : popularTags).map((tagData, index) => (
                                     <Chip
                                         key={index}
                                         label={`${tagData.tag} (${tagData.count})`}
@@ -1337,10 +1482,10 @@ const MathPaperPage = () => {
                             <Typography variant="h6" gutterBottom sx={{
                                 fontSize: { xs: '1.1rem', sm: '1.25rem' }
                             }}>
-                                Results ({totalQuestions} questions found)
+                                {t('results.title')} ({totalQuestions} {t('results.questionsFound')})
                                 {totalPages > 1 && (
                                     <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                                        (Page {currentPage} of {totalPages})
+                                        ({t('results.pageInfo', { currentPage, totalPages })})
                                     </Typography>
                                 )}
                             </Typography>
@@ -1389,7 +1534,7 @@ const MathPaperPage = () => {
                                                     flexWrap: 'wrap'
                                                 }}>
                                                     <Chip
-                                                        label={`Year ${question.year}`}
+                                                        label={`${t('question.year')} ${question.year}`}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: '#87ceeb',
@@ -1400,7 +1545,7 @@ const MathPaperPage = () => {
                                                         }}
                                                     />
                                                     <Chip
-                                                        label={`Paper ${question.paper}`}
+                                                        label={`${t('question.paper')} ${question.paper}`}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: '#ffa500',
@@ -1411,7 +1556,7 @@ const MathPaperPage = () => {
                                                         }}
                                                     />
                                                     <Chip
-                                                        label={`Q${question.question_no}`}
+                                                        label={`${t('question.question')}${question.question_no}`}
                                                         size="small"
                                                         sx={{
                                                             backgroundColor: '#6c757d',
@@ -1465,7 +1610,7 @@ const MathPaperPage = () => {
                                                 alignSelf: { xs: 'flex-end', sm: 'auto' }
                                             }}
                                         >
-                                            View
+                                            {t('results.view')}
                                         </Button>
                                     </Box>
                                 ))}
@@ -1531,10 +1676,10 @@ const MathPaperPage = () => {
                     {!loading && questions.length === 0 && !selectedQuestion && (selectedYear || selectedPaper || selectedQuestionNo || searchTags.length > 0) && (
                         <Paper sx={{ p: 3, textAlign: 'center' }}>
                             <Typography variant="h6" color="text.secondary">
-                                No questions found matching your criteria
+                                {t('results.noResults.title')}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                Try adjusting your filters or search terms
+                                {t('results.noResults.description')}
                             </Typography>
                         </Paper>
                     )}

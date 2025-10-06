@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const SEOHead = ({
     title = "TutorNote - DSE Math Past Papers for Hong Kong Students",
@@ -13,8 +14,21 @@ const SEOHead = ({
     modifiedTime = null,
     structuredData = null
 }) => {
+    const { getCurrentLanguage, isChinese } = useTranslation();
+    const currentLanguage = getCurrentLanguage();
     const fullUrl = url ? `${process.env.REACT_APP_PRODUCTION_URL || 'https://your-domain.com'}${url}` : (process.env.REACT_APP_PRODUCTION_URL || 'https://your-domain.com');
     const fullImageUrl = image.startsWith('http') ? image : `${process.env.REACT_APP_PRODUCTION_URL || 'https://your-domain.com'}${image}`;
+
+    // Get language-specific locale
+    const getLocale = () => {
+        switch (currentLanguage) {
+            case 'zh':
+                return 'zh_HK';
+            case 'en':
+            default:
+                return 'en_HK';
+        }
+    };
 
     return (
         <Helmet>
@@ -24,7 +38,7 @@ const SEOHead = ({
             <meta name="keywords" content={keywords} />
             <meta name="author" content={author} />
             <meta name="robots" content="index, follow" />
-            <meta name="language" content="en" />
+            <meta name="language" content={currentLanguage} />
             <meta name="revisit-after" content="7 days" />
             <link rel="canonical" href={fullUrl} />
 
@@ -36,7 +50,7 @@ const SEOHead = ({
             <meta property="og:image" content={fullImageUrl} />
             <meta property="og:image:alt" content={title} />
             <meta property="og:site_name" content="TutorNote" />
-            <meta property="og:locale" content="en_HK" />
+            <meta property="og:locale" content={getLocale()} />
 
             {publishedTime && <meta property="article:published_time" content={publishedTime} />}
             {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}

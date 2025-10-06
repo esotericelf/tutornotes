@@ -7,21 +7,32 @@ import {
     IconButton,
     Box,
     useTheme,
-    useMediaQuery
+    useMediaQuery,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText
 } from '@mui/material'
 import {
     School,
     PlayCircleOutline,
-    Language
+    Language,
+    Translate,
+    LanguageOutlined
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../store/hooks'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const AppBar = () => {
     const navigate = useNavigate()
     const { user } = useAuth()
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+    const { t, changeLanguage, getCurrentLanguage, getAvailableLanguages, isChinese } = useTranslation()
+
+    const [languageMenuAnchor, setLanguageMenuAnchor] = React.useState(null)
+    const open = Boolean(languageMenuAnchor)
 
     const handleTitleClick = () => {
         navigate('/')
@@ -31,9 +42,39 @@ const AppBar = () => {
         navigate('/login')
     }
 
-    const handleLanguageToggle = () => {
-        // TODO: Implement language toggle functionality
-        console.log('Language toggle clicked')
+    const handleLanguageToggle = (event) => {
+        setLanguageMenuAnchor(event.currentTarget)
+    }
+
+    const handleLanguageSelect = async (language) => {
+        await changeLanguage(language)
+        setLanguageMenuAnchor(null)
+    }
+
+    const handleCloseLanguageMenu = () => {
+        setLanguageMenuAnchor(null)
+    }
+
+    const getLanguageDisplayName = (lang) => {
+        switch (lang) {
+            case 'en':
+                return 'English'
+            case 'zh':
+                return '中文'
+            default:
+                return lang
+        }
+    }
+
+    const getLanguageIcon = (lang) => {
+        switch (lang) {
+            case 'en':
+                return <LanguageOutlined />
+            case 'zh':
+                return <Translate />
+            default:
+                return <Language />
+        }
     }
 
     return (
@@ -93,9 +134,41 @@ const AppBar = () => {
                             minWidth: 'auto',
                             px: 1
                         }}
+                        aria-label="Select language"
+                        aria-controls={open ? 'language-menu' : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? 'true' : undefined}
                     >
-                        <Language />
+                        {getLanguageIcon(getCurrentLanguage())}
                     </IconButton>
+
+                    {/* Language Menu */}
+                    <Menu
+                        id="language-menu"
+                        anchorEl={languageMenuAnchor}
+                        open={open}
+                        onClose={handleCloseLanguageMenu}
+                        MenuListProps={{
+                            'aria-labelledby': 'language-button',
+                        }}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    >
+                        {getAvailableLanguages().map((language) => (
+                            <MenuItem
+                                key={language}
+                                onClick={() => handleLanguageSelect(language)}
+                                selected={getCurrentLanguage() === language}
+                            >
+                                <ListItemIcon>
+                                    {getLanguageIcon(language)}
+                                </ListItemIcon>
+                                <ListItemText>
+                                    {getLanguageDisplayName(language)}
+                                </ListItemText>
+                            </MenuItem>
+                        ))}
+                    </Menu>
 
                     {/* Demo Button */}
                     <Button

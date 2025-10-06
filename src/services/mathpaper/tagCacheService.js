@@ -174,6 +174,16 @@ class TagCacheService {
     }
 
     /**
+     * Cache popular Chinese tags with extended TTL
+     * @param {Array} popularTagsChinese - Popular Chinese tags data
+     */
+    cachePopularTagsChinese(popularTagsChinese) {
+        const key = this.generateCacheKey('popular_tags_chinese', {});
+        const extendedTTL = 30 * 60 * 1000; // 30 minutes for popular tags
+        this.set(key, popularTagsChinese, extendedTTL);
+    }
+
+    /**
      * Cache tag statistics with extended TTL
      * @param {string} tag - Tag name
      * @param {Object} statistics - Tag statistics
@@ -224,6 +234,15 @@ class TagCacheService {
      */
     getCachedPopularTags() {
         const key = this.generateCacheKey('popular_tags', {});
+        return this.get(key);
+    }
+
+    /**
+     * Get cached popular Chinese tags
+     * @returns {Array|null} Cached popular Chinese tags or null
+     */
+    getCachedPopularTagsChinese() {
+        const key = this.generateCacheKey('popular_tags_chinese', {});
         return this.get(key);
     }
 

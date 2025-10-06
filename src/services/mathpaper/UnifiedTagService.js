@@ -59,6 +59,132 @@ class UnifiedTagService extends BaseService {
     }
 
     /**
+     * Get popular Chinese tags with caching
+     * @param {number} limit - Maximum number of tags to return (default: 15)
+     * @returns {Promise<{data: Array, error: Error|null, fromCache: boolean}>}
+     */
+    static async getPopularTagsChinese(limit = 15) {
+        try {
+            // Validate parameters
+            const validation = TagValidationService.validateSearchParams({ limit });
+            if (!validation.isValid) {
+                return { data: null, error: new Error(validation.errors.join(', ')), fromCache: false };
+            }
+
+            // Check cache first
+            const cached = TagCacheService.getCachedPopularTagsChinese();
+            if (cached) {
+                return {
+                    data: cached.slice(0, limit),
+                    error: null,
+                    fromCache: true
+                };
+            }
+
+            // Fetch from database using Chinese function
+            const result = await this.executeRPC('get_popular_math_paper_tags_zh', {
+                limit_count: limit
+            });
+
+            if (result.error) {
+                return { data: null, error: result.error, fromCache: false };
+            }
+
+            // Transform data to match frontend expectations
+            const transformedData = result.data.map(tag => ({
+                topic: 'General',
+                tag: tag.tag,
+                count: tag.count
+            }));
+
+            // Cache the results
+            TagCacheService.cachePopularTagsChinese(transformedData);
+
+            return { data: transformedData, error: null, fromCache: false };
+        } catch (err) {
+            console.error('Unexpected error getting popular Chinese tags:', err);
+            return { data: null, error: err, fromCache: false };
+        }
+    }
+
+    /**
+     * Search math papers by Chinese tags
+     * @param {Array} searchTags - Array of Chinese tags to search for
+     * @param {number} limit - Maximum number of results to return (default: 100)
+     * @param {string} sortBy - Sort field (default: 'year')
+     * @param {boolean} sortAsc - Sort ascending (default: false)
+     * @returns {Promise<{data: Array, error: Error|null}>}
+     */
+    static async searchByChineseTags(searchTags, limit = 100, sortBy = 'year', sortAsc = false) {
+        try {
+            // Validate parameters
+            const validation = TagValidationService.validateSearchParams({
+                searchTags,
+                limit,
+                sortBy,
+                sortAsc
+            });
+            if (!validation.isValid) {
+                return { data: null, error: new Error(validation.errors.join(', ')) };
+            }
+
+            // Execute Chinese tag search function
+            const result = await this.executeRPC('get_math_papers_by_tags_zh', {
+                search_tags: searchTags,
+                limit_count: limit,
+                sort_by: sortBy,
+                sort_asc: sortAsc
+            });
+
+            if (result.error) {
+                return { data: null, error: result.error };
+            }
+
+            return { data: result.data, error: null };
+        } catch (err) {
+            console.error('Unexpected error searching by Chinese tags:', err);
+            return { data: null, error: err };
+        }
+    }
+
+    /**
+     * Search math papers by Chinese tags with pagination
+     * @param {Array} searchTags - Array of Chinese tags to search for
+     * @param {number} pageNumber - Page number (default: 1)
+     * @param {number} pageSize - Number of items per page (default: 10)
+     * @returns {Promise<{data: Object, error: Error|null}>}
+     */
+    static async searchByChineseTagsPaginated(searchTags, pageNumber = 1, pageSize = 10) {
+        try {
+            // Validate parameters
+            const validation = TagValidationService.validateSearchParams({
+                searchTags,
+                pageNumber,
+                pageSize
+            });
+            if (!validation.isValid) {
+                return { data: null, error: new Error(validation.errors.join(', ')) };
+            }
+
+            // Execute Chinese paginated tag search function
+            const result = await this.executeRPC('search_math_papers_by_tags_paginated_zh', {
+                search_tags: searchTags,
+                page_number: pageNumber,
+                page_size: pageSize
+            });
+
+            if (result.error) {
+                return { data: null, error: result.error };
+            }
+
+            return { data: result.data[0], error: null }; // Function returns array with single object
+        } catch (err) {
+            console.error('Unexpected error searching by Chinese tags with pagination:', err);
+            return { data: null, error: err };
+        }
+    }
+
+    /**
      * Get all available tags with usage statistics
      * @param {number} limit - Maximum number of tags to return (default: 100)
      * @returns {Promise<{data: Array, error: Error|null}>}

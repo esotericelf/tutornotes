@@ -1,0 +1,160 @@
+{
+    "en": {
+        "navigation": {
+            "home": "Home",
+            "dseMath": "DSE Math"
+        },
+        "pageTitle": {
+            "main": "DSE Math",
+            "description": "Filter and search through DSE mathematics examination papers"
+        },
+        "filters": {
+            "title": "Filter Questions",
+            "year": {
+                "label": "Year",
+                "allYears": "All Years"
+            },
+            "paper": {
+                "label": "Paper",
+                "allPapers": "All Papers",
+                "paperPrefix": "Paper"
+            },
+            "questionNumber": {
+                "label": "Question Number",
+                "allQuestions": "All Questions"
+            },
+            "tags": {
+                "label": "Search by tags",
+                "placeholder": "Type to search tags..."
+            },
+            "buttons": {
+                "search": "Search",
+                "clear": "Clear"
+            }
+        },
+        "popularTags": {
+            "title": "Popular Tags",
+            "description": "Click on a tag to search for related questions"
+        },
+        "results": {
+            "title": "Results",
+            "questionsFound": "questions found",
+            "pageInfo": "Page {currentPage} of {totalPages}",
+            "view": "View",
+            "noResults": {
+                "title": "No questions found matching your criteria",
+                "description": "Try adjusting your filters or search terms"
+            }
+        },
+        "question": {
+            "year": "Year",
+            "paper": "Paper",
+            "question": "Q",
+            "tags": "Tags"
+        },
+        "seo": {
+            "mainPage": {
+                "title": "DSE Math Past Papers - Practice Questions & Solutions | TutorNote",
+                "description": "Access comprehensive DSE Math past papers with detailed solutions. Practice with real exam questions, track your progress, and improve your mathematics skills for the Hong Kong DSE exam.",
+                "keywords": "DSE Math, Past Papers, Mathematics, Hong Kong, Exam Practice, Solutions, HKDSE, Secondary School, Math Questions"
+            },
+            "questionPage": {
+                "title": "{year} DSE Maths Paper {paper} Question {questionNo} | TutorNote",
+                "description": "Step-by-step solution to {year} DSE Maths Paper {paper} Question {questionNo}. Expert guide for exam preparation.",
+                "loadingTitle": "Loading Question {questionNo} | TutorNote",
+                "loadingDescription": "Loading DSE Maths Paper {paper} Question {questionNo} solution...",
+                "keywords": "DSE Math, {year}, Paper {paper}, Question {questionNo}, Mathematics, Hong Kong"
+            }
+        },
+        "breadcrumbs": {
+            "home": "Home",
+            "dseMath": "DSE Math"
+        },
+        "courseData": {
+            "name": "DSE Math Past Papers",
+            "description": "Comprehensive collection of DSE Mathematics past papers with detailed solutions and explanations for Hong Kong students"
+        },
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success"
+    },
+    "zh": {
+        "navigation": {
+            "home": "首頁",
+            "dseMath": "DSE數學"
+        },
+        "pageTitle": {
+            "main": "DSE數學",
+            "description": "篩選和搜尋DSE數學考試試卷"
+        },
+        "filters": {
+            "title": "篩選題目",
+            "year": {
+                "label": "年份",
+                "allYears": "所有年份"
+            },
+            "paper": {
+                "label": "試卷",
+                "allPapers": "所有試卷",
+                "paperPrefix": "試卷"
+            },
+            "questionNumber": {
+                "label": "題號",
+                "allQuestions": "所有題目"
+            },
+            "tags": {
+                "label": "按標籤搜尋",
+                "placeholder": "輸入以搜尋標籤..."
+            },
+            "buttons": {
+                "search": "搜尋",
+                "clear": "清除"
+            }
+        },
+        "popularTags": {
+            "title": "熱門標籤",
+            "description": "點擊標籤以搜尋相關題目"
+        },
+        "results": {
+            "title": "結果",
+            "questionsFound": "題目",
+            "pageInfo": "第 {currentPage} 頁，共 {totalPages} 頁",
+            "view": "查看",
+            "noResults": {
+                "title": "找不到符合條件的題目",
+                "description": "請嘗試調整篩選條件或搜尋詞"
+            }
+        },
+        "question": {
+            "year": "年份",
+            "paper": "試卷",
+            "question": "題",
+            "tags": "標籤"
+        },
+        "seo": {
+            "mainPage": {
+                "title": "DSE數學歷年試題 - 練習題目與解答 | TutorNote",
+                "description": "獲取全面的DSE數學歷年試題及詳細解答。練習真實考試題目，追蹤進度，提升香港DSE考試的數學技能。",
+                "keywords": "DSE數學, 歷年試題, 數學科, 香港, 考試練習, 解答, 中學文憑試, 中學, 數學題目"
+            },
+            "questionPage": {
+                "title": "{year}年DSE數學試卷{paper}第{questionNo}題 | TutorNote",
+                "description": "{year}年DSE數學試卷{paper}第{questionNo}題的逐步解答。考試準備專家指南。",
+                "loadingTitle": "載入第{questionNo}題 | TutorNote",
+                "loadingDescription": "載入DSE數學試卷{paper}第{questionNo}題解答中...",
+                "keywords": "DSE數學, {year}年, 試卷{paper}, 第{questionNo}題, 數學科, 香港"
+            }
+        },
+        "breadcrumbs": {
+            "home": "首頁",
+            "dseMath": "DSE數學"
+        },
+        "courseData": {
+            "name": "DSE數學歷年試題",
+            "description": "為香港學生提供全面的DSE數學歷年試題，包含詳細解答和解釋"
+        },
+        "loading": "載入中...",
+        "error": "錯誤",
+        "success": "成功"
+    }
+}
