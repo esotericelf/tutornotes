@@ -41,6 +41,33 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.1.5",
+            date: "December 2024",
+            type: "patch",
+            title: "Enhanced Build Stability & Performance",
+            description: "Improved application stability and deployment reliability with cleaner code and better performance",
+            features: [
+                {
+                    icon: <Speed color="primary" />,
+                    title: "Faster Build Process",
+                    description: "Optimized build process for quicker deployment and better development experience",
+                    type: "improvement"
+                },
+                {
+                    icon: <Security color="primary" />,
+                    title: "Enhanced Code Quality",
+                    description: "Cleaned up unused code and improved overall code quality for better maintainability",
+                    type: "improvement"
+                },
+                {
+                    icon: <MobileFriendly color="primary" />,
+                    title: "Better Deployment",
+                    description: "Fixed build warnings to ensure smooth deployment to production environments",
+                    type: "improvement"
+                }
+            ]
+        },
+        {
             version: "v2.1.4",
             date: "September 2025",
             type: "patch",
@@ -71,14 +98,6 @@ const ChangelogPage = () => {
                     description: "Navigation state is embedded in URLs and automatically cleaned up to prevent conflicts",
                     type: "improvement"
                 }
-            ],
-            technical: [
-                "Implemented URL parameter-based navigation state storage",
-                "Added sessionStorage fallback with timestamp validation (30-second expiry)",
-                "Enhanced document referrer parsing as last resort detection method",
-                "Added comprehensive debugging and logging for troubleshooting",
-                "Fixed navigation state persistence across different tag searches",
-                "Implemented automatic cleanup of stale navigation state"
             ]
         },
         {
@@ -112,13 +131,6 @@ const ChangelogPage = () => {
                     description: "Hover over navigation buttons to see exactly which question you'll navigate to next",
                     type: "feature"
                 }
-            ],
-            technical: [
-                "Created PostgreSQL functions for sequential question navigation logic",
-                "Implemented Composite Sort Key for efficient question ordering",
-                "Added QuestionNavigationService for backend integration",
-                "Enhanced CompactQuestionNavigation component with better UX",
-                "Fixed React hooks dependencies and linting issues"
             ]
         },
         {
@@ -152,12 +164,6 @@ const ChangelogPage = () => {
                     description: "Search interface is now more streamlined on phones and tablets, making it easier to find questions on the go",
                     type: "improvement"
                 }
-            ],
-            technical: [
-                "Fixed URL navigation to prevent detail page conflicts",
-                "Implemented mutual exclusion between search methods",
-                "Enhanced backend pagination for better performance",
-                "Improved code quality and reduced loading times"
             ]
         },
         {
@@ -179,11 +185,6 @@ const ChangelogPage = () => {
                     description: "Tag popularity statistics now reflect the true distribution across all questions",
                     type: "improvement"
                 }
-            ],
-            technical: [
-                "Removed .limit(100) restriction from popular tags query",
-                "Updated loadPopularTags function to fetch all questions",
-                "Enhanced tag counting logic for complete dataset accuracy"
             ]
         },
         {
@@ -223,13 +224,6 @@ const ChangelogPage = () => {
                     description: "Fully responsive design that works perfectly on all devices",
                     type: "feature"
                 }
-            ],
-            technical: [
-                "Added QuestionURLService for URL generation and parsing",
-                "Implemented QuestionLoaderService for database interactions",
-                "Enhanced MathPaperPage with direct URL parameter handling",
-                "Fixed React Router integration for seamless navigation",
-                "Optimized useCallback dependencies to prevent re-renders"
             ]
         },
         {
@@ -251,11 +245,6 @@ const ChangelogPage = () => {
                     description: "Resolved various UI and functionality issues",
                     type: "fix"
                 }
-            ],
-            technical: [
-                "Updated Material-UI components",
-                "Improved error handling",
-                "Enhanced loading states"
             ]
         }
     ];
@@ -395,27 +384,6 @@ const ChangelogPage = () => {
                                 </List>
                             </Box>
 
-                            <Divider sx={{ my: 2 }} />
-
-                            {/* Technical Details */}
-                            <Box>
-                                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-                                    Technical Improvements
-                                </Typography>
-                                <List dense>
-                                    {entry.technical.map((tech, techIndex) => (
-                                        <ListItem key={techIndex} sx={{ px: 0 }}>
-                                            <ListItemIcon sx={{ minWidth: 40 }}>
-                                                <Code color="action" />
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary={tech}
-                                                primaryTypographyProps={{ variant: 'body2' }}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            </Box>
                         </CardContent>
                     </Card>
                 ))}
