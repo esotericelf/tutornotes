@@ -1580,39 +1580,6 @@ const MathPaperPage = () => {
                     {/* Question Display Section */}
                     {selectedQuestion && (
                         <Box ref={questionDetailsRef} sx={{ mt: 4 }}>
-                            {/* Back to Search Results Button */}
-                            {(() => {
-                                console.log('🔍 Back button render check:', {
-                                    cameFromTagSearch,
-                                    originalSearchTags,
-                                    originalSearchTagsLength: originalSearchTags.length
-                                });
-                                return cameFromTagSearch && originalSearchTags.length > 0;
-                            })() && (
-                                    <Box sx={{ mb: 3 }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<ArrowBack />}
-                                            onClick={handleBackToTagSearch}
-                                            sx={{
-                                                backgroundColor: 'background.paper',
-                                                borderColor: 'primary.main',
-                                                color: 'primary.main',
-                                                '&:hover': {
-                                                    backgroundColor: 'primary.main',
-                                                    color: 'white',
-                                                    borderColor: 'primary.main'
-                                                },
-                                                fontWeight: 'bold',
-                                                px: 3,
-                                                py: 1
-                                            }}
-                                        >
-                                            Back to Search Results
-                                        </Button>
-                                    </Box>
-                                )}
-
                             <QuestionDisplay
                                 question={selectedQuestion}
                                 questionTags={questionTags[selectedQuestion.id] || []}
@@ -1624,6 +1591,10 @@ const MathPaperPage = () => {
                                     const tags = getQuestionTagsFromData(newQuestion);
                                     dispatch(setQuestionTags({ [newQuestion.id]: tags }));
                                 }}
+                                // Navigation props for back button
+                                cameFromTagSearch={cameFromTagSearch}
+                                originalSearchTags={originalSearchTags}
+                                onBackToSearch={handleBackToTagSearch}
                             />
 
                             {/* Discussion Section */}

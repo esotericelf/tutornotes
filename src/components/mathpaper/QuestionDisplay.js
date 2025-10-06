@@ -5,14 +5,15 @@ import {
     Box,
     Divider,
     IconButton,
-    Chip
+    Chip,
+    Button
 } from '@mui/material';
-import { ExpandMore, ExpandLess, Label } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Label, ArrowBack } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CompactQuestionNavigation from './CompactQuestionNavigation';
 
-const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionChange }) => {
+const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionChange, cameFromTagSearch = false, originalSearchTags = [], onBackToSearch }) => {
     const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
     const [selectedDiagramIndex, setSelectedDiagramIndex] = useState(0);
 
@@ -208,55 +209,120 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                 display: 'flex',
                 gap: { xs: 1, sm: 2 },
                 mb: { xs: 2, sm: 3 },
-                flexDirection: { xs: 'column', sm: 'row' }
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' }
             }}>
-                <Paper
-                    elevation={2}
-                    sx={{
-                        padding: { xs: 1, sm: 2 },
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color: 'white',
-                        minWidth: { xs: '100%', sm: 120 },
-                        textAlign: 'center'
-                    }}
-                >
-                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
-                        {question.year}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Year</Typography>
-                </Paper>
+                <Box sx={{
+                    display: 'flex',
+                    gap: { xs: 1, sm: 2 },
+                    flex: 1,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    flexWrap: { xs: 'nowrap', sm: 'wrap' }
+                }}>
+                    <Paper
+                        elevation={2}
+                        sx={{
+                            padding: { xs: 1, sm: 2 },
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            minWidth: { xs: '100%', sm: 120 },
+                            textAlign: 'center',
+                            flex: { xs: '0 0 auto', sm: '0 0 120px' }
+                        }}
+                    >
+                        <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
+                            {question.year}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Year</Typography>
+                    </Paper>
 
-                <Paper
-                    elevation={2}
-                    sx={{
-                        padding: { xs: 1, sm: 2 },
-                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                        color: 'white',
-                        minWidth: { xs: '100%', sm: 120 },
-                        textAlign: 'center'
-                    }}
-                >
-                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
-                        {question.paper}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Paper</Typography>
-                </Paper>
+                    <Paper
+                        elevation={2}
+                        sx={{
+                            padding: { xs: 1, sm: 2 },
+                            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                            color: 'white',
+                            minWidth: { xs: '100%', sm: 120 },
+                            textAlign: 'center',
+                            flex: { xs: '0 0 auto', sm: '0 0 120px' }
+                        }}
+                    >
+                        <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
+                            {question.paper}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Paper</Typography>
+                    </Paper>
 
-                <Paper
-                    elevation={2}
-                    sx={{
-                        padding: { xs: 1, sm: 2 },
-                        background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                        color: 'white',
-                        minWidth: { xs: '100%', sm: 120 },
-                        textAlign: 'center'
-                    }}
-                >
-                    <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
-                        {question.question_no}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Question</Typography>
-                </Paper>
+                    <Paper
+                        elevation={2}
+                        sx={{
+                            padding: { xs: 1, sm: 2 },
+                            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                            color: 'white',
+                            minWidth: { xs: '100%', sm: 120 },
+                            textAlign: 'center',
+                            flex: { xs: '0 0 auto', sm: '0 0 120px' }
+                        }}
+                    >
+                        <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
+                            {question.question_no}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Question</Typography>
+                    </Paper>
+                </Box>
+
+                {/* Back to Search Results Button */}
+                {cameFromTagSearch && originalSearchTags.length > 0 && (
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: { xs: '100%', sm: 'auto' },
+                        justifyContent: { xs: 'center', sm: 'flex-end' }
+                    }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ArrowBack />}
+                            onClick={onBackToSearch}
+                            sx={{
+                                backgroundColor: 'white',
+                                borderColor: 'primary.main',
+                                color: 'primary.main',
+                                '&:hover': {
+                                    backgroundColor: 'primary.main',
+                                    color: 'white',
+                                    borderColor: 'primary.main'
+                                },
+                                fontWeight: 'bold',
+                                px: { xs: 2, sm: 3 },
+                                py: { xs: 1, sm: 1 },
+                                width: { xs: '100%', sm: 'auto' },
+                                minWidth: { xs: 'auto', sm: 'auto' },
+                                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                                '& .MuiButton-startIcon': {
+                                    fontSize: { xs: '1rem', sm: '1.2rem' }
+                                }
+                            }}
+                        >
+                            <Box sx={{
+                                display: { xs: 'none', sm: 'inline' },
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: { sm: '200px', md: '300px' }
+                            }}>
+                                Back to {originalSearchTags.join(', ')}
+                            </Box>
+                            <Box sx={{
+                                display: { xs: 'inline', sm: 'none' },
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                Back to {originalSearchTags.length > 1 ? `${originalSearchTags[0]}...` : originalSearchTags[0]}
+                            </Box>
+                        </Button>
+                    </Box>
+                )}
             </Box>
 
             {/* Tags Section */}
