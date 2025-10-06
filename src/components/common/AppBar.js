@@ -77,13 +77,26 @@ const AppBar = () => {
                     </Typography>
                 </Box>
 
-                {/* Right side - Demo, Sign In, Language Toggle */}
+                {/* Right side - Language Toggle, Demo, Sign In */}
                 <Box sx={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: { xs: 1, sm: 2 },
                     flexWrap: 'wrap'
                 }}>
+                    {/* Language Toggle */}
+                    <IconButton
+                        onClick={handleLanguageToggle}
+                        color="primary"
+                        size="small"
+                        sx={{
+                            minWidth: 'auto',
+                            px: 1
+                        }}
+                    >
+                        <Language />
+                    </IconButton>
+
                     {/* Demo Button */}
                     <Button
                         variant="outlined"
@@ -97,19 +110,6 @@ const AppBar = () => {
                     >
                         Demo
                     </Button>
-
-                    {/* Language Toggle */}
-                    <IconButton
-                        onClick={handleLanguageToggle}
-                        color="primary"
-                        size="small"
-                        sx={{
-                            minWidth: 'auto',
-                            px: 1
-                        }}
-                    >
-                        <Language />
-                    </IconButton>
 
                     {/* Sign In Button */}
                     {!user && (
