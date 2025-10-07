@@ -225,7 +225,6 @@ const MathPaperPage = () => {
                 dispatch(setCameFromTagSearch(true));
             } else if (isFromTagSearchReferrer) {
                 // Fallback to referrer parsing
-                console.log('🔍 User came from tag search, referrer:', referrer);
                 try {
                     const referrerURL = new URL(referrer);
                     const tagsParam = referrerURL.searchParams.get('tags');
@@ -609,18 +608,23 @@ const MathPaperPage = () => {
     // Load available tags from actual questions in the database
     const loadAvailableTags = useCallback(async () => {
         try {
+            console.log('🔄 loadAvailableTags called, isChinese():', isChinese());
             if (isChinese()) {
+                console.log('🇨🇳 Loading Chinese tags...');
                 // Use Chinese autocomplete for Chinese mode
                 const { data, error } = await UnifiedTagService.searchChineseTagsAutocomplete('', 100);
                 if (error) {
-                    console.error('Error loading Chinese tags:', error);
+                    console.error('❌ Error loading Chinese tags:', error);
                     dispatch(setAvailableTags(getSampleAvailableTags()));
                     return;
                 }
+                console.log('✅ Chinese tags loaded:', data?.length || 0, 'tags');
                 // Convert to simple array format for autocomplete
                 const chineseTags = (data || []).map(tagData => tagData.tag);
+                console.log('🏷️ Converted Chinese tags:', chineseTags.slice(0, 5));
                 dispatch(setAvailableTags(chineseTags));
             } else {
+                console.log('🇺🇸 Loading English tags...');
                 // Get all questions to extract their tags for English mode
                 const { data: allQuestions, error } = await supabase
                     .from('Math_Past_Paper')
@@ -678,13 +682,14 @@ const MathPaperPage = () => {
     useEffect(() => {
         if (!tagsLoadedRef.current) {
             tagsLoadedRef.current = true;
-            loadAvailableTags();
-            // Dispatch the appropriate popular tags thunk based on language
-            if (isChinese()) {
-                dispatch(loadPopularTagsChineseThunk());
-            } else {
-                dispatch(loadPopularTagsThunk());
-            }
+        }
+        // Always load available tags when language changes
+        loadAvailableTags();
+        // Dispatch the appropriate popular tags thunk based on language
+        if (isChinese()) {
+            dispatch(loadPopularTagsChineseThunk());
+        } else {
+            dispatch(loadPopularTagsThunk());
         }
     }, [loadAvailableTags, dispatch, isChinese]);
 
@@ -1414,8 +1419,13 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Autocomplete
-                                    key={`${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}`} // Force remount when search state or filter state changes
-                                    options={availableTags}
+                                    key={`${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}-${isChinese() ? 'zh' : 'en'}`} // Force remount when search state, filter state, or language changes
+                                    options={(() => {
+                                        console.log('🔍 Autocomplete options:', availableTags?.length || 0, 'tags');
+                                        console.log('🔍 Sample options:', availableTags?.slice(0, 5));
+                                        console.log('🔍 Current language:', isChinese() ? 'Chinese' : 'English');
+                                        return availableTags;
+                                    })()}
                                     value={searchTags.length > 0 ? searchTags[0] : null}
                                     onChange={(event, newValue) => {
                                         if (newValue) {

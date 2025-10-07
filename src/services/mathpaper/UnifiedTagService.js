@@ -258,11 +258,7 @@ class UnifiedTagService extends BaseService {
      */
     static async searchChineseTagsAutocomplete(searchTerm, limit = 20) {
         try {
-            if (!searchTerm || searchTerm.trim().length === 0) {
-                return { data: [], error: null, fromCache: false };
-            }
-
-            const trimmedTerm = searchTerm.trim();
+            const trimmedTerm = searchTerm ? searchTerm.trim() : '';
 
             // Check cache first
             const cacheKey = `zh_${trimmedTerm}`;
@@ -275,13 +271,20 @@ class UnifiedTagService extends BaseService {
                 };
             }
 
-            // Use Chinese topic tags function
-            const result = await this.executeRPC('get_popular_tags_zh', {
+            // Use Chinese all tags function for better coverage when no search term
+            const result = await this.executeRPC('get_all_tags_with_counts_zh', {
                 limit_count: limit
             });
 
             if (result.error) {
                 return { data: null, error: result.error, fromCache: false };
+            }
+
+            // If no search term, return all results
+            if (!trimmedTerm) {
+                // Cache the results
+                TagCacheService.cacheAutocompleteResults(cacheKey, result.data);
+                return { data: result.data, error: null, fromCache: false };
             }
 
             // Filter results based on search term
