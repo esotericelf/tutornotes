@@ -1,9 +1,36 @@
 import mathPaperTranslations from '../../locales/mathPaperTranslations.json';
+import homeTranslations from '../../locales/homeTranslations.json';
 
 class TranslationService {
+    /**
+     * Merge two translation objects, with the second one taking precedence for overlapping keys
+     * @param {object} main - Main translations object
+     * @param {object} additional - Additional translations object
+     * @returns {object} Merged translations
+     */
+    mergeTranslations(main, additional) {
+        const merged = {};
+
+        // Get all language codes from both objects
+        const allLanguages = new Set([
+            ...Object.keys(main),
+            ...Object.keys(additional)
+        ]);
+
+        allLanguages.forEach(lang => {
+            merged[lang] = {
+                ...main[lang],
+                ...additional[lang]
+            };
+        });
+
+        return merged;
+    }
+
     constructor() {
         this.currentLanguage = 'en';
-        this.translations = mathPaperTranslations;
+        // Merge all translation files - homeTranslations takes precedence
+        this.translations = this.mergeTranslations(mathPaperTranslations, homeTranslations);
     }
 
     /**

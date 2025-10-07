@@ -52,6 +52,16 @@
             "question": "Q",
             "tags": "Tags"
         },
+        "solution": {
+            "title": "Solution",
+            "correctAnswer": "Correct Answer",
+            "noDiagram": "No diagram available for this solution.",
+            "diagram": "Solution Diagram"
+        },
+        "diagram": {
+            "title": "Diagram",
+            "multiple": "Diagrams"
+        },
         "seo": {
             "mainPage": {
                 "title": "DSE Math Past Papers - Practice Questions & Solutions | TutorNote",
@@ -130,6 +140,16 @@
             "paper": "試卷",
             "question": "題",
             "tags": "標籤"
+        },
+        "solution": {
+            "title": "解答",
+            "correctAnswer": "正確答案",
+            "noDiagram": "此解答沒有圖表。",
+            "diagram": "解答圖表"
+        },
+        "diagram": {
+            "title": "圖表",
+            "multiple": "圖表"
         },
         "seo": {
             "mainPage": {

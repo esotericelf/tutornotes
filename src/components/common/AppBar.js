@@ -29,7 +29,7 @@ const AppBar = () => {
     const { user } = useAuth()
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-    const { t, changeLanguage, getCurrentLanguage, getAvailableLanguages, isChinese } = useTranslation()
+    const { t, changeLanguage, getCurrentLanguage, getAvailableLanguages } = useTranslation()
 
     const [languageMenuAnchor, setLanguageMenuAnchor] = React.useState(null)
     const open = Boolean(languageMenuAnchor)
@@ -114,7 +114,7 @@ const AppBar = () => {
                             fontSize: { xs: '1.1rem', sm: '1.5rem' }
                         }}
                     >
-                        Tutornotes
+                        {t('app.title')}
                     </Typography>
                 </Box>
 

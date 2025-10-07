@@ -28,7 +28,7 @@ export const useTranslation = () => {
      */
     const t = useCallback((key, params = {}, fallback = null) => {
         return translationService.t(key, params, fallback);
-    }, [currentLanguage]);
+    }, []);
 
     /**
      * Change the current language
@@ -45,12 +45,12 @@ export const useTranslation = () => {
             // Update meta tags for SEO
             const metaDescription = document.querySelector('meta[name="description"]');
             if (metaDescription) {
-                metaDescription.content = t('seo.mainPage.description');
+                metaDescription.content = t('seo.description');
             }
 
             const metaKeywords = document.querySelector('meta[name="keywords"]');
             if (metaKeywords) {
-                metaKeywords.content = t('seo.mainPage.keywords');
+                metaKeywords.content = t('seo.keywords');
             }
 
         } catch (error) {

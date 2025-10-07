@@ -1,0 +1,118 @@
+{
+    "en": {
+        "app": {
+            "title": "TutorNotes"
+        },
+        "hero": {
+            "title": "Your Learning Journey Starts Here",
+            "subtitle": "Access comprehensive math past papers, expert tutor notes, and join a community of learners",
+            "getStarted": "Start Learning Now",
+            "continueLearning": "Continue Learning",
+            "whatsNew": "What's New"
+        },
+        "features": {
+            "title": "Features",
+            "mathPastPapers": {
+                "title": "Math Past Papers",
+                "description": "Access comprehensive collection of past mathematics examination papers with advanced filtering and search capabilities.",
+                "browsePapers": "Browse Papers",
+                "viewDemo": "View Demo"
+            },
+            "practiceQuizzes": {
+                "title": "Practice Quizzes",
+                "description": "Test your knowledge with interactive practice quizzes. Track your progress and identify areas for improvement.",
+                "startQuiz": "Start Quiz"
+            },
+            "discussions": {
+                "title": "Discussions",
+                "description": "Join discussions with other students, ask questions, and get help with difficult topics.",
+                "learnMore": "Learn More"
+            },
+            "favorites": {
+                "title": "Favorites",
+                "description": "Save your favorite notes and papers for quick access and personalized learning.",
+                "learnMore": "Learn More"
+            }
+        },
+        "stats": {
+            "pastPapers": "Past Papers",
+            "practiceQuizzes": "Practice Quizzes",
+            "activeDiscussions": "Active Discussions",
+            "students": "Students"
+        },
+        "cta": {
+            "title": "Ready to Transform Your Learning?",
+            "subtitle": "Join thousands of students who are already using Tutor Notes to improve their academic performance and achieve their goals.",
+            "accessDashboard": "Access Dashboard",
+            "startFree": "Start Free Today",
+            "learnMore": "Learn More"
+        },
+        "footer": {
+            "title": "Tutor Notes",
+            "copyright": "© 2024 Tutor Notes. All rights reserved."
+        },
+        "seo": {
+            "title": "TutorNote - DSE Math Past Papers for Hong Kong Students",
+            "description": "Comprehensive DSE Math Past Papers, practice quizzes, and educational resources for Hong Kong students. Access past papers, track progress, and improve your math skills.",
+            "keywords": "DSE, Math, Past Papers, Hong Kong, Education, Tutoring, Mathematics, HKDSE, Secondary School, Exam Preparation, Practice Quizzes"
+        }
+    },
+    "zh": {
+        "app": {
+            "title": "導師筆記"
+        },
+        "hero": {
+            "title": "您的學習之旅從這裡開始",
+            "subtitle": "獲取全面的數學歷年試題、專家導師筆記，並加入學習者社群",
+            "getStarted": "立即開始學習",
+            "continueLearning": "繼續學習",
+            "whatsNew": "最新消息"
+        },
+        "features": {
+            "title": "功能特色",
+            "mathPastPapers": {
+                "title": "數學歷年試題",
+                "description": "獲取全面的歷年數學考試試卷，具備高級篩選和搜尋功能。",
+                "browsePapers": "瀏覽試卷",
+                "viewDemo": "查看演示"
+            },
+            "practiceQuizzes": {
+                "title": "練習測驗",
+                "description": "透過互動式練習測驗測試您的知識。追蹤進度並識別需要改進的領域。",
+                "startQuiz": "開始測驗"
+            },
+            "discussions": {
+                "title": "討論區",
+                "description": "與其他學生一起討論，提出問題，並獲得困難主題的幫助。",
+                "learnMore": "了解更多"
+            },
+            "favorites": {
+                "title": "收藏",
+                "description": "保存您喜愛的筆記和試卷，以便快速存取和個人化學習。",
+                "learnMore": "了解更多"
+            }
+        },
+        "stats": {
+            "pastPapers": "歷年試題",
+            "practiceQuizzes": "練習測驗",
+            "activeDiscussions": "活躍討論",
+            "students": "學生"
+        },
+        "cta": {
+            "title": "準備好改變您的學習方式了嗎？",
+            "subtitle": "加入數千名已經使用導師筆記提升學業表現並實現目標的學生。",
+            "accessDashboard": "進入儀表板",
+            "startFree": "立即免費開始",
+            "learnMore": "了解更多"
+        },
+        "footer": {
+            "title": "導師筆記",
+            "copyright": "© 2024 導師筆記. 版權所有。"
+        },
+        "seo": {
+            "title": "TutorNote - 香港學生DSE數學歷年試題",
+            "description": "為香港學生提供全面的DSE數學歷年試題、練習測驗和教育資源。獲取歷年試題、追蹤進度並提升數學技能。",
+            "keywords": "DSE, 數學, 歷年試題, 香港, 教育, 輔導, 數學科, 中學文憑試, 中學, 考試準備, 練習測驗"
+        }
+    }
+}

@@ -12,10 +12,14 @@ import { ExpandMore, ExpandLess, Label, ArrowBack } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CompactQuestionNavigation from './CompactQuestionNavigation';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionChange, cameFromTagSearch = false, originalSearchTags = [], onBackToSearch }) => {
     const [solutionDiagramExpanded, setSolutionDiagramExpanded] = useState(false);
     const [selectedDiagramIndex, setSelectedDiagramIndex] = useState(0);
+
+    // Translation hook
+    const { t, isChinese } = useTranslation();
 
 
     const handleSolutionDiagramToggle = () => {
@@ -233,7 +237,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                         <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
                             {question.year}
                         </Typography>
-                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Year</Typography>
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{t('question.year')}</Typography>
                     </Paper>
 
                     <Paper
@@ -250,7 +254,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                         <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
                             {question.paper}
                         </Typography>
-                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Paper</Typography>
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{t('question.paper')}</Typography>
                     </Paper>
 
                     <Paper
@@ -267,7 +271,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                         <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', sm: '1.25rem' } }}>
                             {question.question_no}
                         </Typography>
-                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Question</Typography>
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{t('question.question')}</Typography>
                     </Paper>
                 </Box>
 
@@ -341,7 +345,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                         <Typography variant="h6" fontWeight="bold" color="primary" sx={{
                             fontSize: { xs: '1rem', sm: '1.25rem' }
                         }}>
-                            Tags
+                            {t('question.tags')}
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -456,7 +460,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                         fontSize: { xs: '1rem', sm: '1.25rem' },
                                         mb: { xs: 1, sm: 2 }
                                     }}>
-                                        Diagram
+                                        {t('diagram.title')}
                                     </Typography>
                                     {renderIframeContent(question.question_diagram)}
                                 </Paper>
@@ -486,7 +490,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                     <Typography variant="h5" fontWeight="bold" color="primary" sx={{
                         fontSize: { xs: '1.3rem', sm: '1.5rem' }
                     }}>
-                        Solution
+                        {t('solution.title')}
                     </Typography>
 
                     {/* Correct Answer Badge */}
@@ -504,7 +508,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                             <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                                 {question.correct_answer}
                             </Typography>
-                            <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Correct Answer</Typography>
+                            <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{t('solution.correctAnswer')}</Typography>
                         </Paper>
                     )}
                 </Box>
@@ -577,7 +581,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                         ml: 1,
                                         fontSize: { xs: '0.9rem', sm: '1rem' }
                                     }}>
-                                        Solution Diagram
+                                        {t('solution.diagram')}
                                     </Typography>
                                 )}
                             </Box>
@@ -687,7 +691,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                             textAlign: 'center',
                                             fontSize: { xs: '0.9rem', sm: '1rem' }
                                         }}>
-                                            No diagram available for this solution.
+                                            {t('solution.noDiagram')}
                                         </Typography>
                                     )
                                 ) : (
@@ -697,7 +701,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                         sx={{
                                             writingMode: { xs: 'horizontal-tb', lg: 'vertical-rl' },
                                             textOrientation: { xs: 'mixed', lg: 'mixed' },
-                                            transform: { xs: 'none', lg: 'rotate(180deg)' },
+                                            transform: { xs: 'none', lg: isChinese() ? 'none' : 'rotate(180deg)' },
                                             fontWeight: 'bold',
                                             alignSelf: 'center',
                                             justifySelf: 'center',
@@ -705,7 +709,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                             fontSize: { xs: '0.8rem', sm: '1rem' }
                                         }}
                                     >
-                                        {solutionDiagrams.length > 1 ? `${solutionDiagrams.length} Diagrams` : 'Diagram'}
+                                        {solutionDiagrams.length > 1 ? `${solutionDiagrams.length} ${t('diagram.multiple')}` : t('diagram.title')}
                                     </Typography>
                                 )}
                             </Box>

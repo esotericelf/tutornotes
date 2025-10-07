@@ -23,10 +23,12 @@ import { useAuth } from '../../store/hooks'
 import { useNavigate } from 'react-router-dom'
 import SEOHead from '../common/SEOHead'
 import { createWebsiteStructuredData, createOrganizationStructuredData } from '../../utils/structuredData'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const HomePage = () => {
     const { user } = useAuth()
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
     // const handleLogout = async () => {
     //     // Function removed to fix build errors
@@ -35,29 +37,29 @@ const HomePage = () => {
     const features = [
         {
             icon: <PlayCircleOutline sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Practice Quizzes',
-            description: 'Test your knowledge with interactive practice quizzes. Track your progress and identify areas for improvement.',
+            title: t('features.practiceQuizzes.title'),
+            description: t('features.practiceQuizzes.description'),
             color: '#e3f2fd'
         },
         {
             icon: <Forum sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Discussions',
-            description: 'Join discussions with other students, ask questions, and get help with difficult topics.',
+            title: t('features.discussions.title'),
+            description: t('features.discussions.description'),
             color: '#e8f5e8'
         },
         {
             icon: <Favorite sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Favorites',
-            description: 'Save your favorite notes and papers for quick access and personalized learning.',
+            title: t('features.favorites.title'),
+            description: t('features.favorites.description'),
             color: '#fff3e0'
         }
     ]
 
     const stats = [
-        { number: '150+', label: 'Past Papers', icon: <Book /> },
-        { number: '30+', label: 'Practice Quizzes', icon: <PlayCircleOutline /> },
-        { number: '25+', label: 'Active Discussions', icon: <Forum /> },
-        { number: '1000+', label: 'Students', icon: <People /> }
+        { number: '150+', label: t('stats.pastPapers'), icon: <Book /> },
+        { number: '30+', label: t('stats.practiceQuizzes'), icon: <PlayCircleOutline /> },
+        { number: '25+', label: t('stats.activeDiscussions'), icon: <Forum /> },
+        { number: '1000+', label: t('stats.students'), icon: <People /> }
     ]
 
     const handleGetStarted = () => {
@@ -71,9 +73,9 @@ const HomePage = () => {
     return (
         <>
             <SEOHead
-                title="TutorNote - DSE Math Past Papers for Hong Kong Students"
-                description="Comprehensive DSE Math Past Papers, practice quizzes, and educational resources for Hong Kong students. Access past papers, track progress, and improve your math skills."
-                keywords="DSE, Math, Past Papers, Hong Kong, Education, Tutoring, Mathematics, HKDSE, Secondary School, Exam Preparation, Practice Quizzes"
+                title={t('seo.title')}
+                description={t('seo.description')}
+                keywords={t('seo.keywords')}
                 url="/"
                 structuredData={[createWebsiteStructuredData(), createOrganizationStructuredData()]}
             />
@@ -106,9 +108,7 @@ const HomePage = () => {
                                 fontWeight="bold"
                                 sx={{ mb: 3, fontSize: { xs: '2.5rem', md: '3.5rem' } }}
                             >
-                                Your Learning Journey
-                                <br />
-                                Starts Here
+                                {t('hero.title')}
                             </Typography>
                             <Typography
                                 variant="h5"
@@ -119,7 +119,7 @@ const HomePage = () => {
                                     fontSize: { xs: '1.1rem', md: '1.3rem' }
                                 }}
                             >
-                                Access comprehensive math past papers, expert tutor notes, and join a community of learners
+                                {t('hero.subtitle')}
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
                                 <Button
@@ -138,7 +138,7 @@ const HomePage = () => {
                                         }
                                     }}
                                 >
-                                    {user ? 'Continue Learning' : 'Start Learning Now'}
+                                    {user ? t('hero.continueLearning') : t('hero.getStarted')}
                                 </Button>
                                 <Button
                                     variant="outlined"
@@ -156,7 +156,7 @@ const HomePage = () => {
                                         }
                                     }}
                                 >
-                                    What's New
+                                    {t('hero.whatsNew')}
                                 </Button>
                             </Box>
                         </Box>
@@ -166,7 +166,7 @@ const HomePage = () => {
                 {/* Features Section */}
                 <Container maxWidth="lg" sx={{ py: 8 }}>
                     <Typography variant="h3" component="h2" align="center" gutterBottom>
-                        Features
+                        {t('features.title')}
                     </Typography>
                     <Grid container spacing={4} sx={{ mt: 4 }}>
                         <Grid size={{ xs: 12, md: 4 }}>
@@ -174,10 +174,10 @@ const HomePage = () => {
                                 <CardContent sx={{ flexGrow: 1 }}>
                                     <School sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
                                     <Typography variant="h5" component="h3" gutterBottom>
-                                        Math Past Papers
+                                        {t('features.mathPastPapers.title')}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary" paragraph>
-                                        Access comprehensive collection of past mathematics examination papers with advanced filtering and search capabilities.
+                                        {t('features.mathPastPapers.description')}
                                     </Typography>
                                 </CardContent>
                                 <CardActions>
@@ -186,7 +186,7 @@ const HomePage = () => {
                                         onClick={() => navigate('/DSE_Math')}
                                         endIcon={<ArrowForward />}
                                     >
-                                        Browse Papers
+                                        {t('features.mathPastPapers.browsePapers')}
                                     </Button>
                                     <Button
                                         size="small"
@@ -194,7 +194,7 @@ const HomePage = () => {
                                         startIcon={<PlayCircleOutline />}
                                         onClick={() => navigate('/question-demo')}
                                     >
-                                        View Demo
+                                        {t('features.mathPastPapers.viewDemo')}
                                     </Button>
                                 </CardActions>
                             </Card>
@@ -248,7 +248,7 @@ const HomePage = () => {
                                                 }
                                             }}
                                         >
-                                            {feature.title === 'Practice Quizzes' ? 'Start Quiz' : 'Learn More'}
+                                            {feature.title === t('features.practiceQuizzes.title') ? t('features.practiceQuizzes.startQuiz') : t('features.discussions.learnMore')}
                                         </Button>
                                     </CardActions>
                                 </Card>
@@ -294,10 +294,10 @@ const HomePage = () => {
                         }}
                     >
                         <Typography variant="h3" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                            Ready to Transform Your Learning?
+                            {t('cta.title')}
                         </Typography>
                         <Typography variant="h6" sx={{ mb: 4, opacity: 0.9, maxWidth: 600, mx: 'auto' }}>
-                            Join thousands of students who are already using Tutor Notes to improve their academic performance and achieve their goals.
+                            {t('cta.subtitle')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                             <Button
@@ -315,7 +315,7 @@ const HomePage = () => {
                                     }
                                 }}
                             >
-                                {user ? 'Access Dashboard' : 'Start Free Today'}
+                                {user ? t('cta.accessDashboard') : t('cta.startFree')}
                             </Button>
                             <Button
                                 variant="outlined"
@@ -332,7 +332,7 @@ const HomePage = () => {
                                     }
                                 }}
                             >
-                                Learn More
+                                {t('cta.learnMore')}
                             </Button>
                         </Box>
                     </Paper>
@@ -343,10 +343,10 @@ const HomePage = () => {
                     <Container maxWidth="lg">
                         <Box sx={{ textAlign: 'center' }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
-                                Tutor Notes
+                                {t('footer.title')}
                             </Typography>
                             <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                                © 2024 Tutor Notes. All rights reserved.
+                                {t('footer.copyright')}
                             </Typography>
                         </Box>
                     </Container>
