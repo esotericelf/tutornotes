@@ -507,11 +507,9 @@ const MathPaperPage = () => {
 
     // Initialize state from URL parameters
     useEffect(() => {
-        console.log('🔍 URL useEffect triggered - searchParams:', searchParams.toString(), 'params:', params, 'isFilterSearching:', isFilterSearching);
 
         // Skip if we're in the middle of a filter search
         if (isFilterSearching) {
-            console.log('🔍 Skipping URL useEffect - filter search in progress');
             return;
         }
 
@@ -520,7 +518,6 @@ const MathPaperPage = () => {
 
         if (questionParams) {
             // Direct question URL - load specific question
-            console.log('✅ Direct question URL detected:', questionParams);
             loadSpecificQuestion(questionParams.year, questionParams.paper, questionParams.questionNo);
         } else {
             // Regular tag-based or filter-based search
@@ -541,14 +538,12 @@ const MathPaperPage = () => {
                 dispatch(setSearchInput(''));
                 // Automatically trigger tag search if tags are in URL
                 if (tagsArray.length > 0) {
-                    console.log('🔄 Triggering tag search from URL:', tagsArray);
                     handleTagSearchFromURL(tagsArray, pageFromURL);
                 }
             } else {
                 // Clear tags if no URL parameters, but only if we're not in the middle of a filter search
                 const hasActiveFilters = selectedYear || selectedPaper || selectedQuestionNo;
                 if (!hasActiveFilters) {
-                    console.log('🧹 Clearing search state - no URL parameters and no active filters');
                     dispatch(setSearchTags([]));
                     dispatch(setSearchInput(''));
                     dispatch(setQuestions([]));
@@ -558,7 +553,6 @@ const MathPaperPage = () => {
                     dispatch(setTotalQuestions(0));
                     dispatch(setTotalPages(0));
                 } else {
-                    console.log('🔍 Skipping clear - active filter search detected');
                 }
             }
         }
@@ -739,11 +733,9 @@ const MathPaperPage = () => {
 
     // Handle filter search (simplified like your reference code)
     const handleFilterSearch = useCallback(async (page = 1) => {
-        console.log('🔍 handleFilterSearch called with page:', page);
 
         // Don't run filter search if we're doing a tag search
         if (isTagSearchActive) {
-            console.log('Skipping handleFilterSearch because tag search is active');
             return;
         }
 
@@ -753,7 +745,6 @@ const MathPaperPage = () => {
         setIsTagSearchActive(false);
 
         try {
-            console.log('Fetching questions with filters:', { selectedYear, selectedPaper, selectedQuestionNo, page });
 
             // Use the Redux thunk instead of direct Supabase queries
             const result = await dispatch(loadQuestionsByFilters({
@@ -762,14 +753,10 @@ const MathPaperPage = () => {
                 questionNo: selectedQuestionNo
             })).unwrap();
 
-            console.log('🔍 Filter search results:', result);
-            console.log('🔍 Current Redux questions state:', questions);
-            console.log('🔍 Current Redux totalQuestions state:', totalQuestions);
 
             // If exactly one result, navigate directly to the question detail page
             if (result && result.length === 1) {
                 const question = result[0];
-                console.log('🔍 Single result found, navigating to question:', question);
                 const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
@@ -1414,19 +1401,16 @@ const MathPaperPage = () => {
                                     variant="contained"
                                     fullWidth
                                     onClick={() => {
-                                        console.log('🔍 Search button clicked - searchTags:', searchTags);
 
                                         // Reset pagination for new search
                                         dispatch(setCurrentPage(1));
 
                                         // If tags are selected, do tag search; otherwise do filter search
                                         if (searchTags.length > 0) {
-                                            console.log('🔍 Executing tag search');
                                             // Update URL with tags and page 1
                                             updateURLWithPagination(searchTags, 1);
                                             handleTagSearch();
                                         } else {
-                                            console.log('🔍 Executing filter search');
                                             // For filter search, update URL with page 1
                                             updateURLWithPagination([], 1);
                                             handleFilterSearch(1);
