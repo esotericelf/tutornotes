@@ -114,12 +114,17 @@ const MathPaperPage = () => {
         window.scrollTo(0, 0);
         // Reset search input on component mount to prevent autocomplete from retaining previous values
         dispatch(setSearchInput(''));
+        // Clear URL parameters on page load to return to blank state after refresh
+        const currentURL = new URL(window.location);
+        if (currentURL.searchParams.has('tags') || currentURL.searchParams.has('page')) {
+            navigate('/DSE_Math', { replace: true });
+        }
         // Initialize the previous language ref
         previousLanguageRef.current = isChinese() ? 'zh' : 'en';
         return () => {
             setComponentMounted(false);
         };
-    }, [dispatch, isChinese]);
+    }, [dispatch, isChinese, navigate]);
 
 
     // Convert question tags array to the format expected by the UI
@@ -332,13 +337,8 @@ const MathPaperPage = () => {
                 // Load tags for the matching questions
                 if (matchingQuestions.length > 0) {
                     loadTagsForQuestions(matchingQuestions);
-                    // Update available tags from the loaded questions
-                    const questionTags = extractTagsFromQuestions(matchingQuestions);
-                    if (questionTags.length > 0) {
-                        const currentAvailableTags = availableTags;
-                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
-                        dispatch(setAvailableTags(newAvailableTags));
-                    }
+                    // Disabled: Don't update available tags from search results to prevent mixed language tags
+                    // This was causing English tags to be added to Chinese autocomplete
                 }
 
                 if (matchingQuestions.length === 0 && totalQuestions === 0) {
@@ -424,13 +424,8 @@ const MathPaperPage = () => {
                 // Load tags for the matching questions
                 if (matchingQuestions.length > 0) {
                     loadTagsForQuestions(matchingQuestions);
-                    // Update available tags from the loaded questions
-                    const questionTags = extractTagsFromQuestions(matchingQuestions);
-                    if (questionTags.length > 0) {
-                        const currentAvailableTags = availableTags;
-                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
-                        dispatch(setAvailableTags(newAvailableTags));
-                    }
+                    // Disabled: Don't update available tags from search results to prevent mixed language tags
+                    // This was causing English tags to be added to Chinese autocomplete
                 }
 
                 if (matchingQuestions.length === 0 && totalQuestions === 0) {
@@ -622,7 +617,10 @@ const MathPaperPage = () => {
                 // Convert to simple array format for autocomplete
                 const chineseTags = (data || []).map(tagData => tagData.tag);
                 console.log('🏷️ Converted Chinese tags:', chineseTags.slice(0, 5));
-                dispatch(setAvailableTags(chineseTags));
+                // Only set Chinese tags if we're still in Chinese mode
+                if (isChinese()) {
+                    dispatch(setAvailableTags(chineseTags));
+                }
             } else {
                 console.log('🇺🇸 Loading English tags...');
                 // Get all questions to extract their tags for English mode
@@ -650,9 +648,13 @@ const MathPaperPage = () => {
 
                 if (uniqueTags.length === 0) {
                     // If no tags found, use sample tags for testing
-                    dispatch(setAvailableTags(getSampleAvailableTags()));
+                    if (!isChinese()) {
+                        dispatch(setAvailableTags(getSampleAvailableTags()));
+                    }
                 } else {
-                    dispatch(setAvailableTags(uniqueTags));
+                    if (!isChinese()) {
+                        dispatch(setAvailableTags(uniqueTags));
+                    }
                 }
             }
         } catch (err) {
@@ -691,7 +693,7 @@ const MathPaperPage = () => {
         } else {
             dispatch(loadPopularTagsThunk());
         }
-    }, [loadAvailableTags, dispatch, isChinese]);
+    }, [dispatch, isChinese]); // Removed loadAvailableTags from dependencies to prevent circular dependency
 
     // Reload popular tags when language changes
     useEffect(() => {
@@ -818,13 +820,8 @@ const MathPaperPage = () => {
                 // Load tags for the matching questions
                 if (matchingQuestions.length > 0) {
                     loadTagsForQuestions(matchingQuestions);
-                    // Update available tags from the loaded questions
-                    const questionTags = extractTagsFromQuestions(matchingQuestions);
-                    if (questionTags.length > 0) {
-                        const currentAvailableTags = availableTags;
-                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
-                        dispatch(setAvailableTags(newAvailableTags));
-                    }
+                    // Disabled: Don't update available tags from search results to prevent mixed language tags
+                    // This was causing English tags to be added to Chinese autocomplete
                 }
 
                 if (matchingQuestions.length === 0 && totalQuestions === 0) {
@@ -907,13 +904,8 @@ const MathPaperPage = () => {
                 // Load tags for the matching questions
                 if (matchingQuestions.length > 0) {
                     loadTagsForQuestions(matchingQuestions);
-                    // Update available tags from the loaded questions
-                    const questionTags = extractTagsFromQuestions(matchingQuestions);
-                    if (questionTags.length > 0) {
-                        const currentAvailableTags = availableTags;
-                        const newAvailableTags = [...new Set([...currentAvailableTags, ...questionTags])];
-                        dispatch(setAvailableTags(newAvailableTags));
-                    }
+                    // Disabled: Don't update available tags from search results to prevent mixed language tags
+                    // This was causing English tags to be added to Chinese autocomplete
                 }
 
                 if (matchingQuestions.length === 0 && totalQuestions === 0) {
@@ -1448,7 +1440,13 @@ const MathPaperPage = () => {
                                     }}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue, reason) => {
+                                        console.log('🔍 Autocomplete input change:', { newInputValue, reason, currentLanguage: isChinese() ? 'Chinese' : 'English' });
                                         dispatch(setSearchInput(newInputValue));
+                                    }}
+                                    onOpen={() => {
+                                        console.log('🔍 Autocomplete opened, current language:', isChinese() ? 'Chinese' : 'English');
+                                        console.log('🔍 Available tags count:', availableTags?.length || 0);
+                                        console.log('🔍 Sample available tags:', availableTags?.slice(0, 10));
                                     }}
                                     renderInput={(params) => (
                                         <TextField
