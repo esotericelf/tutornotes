@@ -741,11 +741,16 @@ const MathPaperPage = () => {
                 questionNo: selectedQuestionNo
             })).unwrap();
 
+            console.log('🔍 Filter search results:', result);
+            console.log('🔍 Results count:', result ? result.length : 0);
 
             // If exactly one result, navigate directly to the question detail page
             if (result && result.length === 1) {
+                console.log('🔍 Single result found - navigating to question detail page');
                 const question = result[0];
+                console.log('🔍 Question:', question);
                 const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
+                console.log('🔍 Generated URL:', questionURL);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
             }
