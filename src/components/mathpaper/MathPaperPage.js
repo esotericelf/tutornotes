@@ -1326,10 +1326,6 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid year
-                                            if (newYear && newYear !== '') {
-                                                handleFilterSearch(1);
-                                            }
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1362,10 +1358,6 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid paper
-                                            if (newPaper && newPaper !== '') {
-                                                handleFilterSearch(1);
-                                            }
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1397,10 +1389,6 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid question number
-                                            if (newQuestionNo && newQuestionNo !== '') {
-                                                handleFilterSearch(1);
-                                            }
                                         }}
                                         disabled={!selectedPaper}
                                         MenuProps={{
