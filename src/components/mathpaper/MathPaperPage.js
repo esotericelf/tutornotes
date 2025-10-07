@@ -1326,8 +1326,8 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid year (not empty string)
-                                            if (newYear && newYear.trim() !== '') {
+                                            // Only trigger search if we have a valid year
+                                            if (newYear && newYear !== '') {
                                                 handleFilterSearch(1);
                                             }
                                         }}
@@ -1362,8 +1362,8 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid paper (not empty string)
-                                            if (newPaper && newPaper.trim() !== '') {
+                                            // Only trigger search if we have a valid paper
+                                            if (newPaper && newPaper !== '') {
                                                 handleFilterSearch(1);
                                             }
                                         }}
@@ -1397,8 +1397,8 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid question number (not empty string)
-                                            if (newQuestionNo && newQuestionNo.trim() !== '') {
+                                            // Only trigger search if we have a valid question number
+                                            if (newQuestionNo && newQuestionNo !== '') {
                                                 handleFilterSearch(1);
                                             }
                                         }}
