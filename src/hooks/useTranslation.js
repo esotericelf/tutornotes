@@ -99,7 +99,7 @@ export const useTranslation = () => {
      */
     const getSection = useCallback((section) => {
         return translationService.getSection(section);
-    }, [currentLanguage]);
+    }, []);
 
     /**
      * Get Chinese translations for database tags

@@ -11,7 +11,8 @@ import {
     Menu,
     MenuItem,
     ListItemIcon,
-    ListItemText
+    ListItemText,
+    CircularProgress
 } from '@mui/material'
 import {
     School,
@@ -22,14 +23,25 @@ import {
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../store/hooks'
+import { signOut } from '../../store/slices/authSlice'
 import { useTranslation } from '../../hooks/useTranslation'
 
 const AppBar = () => {
     const navigate = useNavigate()
-    const { user } = useAuth()
+    const { user, loading, dispatch } = useAuth()
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
     const { t, changeLanguage, getCurrentLanguage, getAvailableLanguages } = useTranslation()
+
+
+    // Use a stable state to prevent flashing
+    const [showSignIn, setShowSignIn] = React.useState(false)
+
+    React.useEffect(() => {
+        if (!loading) {
+            setShowSignIn(!user)
+        }
+    }, [user, loading])
 
     const [languageMenuAnchor, setLanguageMenuAnchor] = React.useState(null)
     const open = Boolean(languageMenuAnchor)
@@ -40,6 +52,19 @@ const AppBar = () => {
 
     const handleSignInClick = () => {
         navigate('/login')
+    }
+
+    const handleSignOutClick = async () => {
+        try {
+            await dispatch(signOut())
+            navigate('/')
+        } catch (error) {
+            console.error('Sign out error:', error)
+        }
+    }
+
+    const handleDemoClick = () => {
+        navigate('/DSE_Math')
     }
 
     const handleLanguageToggle = (event) => {
@@ -175,6 +200,7 @@ const AppBar = () => {
                         variant="outlined"
                         size="small"
                         startIcon={<PlayCircleOutline />}
+                        onClick={handleDemoClick}
                         sx={{
                             display: { xs: 'none', sm: 'flex' },
                             minWidth: 'auto',
@@ -184,8 +210,12 @@ const AppBar = () => {
                         Demo
                     </Button>
 
-                    {/* Sign In Button */}
-                    {!user && (
+                    {/* Sign In/Sign Out Button or Loading */}
+                    {loading ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', px: 2 }}>
+                            <CircularProgress size={20} />
+                        </Box>
+                    ) : showSignIn ? (
                         <Button
                             variant="outlined"
                             size="small"
@@ -197,7 +227,19 @@ const AppBar = () => {
                         >
                             Sign In
                         </Button>
-                    )}
+                    ) : user ? (
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={handleSignOutClick}
+                            sx={{
+                                minWidth: 'auto',
+                                px: 2
+                            }}
+                        >
+                            Sign Out
+                        </Button>
+                    ) : null}
                 </Box>
             </Toolbar>
         </MuiAppBar>
