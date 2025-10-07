@@ -171,7 +171,6 @@ const MathPaperPage = () => {
         dispatch(clearError());
 
         try {
-            console.log(`🔍 Loading specific question: ${year} Paper ${paper} Question ${questionNo}`);
 
             // Check if user came from a tag search using multiple methods
             const referrer = document.referrer;
@@ -249,7 +248,6 @@ const MathPaperPage = () => {
                 }
             } else {
                 // Reset navigation state if not from tag search
-                console.log('🔍 No tag search navigation state found. Referrer:', referrer, 'SessionStorage:', storedNavState, 'URL params:', { fromTagSearch: urlFromTagSearch, tags: urlTags, page: urlPage });
                 dispatch(setCameFromTagSearch(false));
                 dispatch(setOriginalSearchTags([]));
                 dispatch(setOriginalSearchPage(1));
@@ -284,7 +282,6 @@ const MathPaperPage = () => {
                     });
                 }, 100);
 
-                console.log(`✅ Successfully loaded question: ${result.data.id}`);
             } else {
                 dispatch(clearError());
                 dispatch(setSelectedQuestion(null));
@@ -303,7 +300,6 @@ const MathPaperPage = () => {
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
-        console.log('🔍 handleTagSearchFromURL called with tags:', tags, 'page:', page, 'isChinese:', isChinese());
 
         if (tags.length === 0) return;
 
@@ -318,11 +314,9 @@ const MathPaperPage = () => {
         dispatch(clearError());
 
         try {
-            console.log('Searching for tags from URL:', tags, 'Page:', page, 'Language:', isChinese() ? 'Chinese' : 'English');
 
             if (isChinese()) {
                 // Use Chinese tag search with Supabase function
-                console.log('🔍 Using Chinese tag search function for URL');
 
                 const result = await UnifiedTagService.searchByChineseTagsPaginated(tags, page, pageSize);
 
@@ -379,7 +373,6 @@ const MathPaperPage = () => {
                 }
             } else {
                 // Use English tag search (existing logic)
-                console.log('🔍 Using English tag search for URL');
 
                 // Calculate offset for pagination
                 const offset = (page - 1) * pageSize;
@@ -774,7 +767,6 @@ const MathPaperPage = () => {
     // Handle tag search (simplified like your reference code)
     const handleTagSearch = useCallback(async (tagsToSearch = null) => {
         const tags = tagsToSearch || searchTags;
-        console.log('🔍 handleTagSearch called with tags:', tags, 'isChinese:', isChinese());
 
         if (tags.length === 0) return;
 
@@ -793,14 +785,12 @@ const MathPaperPage = () => {
         dispatch(clearError());
 
         try {
-            console.log('Searching for tags:', tags, 'Language:', isChinese() ? 'Chinese' : 'English');
 
             // Calculate offset for pagination (always page 1 for new search)
             const offset = 0;
 
             if (isChinese()) {
                 // Use Chinese tag search with Supabase function
-                console.log('🔍 Using Chinese tag search function');
 
                 // Use the Chinese paginated search function
                 const result = await UnifiedTagService.searchByChineseTagsPaginated(tags, 1, pageSize);
@@ -858,7 +848,6 @@ const MathPaperPage = () => {
                 }
             } else {
                 // Use English tag search (existing logic)
-                console.log('🔍 Using English tag search');
 
                 // First, get the total count
                 let countQuery = supabase
@@ -1342,13 +1331,10 @@ const MathPaperPage = () => {
                                     options={availableTags}
                                     value={searchTags.length > 0 ? searchTags[0] : null}
                                     onChange={(event, newValue) => {
-                                        console.log('🔄 Autocomplete onChange - event:', event, 'newValue:', newValue);
                                         if (newValue) {
-                                            console.log('🔄 Setting tag:', newValue);
                                             dispatch(setSearchTags([newValue]));
                                             dispatch(setSearchInput(''));
                                         } else {
-                                            console.log('🔄 Clearing tags');
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
                                         }
@@ -1361,7 +1347,6 @@ const MathPaperPage = () => {
                                     }}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue, reason) => {
-                                        console.log('🔄 Autocomplete onInputChange:', newInputValue, 'reason:', reason);
                                         dispatch(setSearchInput(newInputValue));
                                     }}
                                     renderInput={(params) => (
