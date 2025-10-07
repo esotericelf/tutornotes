@@ -1081,56 +1081,6 @@ const MathPaperPage = () => {
         });
     };
 
-    // Comprehensive test for mutual exclusion and auto-trigger
-    window.testMutualExclusion = () => {
-        console.log('🧪 Testing mutual exclusion and auto-trigger behavior...');
-
-        console.log('=== Test 1: Tag Search Auto-Trigger ===');
-        console.log('1. Select a tag from autocomplete');
-        console.log('2. Verify: Search starts automatically');
-        console.log('3. Verify: Filter dropdowns are cleared');
-
-        console.log('=== Test 2: Filter Search Auto-Trigger ===');
-        console.log('1. Set a tag in tag field');
-        console.log('2. Select year from dropdown');
-        console.log('3. Verify: Tag field is cleared');
-        console.log('4. Verify: Search starts automatically');
-
-        console.log('=== Test 3: Paper Search Auto-Trigger ===');
-        console.log('1. Set a tag in tag field');
-        console.log('2. Select paper from dropdown');
-        console.log('3. Verify: Tag field is cleared');
-        console.log('4. Verify: Search starts automatically');
-
-        console.log('=== Test 4: Question Number Search Auto-Trigger ===');
-        console.log('1. Set a tag in tag field');
-        console.log('2. Select question number from dropdown');
-        console.log('3. Verify: Tag field is cleared');
-        console.log('4. Verify: Search starts automatically');
-
-        console.log('🧪 All tests should work without clicking search button!');
-    };
-
-    // Simple debug function to see what's actually happening
-    window.debugTagField = () => {
-        console.log('🔍 Current Autocomplete state:');
-        console.log('- searchTags:', searchTags);
-        console.log('- searchInput:', searchInput);
-        console.log('- selectedYear:', selectedYear);
-        console.log('- selectedPaper:', selectedPaper);
-        console.log('- selectedQuestionNo:', selectedQuestionNo);
-        console.log('- Autocomplete key:', `${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}`);
-        console.log('- Autocomplete value:', searchTags.length > 0 ? searchTags[0] : null);
-    };
-
-    // Test function to manually clear tag field
-    window.clearTagField = () => {
-        console.log('🧹 Manually clearing tag field...');
-        dispatch(setSearchTags([]));
-        dispatch(setSearchInput(''));
-        console.log('Tag field cleared!');
-    };
-
     // Clear all filters
     const handleClearFilters = () => {
         setIsFilterSearching(false);
@@ -1321,15 +1271,10 @@ const MathPaperPage = () => {
                                         value={selectedYear}
                                         label={t('filters.year.label')}
                                         onChange={(e) => {
-                                            const newYear = e.target.value;
-                                            dispatch(setSelectedYear(newYear));
+                                            dispatch(setSelectedYear(e.target.value));
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid year (not empty string)
-                                            if (newYear && newYear.trim() !== '') {
-                                                handleFilterSearch(1);
-                                            }
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1356,16 +1301,11 @@ const MathPaperPage = () => {
                                         value={selectedPaper}
                                         label={t('filters.paper.label')}
                                         onChange={(e) => {
-                                            const newPaper = e.target.value;
-                                            dispatch(setSelectedPaper(newPaper));
+                                            dispatch(setSelectedPaper(e.target.value));
                                             dispatch(setSelectedQuestionNo('')); // Reset question number when paper changes
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid paper (not empty string)
-                                            if (newPaper && newPaper.trim() !== '') {
-                                                handleFilterSearch(1);
-                                            }
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1392,15 +1332,10 @@ const MathPaperPage = () => {
                                         value={selectedQuestionNo}
                                         label={t('filters.questionNumber.label')}
                                         onChange={(e) => {
-                                            const newQuestionNo = e.target.value;
-                                            dispatch(setSelectedQuestionNo(newQuestionNo));
+                                            dispatch(setSelectedQuestionNo(e.target.value));
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // Only trigger search if we have a valid question number (not empty string)
-                                            if (newQuestionNo && newQuestionNo.trim() !== '') {
-                                                handleFilterSearch(1);
-                                            }
                                         }}
                                         disabled={!selectedPaper}
                                         MenuProps={{
@@ -1421,23 +1356,19 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Autocomplete
-                                    key={`${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}`} // Force remount when search state or filter state changes
+                                    key={`${searchTags.join(',')}-${searchInput}`} // Force remount when search state changes
                                     options={availableTags}
                                     value={searchTags.length > 0 ? searchTags[0] : null}
                                     onChange={(event, newValue) => {
                                         if (newValue) {
+                                            dispatch(setSearchTags([newValue]));
+                                            dispatch(setSearchInput(''));
+
                                             // Clear dropdown filters when using tags
                                             dispatch(setSelectedYear(''));
                                             dispatch(setSelectedPaper(''));
                                             dispatch(setSelectedQuestionNo(''));
                                             dispatch(setCurrentPage(1));
-
-                                            // Set the tag and trigger search directly
-                                            dispatch(setSearchTags([newValue]));
-                                            dispatch(setSearchInput(''));
-
-                                            // Trigger search with the new tag directly
-                                            handleTagSearch([newValue]);
                                         } else {
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
