@@ -28,13 +28,13 @@ import {
     Visibility
 } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink, useSearchParams, useParams } from 'react-router-dom';
-import { supabase } from '../../services/supabase';
 import QuestionDisplay from './QuestionDisplay';
 import { DiscussionSection } from '../discussion';
 import SEOHead from '../common/SEOHead';
 import { createCourseStructuredData, createBreadcrumbStructuredData } from '../../utils/structuredData';
 import { trackMathPaperEvent } from '../../utils/analytics';
 import { UnifiedURLService, UnifiedQuestionService, UnifiedTagService } from '../../services/mathpaper';
+import { supabase } from '../../services/supabase';
 import { useMathPaper } from '../../store/hooks';
 import { useTranslation } from '../../hooks/useTranslation';
 import {
@@ -62,6 +62,7 @@ import {
     setTagsCache,
     loadPopularTags as loadPopularTagsThunk,
     loadPopularTagsChinese as loadPopularTagsChineseThunk,
+    translateTags as translateTagsThunk,
     loadQuestionsByFilters
 } from '../../store/slices/mathPaperSlice';
 
@@ -72,7 +73,7 @@ const MathPaperPage = () => {
     const questionDetailsRef = React.useRef(null);
 
     // Translation hook
-    const { t, isChinese, getCurrentLanguage } = useTranslation();
+    const { t, isChinese } = useTranslation();
 
     // Redux state and dispatch
     const {
@@ -103,6 +104,7 @@ const MathPaperPage = () => {
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
     const tagsLoadedRef = useRef(false);
+    const previousLanguageRef = useRef(null);
     const [isFilterSearching, setIsFilterSearching] = useState(false);
     const [pageSize] = useState(10); // Fixed at 10 items per page
 
@@ -112,10 +114,12 @@ const MathPaperPage = () => {
         window.scrollTo(0, 0);
         // Reset search input on component mount to prevent autocomplete from retaining previous values
         dispatch(setSearchInput(''));
+        // Initialize the previous language ref
+        previousLanguageRef.current = isChinese() ? 'zh' : 'en';
         return () => {
             setComponentMounted(false);
         };
-    }, [dispatch]);
+    }, [dispatch, isChinese]);
 
 
     // Convert question tags array to the format expected by the UI
@@ -712,6 +716,32 @@ const MathPaperPage = () => {
             }
         }
     }, [isChinese, dispatch]);
+
+    // Clear search field when language changes
+    useEffect(() => {
+        const currentLanguage = isChinese() ? 'zh' : 'en';
+        const previousLanguage = previousLanguageRef.current;
+
+        console.log('🔄 Language change effect triggered:', {
+            currentLanguage,
+            previousLanguage,
+            searchTagsLength: searchTags.length
+        });
+
+        // Clear search if language actually changed and we have search tags
+        if (searchTags.length > 0 && previousLanguage !== null && currentLanguage !== previousLanguage) {
+            console.log('🔄 Language changed, calling handleClearFilters');
+            handleClearFilters();
+        }
+
+        // Update the previous language ref
+        previousLanguageRef.current = currentLanguage;
+    }, [isChinese, dispatch]);
+
+    // Debug: Monitor search tags changes
+    useEffect(() => {
+        console.log('🔍 Search tags changed:', searchTags);
+    }, [searchTags]);
 
     // Debug: Monitor questions state changes
     // useEffect(() => {

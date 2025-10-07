@@ -300,6 +300,78 @@ class UnifiedTagService extends BaseService {
     }
 
     /**
+     * Translate tags between Chinese and English
+     * @param {Array<string>} tags - Array of tags to translate
+     * @param {string} fromLanguage - Source language ('zh' or 'en')
+     * @param {string} toLanguage - Target language ('zh' or 'en')
+     * @returns {Promise<{data: Array, error: Error|null}>}
+     */
+    static async translateTags(tags, fromLanguage, toLanguage) {
+        try {
+            console.log('🔄 UnifiedTagService.translateTags called:', {
+                tags,
+                fromLanguage,
+                toLanguage
+            });
+
+            if (!tags || tags.length === 0) {
+                console.log('⚠️ No tags provided');
+                return { data: [], error: null };
+            }
+
+            if (fromLanguage === toLanguage) {
+                console.log('⚠️ Same language, no translation needed');
+                return { data: tags, error: null };
+            }
+
+            // Get all topic tags to find translations
+            console.log('🔍 Getting all tags for translation mapping...');
+            const result = await this.executeRPC('get_all_tags_with_counts', {
+                limit_count: 1000
+            });
+
+            if (result.error) {
+                console.error('❌ Error getting all tags:', result.error);
+                return { data: null, error: result.error };
+            }
+
+            console.log('🔍 All tags retrieved:', result.data?.length || 0, 'tags');
+
+            const translatedTags = [];
+            const allTags = result.data || [];
+
+            for (const tag of tags) {
+                let translatedTag = null;
+
+                if (fromLanguage === 'zh' && toLanguage === 'en') {
+                    // Find English equivalent of Chinese tag
+                    const tagMapping = allTags.find(t => t.tag_ch === tag);
+                    translatedTag = tagMapping ? tagMapping.tag : tag;
+                    console.log(`🔄 Chinese to English: "${tag}" -> "${translatedTag}"`);
+                } else if (fromLanguage === 'en' && toLanguage === 'zh') {
+                    // Find Chinese equivalent of English tag
+                    const tagMapping = allTags.find(t => t.tag === tag);
+                    translatedTag = tagMapping ? tagMapping.tag_ch : tag;
+                    console.log(`🔄 English to Chinese: "${tag}" -> "${translatedTag}"`);
+                }
+
+                if (translatedTag) {
+                    translatedTags.push(translatedTag);
+                } else {
+                    // If no translation found, keep original tag
+                    translatedTags.push(tag);
+                }
+            }
+
+            console.log('✅ Translation completed:', translatedTags);
+            return { data: translatedTags, error: null };
+        } catch (err) {
+            console.error('Unexpected error translating tags:', err);
+            return { data: null, error: err };
+        }
+    }
+
+    /**
      * Get math papers by tags with caching
      * @param {Array<string>} tags - Array of tags to search for
      * @param {number} limit - Maximum number of results (default: 100)

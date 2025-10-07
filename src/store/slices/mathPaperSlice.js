@@ -105,6 +105,21 @@ export const searchChineseTagsAutocomplete = createAsyncThunk(
     }
 )
 
+export const translateTags = createAsyncThunk(
+    'mathPaper/translateTags',
+    async ({ tags, fromLanguage, toLanguage }, { rejectWithValue }) => {
+        try {
+            const { data, error } = await UnifiedTagService.translateTags(tags, fromLanguage, toLanguage)
+            if (error) {
+                return rejectWithValue(error.message)
+            }
+            return data
+        } catch (error) {
+            return rejectWithValue(error.message)
+        }
+    }
+)
+
 export const getMathPapersByTags = createAsyncThunk(
     'mathPaper/getMathPapersByTags',
     async ({ tags, limit = 100, sortBy = 'year', sortAsc = false }, { rejectWithValue }) => {
@@ -371,6 +386,21 @@ const mathPaperSlice = createSlice({
                 state.error = ''
             })
             .addCase(searchChineseTagsAutocomplete.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload
+            })
+
+            // Translate tags
+            .addCase(translateTags.pending, (state) => {
+                state.loading = true
+                state.error = ''
+            })
+            .addCase(translateTags.fulfilled, (state, action) => {
+                state.searchTags = action.payload
+                state.loading = false
+                state.error = ''
+            })
+            .addCase(translateTags.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload
             })
