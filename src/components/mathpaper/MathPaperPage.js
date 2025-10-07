@@ -719,29 +719,12 @@ const MathPaperPage = () => {
 
     // Clear search field when language changes
     useEffect(() => {
-        const currentLanguage = isChinese() ? 'zh' : 'en';
-        const previousLanguage = previousLanguageRef.current;
-
-        console.log('🔄 Language change effect triggered:', {
-            currentLanguage,
-            previousLanguage,
-            searchTagsLength: searchTags.length
-        });
-
-        // Clear search if language actually changed and we have search tags
-        if (searchTags.length > 0 && previousLanguage !== null && currentLanguage !== previousLanguage) {
-            console.log('🔄 Language changed, calling handleClearFilters');
+        // Simple approach: if we have search tags and language changed, clear them
+        if (searchTags.length > 0) {
             handleClearFilters();
         }
-
-        // Update the previous language ref
-        previousLanguageRef.current = currentLanguage;
     }, [isChinese, dispatch]);
 
-    // Debug: Monitor search tags changes
-    useEffect(() => {
-        console.log('🔍 Search tags changed:', searchTags);
-    }, [searchTags]);
 
     // Debug: Monitor questions state changes
     // useEffect(() => {
