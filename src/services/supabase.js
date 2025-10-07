@@ -13,9 +13,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         // Ensure auth works across different environments
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: true,
-        // Add debug logging for web vs mobile issues
-        debug: process.env.NODE_ENV === 'development'
+        detectSessionInUrl: true
+        // Removed debug logging to reduce console noise
     },
     // Add global configuration for better web compatibility
     global: {
@@ -33,7 +32,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Debug: Log client configuration (only in development)
 if (process.env.NODE_ENV === 'development') {
-    console.log('Supabase client configured for:', typeof navigator !== 'undefined' ? 'web' : 'server');
 }
 
 // Export for use in other services
