@@ -188,7 +188,6 @@ const MathPaperPage = () => {
                 isFromTagSearchURL = true;
                 urlTagsArray = urlTags.split(',').filter(tag => tag.trim());
                 urlPageNum = urlPage ? parseInt(urlPage, 10) : 1;
-                console.log('🔍 Found navigation state in URL parameters:', { tags: urlTagsArray, page: urlPageNum });
             } else {
             }
 
@@ -207,9 +206,7 @@ const MathPaperPage = () => {
                         isFromTagSearchStorage = true;
                         storedTags = navState.tags;
                         storedPage = navState.page || 1;
-                        console.log('🔍 Found recent navigation state in sessionStorage:', navState);
                     } else if (navState.timestamp) {
-                        console.log('🔍 Found old navigation state in sessionStorage (ignoring):', navState);
                     }
                 } catch (err) {
                     console.warn('Could not parse navigation state from sessionStorage:', err);
@@ -221,13 +218,11 @@ const MathPaperPage = () => {
                 dispatch(setOriginalSearchTags(urlTagsArray));
                 dispatch(setOriginalSearchPage(urlPageNum));
                 dispatch(setCameFromTagSearch(true));
-                console.log('✅ Set navigation state from URL parameters:', { tags: urlTagsArray, page: urlPageNum });
             } else if (isFromTagSearchStorage) {
                 // Use sessionStorage data (fallback)
                 dispatch(setOriginalSearchTags(storedTags));
                 dispatch(setOriginalSearchPage(storedPage));
                 dispatch(setCameFromTagSearch(true));
-                console.log('✅ Set navigation state from sessionStorage:', { tags: storedTags, page: storedPage });
             } else if (isFromTagSearchReferrer) {
                 // Fallback to referrer parsing
                 console.log('🔍 User came from tag search, referrer:', referrer);
@@ -972,13 +967,11 @@ const MathPaperPage = () => {
                 timestamp: Date.now()
             };
             sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-            console.log('✅ Stored navigation state for question click:', navState);
 
             // Set Redux state for back navigation
             dispatch(setCameFromTagSearch(true));
             dispatch(setOriginalSearchTags(searchTags));
             dispatch(setOriginalSearchPage(currentPage));
-            console.log('✅ Set Redux navigation state:', { cameFromTagSearch: true, originalSearchTags: searchTags, originalSearchPage: currentPage });
 
             // Also store in URL parameters as a fallback
             const questionURL = generateQuestionURL(question);
@@ -1051,6 +1044,42 @@ const MathPaperPage = () => {
 
     // Make test function available globally for console testing
     window.testPopularTagsFlow = testPopularTagsFlow;
+
+    // Test function for filter clearing behavior
+    window.testFilterClearing = () => {
+        console.log('🧪 Testing filter clearing behavior...');
+        console.log('Current state:', {
+            selectedYear,
+            selectedPaper,
+            selectedQuestionNo,
+            searchTags: searchTags.length
+        });
+
+        // Test: Set some filters
+        dispatch(setSelectedYear('2020'));
+        dispatch(setSelectedPaper('I'));
+        dispatch(setSelectedQuestionNo('5'));
+        dispatch(setSearchTags(['test tag']));
+
+        console.log('After setting filters:', {
+            selectedYear,
+            selectedPaper,
+            selectedQuestionNo,
+            searchTags: searchTags.length
+        });
+
+        // Test: Clear filters (simulate tag search)
+        dispatch(setSelectedYear(''));
+        dispatch(setSelectedPaper(''));
+        dispatch(setSelectedQuestionNo(''));
+
+        console.log('After clearing filters:', {
+            selectedYear,
+            selectedPaper,
+            selectedQuestionNo,
+            searchTags: searchTags.length
+        });
+    };
 
     // Clear all filters
     const handleClearFilters = () => {
@@ -1334,16 +1363,16 @@ const MathPaperPage = () => {
                                         if (newValue) {
                                             dispatch(setSearchTags([newValue]));
                                             dispatch(setSearchInput(''));
+
+                                            // Clear dropdown filters when using tags
+                                            dispatch(setSelectedYear(''));
+                                            dispatch(setSelectedPaper(''));
+                                            dispatch(setSelectedQuestionNo(''));
+                                            dispatch(setCurrentPage(1));
                                         } else {
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
                                         }
-
-                                        // Clear dropdown filters when using tags
-                                        setSelectedYear('');
-                                        setSelectedPaper('');
-                                        dispatch(setSelectedQuestionNo(''));
-                                        dispatch(setCurrentPage(1));
                                     }}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue, reason) => {
@@ -1392,10 +1421,20 @@ const MathPaperPage = () => {
 
                                         // If tags are selected, do tag search; otherwise do filter search
                                         if (searchTags.length > 0) {
+                                            // Clear filter search fields when doing tag search
+                                            dispatch(setSelectedYear(''));
+                                            dispatch(setSelectedPaper(''));
+                                            dispatch(setSelectedQuestionNo(''));
                                             // Update URL with tags and page 1
                                             updateURLWithPagination(searchTags, 1);
-                                            handleTagSearch();
+                                            // Use setTimeout to ensure state updates are processed
+                                            setTimeout(() => {
+                                                handleTagSearch();
+                                            }, 50);
                                         } else {
+                                            // Clear tag search when doing filter search
+                                            dispatch(setSearchTags([]));
+                                            dispatch(setSearchInput(''));
                                             // For filter search, update URL with page 1
                                             updateURLWithPagination([], 1);
                                             handleFilterSearch(1);
