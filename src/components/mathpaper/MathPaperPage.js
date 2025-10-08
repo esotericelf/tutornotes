@@ -240,7 +240,6 @@ const MathPaperPage = () => {
                         dispatch(setOriginalSearchTags(tagsArray));
                         dispatch(setOriginalSearchPage(pageParam ? parseInt(pageParam, 10) : 1));
                         dispatch(setCameFromTagSearch(true));
-                        console.log('✅ Set navigation state from referrer:', { tags: tagsArray, page: pageParam });
                     }
                 } catch (err) {
                     console.warn('Could not parse referrer URL:', err);
@@ -358,7 +357,6 @@ const MathPaperPage = () => {
                             timestamp: Date.now()
                         };
                         sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-                        console.log('✅ Stored navigation state for single result navigation:', navState);
                     }
 
                     const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
@@ -445,7 +443,6 @@ const MathPaperPage = () => {
                             timestamp: Date.now()
                         };
                         sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-                        console.log('✅ Stored navigation state for single result navigation:', navState);
                     }
 
                     const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
@@ -548,11 +545,6 @@ const MathPaperPage = () => {
 
     // Handle going back to tag search results
     const handleBackToTagSearch = useCallback(() => {
-        console.log('🔍 handleBackToTagSearch called with state:', {
-            cameFromTagSearch,
-            originalSearchTags,
-            originalSearchPage
-        });
 
         if (cameFromTagSearch && originalSearchTags.length > 0) {
             // Clear the navigation state since we're going back
@@ -564,13 +556,8 @@ const MathPaperPage = () => {
                 params.set('page', originalSearchPage.toString());
             }
             const backURL = `/DSE_Math?${params.toString()}`;
-            console.log('🔍 Navigating back to:', backURL);
             navigate(backURL);
         } else {
-            console.log('🔍 Back navigation conditions not met:', {
-                cameFromTagSearch,
-                originalSearchTagsLength: originalSearchTags.length
-            });
         }
     }, [cameFromTagSearch, originalSearchTags, originalSearchPage, navigate]);
 
@@ -603,9 +590,7 @@ const MathPaperPage = () => {
     // Load available tags from actual questions in the database
     const loadAvailableTags = useCallback(async () => {
         try {
-            console.log('🔄 loadAvailableTags called, isChinese():', isChinese());
             if (isChinese()) {
-                console.log('🇨🇳 Loading Chinese tags...');
                 // Use Chinese autocomplete for Chinese mode
                 const { data, error } = await UnifiedTagService.searchChineseTagsAutocomplete('', 100);
                 if (error) {
@@ -613,16 +598,13 @@ const MathPaperPage = () => {
                     dispatch(setAvailableTags(getSampleAvailableTags()));
                     return;
                 }
-                console.log('✅ Chinese tags loaded:', data?.length || 0, 'tags');
                 // Convert to simple array format for autocomplete
                 const chineseTags = (data || []).map(tagData => tagData.tag);
-                console.log('🏷️ Converted Chinese tags:', chineseTags.slice(0, 5));
                 // Only set Chinese tags if we're still in Chinese mode
                 if (isChinese()) {
                     dispatch(setAvailableTags(chineseTags));
                 }
             } else {
-                console.log('🇺🇸 Loading English tags...');
                 // Get all questions to extract their tags for English mode
                 const { data: allQuestions, error } = await supabase
                     .from('Math_Past_Paper')
@@ -748,16 +730,11 @@ const MathPaperPage = () => {
                 questionNo: selectedQuestionNo
             })).unwrap();
 
-            console.log('🔍 Filter search results:', result);
-            console.log('🔍 Results count:', result ? result.length : 0);
 
             // If exactly one result, navigate directly to the question detail page
             if (result && result.length === 1) {
-                console.log('🔍 Single result found - navigating to question detail page');
                 const question = result[0];
-                console.log('🔍 Question:', question);
                 const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
-                console.log('🔍 Generated URL:', questionURL);
                 navigate(questionURL);
                 return; // Exit early since we're navigating away
             }
@@ -841,7 +818,6 @@ const MathPaperPage = () => {
                             timestamp: Date.now()
                         };
                         sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-                        console.log('✅ Stored navigation state for single result navigation:', navState);
                     }
 
                     const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
@@ -925,7 +901,6 @@ const MathPaperPage = () => {
                             timestamp: Date.now()
                         };
                         sessionStorage.setItem('tutornotes_navigation_state', JSON.stringify(navState));
-                        console.log('✅ Stored navigation state for single result navigation:', navState);
                     }
 
                     const questionURL = UnifiedURLService.generateQuestionURL(question.year, question.paper, question.question_no);
@@ -1019,119 +994,9 @@ const MathPaperPage = () => {
     };
 
 
-    // Test function to verify popular tags flow
-    const testPopularTagsFlow = async () => {
-        console.log('🧪 Testing popular tags flow...');
-        try {
-            // Test 1: Direct service call
-            console.log('🧪 Test 1: Direct service call');
-            const serviceResult = await UnifiedTagService.getPopularTags(5);
-            console.log('🧪 Service result:', serviceResult);
 
-            // Test 2: Redux thunk call
-            console.log('🧪 Test 2: Redux thunk call');
-            const thunkResult = await dispatch(loadPopularTagsThunk(5)).unwrap();
-            console.log('🧪 Thunk result:', thunkResult);
 
-            // Test 3: Check Redux state
-            console.log('🧪 Test 3: Redux state');
-            console.log('🧪 Current popularTags state:', popularTags);
 
-            return { serviceResult, thunkResult, state: popularTags };
-        } catch (error) {
-            console.error('🧪 Test failed:', error);
-            return { error: error.message };
-        }
-    };
-
-    // Make test function available globally for console testing
-    window.testPopularTagsFlow = testPopularTagsFlow;
-
-    // Test function for filter clearing behavior
-    window.testFilterClearing = () => {
-        console.log('🧪 Testing filter clearing behavior...');
-        console.log('Current state:', {
-            selectedYear,
-            selectedPaper,
-            selectedQuestionNo,
-            searchTags: searchTags.length
-        });
-
-        // Test: Set some filters
-        dispatch(setSelectedYear('2020'));
-        dispatch(setSelectedPaper('I'));
-        dispatch(setSelectedQuestionNo('5'));
-        dispatch(setSearchTags(['test tag']));
-
-        console.log('After setting filters:', {
-            selectedYear,
-            selectedPaper,
-            selectedQuestionNo,
-            searchTags: searchTags.length
-        });
-
-        // Test: Clear filters (simulate tag search)
-        dispatch(setSelectedYear(''));
-        dispatch(setSelectedPaper(''));
-        dispatch(setSelectedQuestionNo(''));
-
-        console.log('After clearing filters:', {
-            selectedYear,
-            selectedPaper,
-            selectedQuestionNo,
-            searchTags: searchTags.length
-        });
-    };
-
-    // Comprehensive test for mutual exclusion and auto-trigger
-    window.testMutualExclusion = () => {
-        console.log('🧪 Testing mutual exclusion and auto-trigger behavior...');
-
-        console.log('=== Test 1: Tag Search Auto-Trigger ===');
-        console.log('1. Select a tag from autocomplete');
-        console.log('2. Verify: Search starts automatically');
-        console.log('3. Verify: Filter dropdowns are cleared');
-
-        console.log('=== Test 2: Filter Search Auto-Trigger ===');
-        console.log('1. Set a tag in tag field');
-        console.log('2. Select year from dropdown');
-        console.log('3. Verify: Tag field is cleared');
-        console.log('4. Verify: Search starts automatically');
-
-        console.log('=== Test 3: Paper Search Auto-Trigger ===');
-        console.log('1. Set a tag in tag field');
-        console.log('2. Select paper from dropdown');
-        console.log('3. Verify: Tag field is cleared');
-        console.log('4. Verify: Search starts automatically');
-
-        console.log('=== Test 4: Question Number Search Auto-Trigger ===');
-        console.log('1. Set a tag in tag field');
-        console.log('2. Select question number from dropdown');
-        console.log('3. Verify: Tag field is cleared');
-        console.log('4. Verify: Search starts automatically');
-
-        console.log('🧪 All tests should work without clicking search button!');
-    };
-
-    // Simple debug function to see what's actually happening
-    window.debugTagField = () => {
-        console.log('🔍 Current Autocomplete state:');
-        console.log('- searchTags:', searchTags);
-        console.log('- searchInput:', searchInput);
-        console.log('- selectedYear:', selectedYear);
-        console.log('- selectedPaper:', selectedPaper);
-        console.log('- selectedQuestionNo:', selectedQuestionNo);
-        console.log('- Autocomplete key:', `${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}`);
-        console.log('- Autocomplete value:', searchTags.length > 0 ? searchTags[0] : null);
-    };
-
-    // Test function to manually clear tag field
-    window.clearTagField = () => {
-        console.log('🧹 Manually clearing tag field...');
-        dispatch(setSearchTags([]));
-        dispatch(setSearchInput(''));
-        console.log('Tag field cleared!');
-    };
 
     // Clear all filters
     const handleClearFilters = () => {
@@ -1412,12 +1277,7 @@ const MathPaperPage = () => {
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Autocomplete
                                     key={`${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}-${isChinese() ? 'zh' : 'en'}`} // Force remount when search state, filter state, or language changes
-                                    options={(() => {
-                                        console.log('🔍 Autocomplete options:', availableTags?.length || 0, 'tags');
-                                        console.log('🔍 Sample options:', availableTags?.slice(0, 5));
-                                        console.log('🔍 Current language:', isChinese() ? 'Chinese' : 'English');
-                                        return availableTags;
-                                    })()}
+                                    options={availableTags}
                                     value={searchTags.length > 0 ? searchTags[0] : null}
                                     onChange={(event, newValue) => {
                                         if (newValue) {
@@ -1440,13 +1300,10 @@ const MathPaperPage = () => {
                                     }}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue, reason) => {
-                                        console.log('🔍 Autocomplete input change:', { newInputValue, reason, currentLanguage: isChinese() ? 'Chinese' : 'English' });
                                         dispatch(setSearchInput(newInputValue));
                                     }}
                                     onOpen={() => {
-                                        console.log('🔍 Autocomplete opened, current language:', isChinese() ? 'Chinese' : 'English');
-                                        console.log('🔍 Available tags count:', availableTags?.length || 0);
-                                        console.log('🔍 Sample available tags:', availableTags?.slice(0, 10));
+                                        // Autocomplete opened
                                     }}
                                     renderInput={(params) => (
                                         <TextField
