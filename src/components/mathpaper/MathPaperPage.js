@@ -35,7 +35,7 @@ import { createCourseStructuredData, createBreadcrumbStructuredData } from '../.
 import { trackMathPaperEvent } from '../../utils/analytics';
 import { UnifiedURLService, UnifiedQuestionService, UnifiedTagService } from '../../services/mathpaper';
 import { supabase } from '../../services/supabase';
-import { useMathPaper } from '../../store/hooks';
+import { useMathPaper, useAuth } from '../../store/hooks';
 import { useTranslation } from '../../hooks/useTranslation';
 import {
     setSelectedYear,
@@ -99,6 +99,9 @@ const MathPaperPage = () => {
         dispatch
     } = useMathPaper();
 
+    // Auth state
+    const { user } = useAuth();
+
 
     // Add component mount tracking to prevent infinite loops
     const [componentMounted, setComponentMounted] = useState(false);
@@ -111,19 +114,14 @@ const MathPaperPage = () => {
         setComponentMounted(true);
         // Scroll to top on component mount
         window.scrollTo(0, 0);
-        // Reset search input on component mount to prevent autocomplete from retaining previous values
-        dispatch(setSearchInput(''));
-        // Clear URL parameters on page load to return to blank state after refresh
-        const currentURL = new URL(window.location);
-        if (currentURL.searchParams.has('tags') || currentURL.searchParams.has('page')) {
-            navigate('/DSE_Math', { replace: true });
-        }
+
         // Initialize the previous language ref
         previousLanguageRef.current = isChinese() ? 'zh' : 'en';
         return () => {
             setComponentMounted(false);
         };
-    }, [dispatch, isChinese, navigate]);
+    }, [dispatch, isChinese, navigate, params]);
+
 
     // Handle language parameter from URL
     useEffect(() => {
@@ -272,6 +270,11 @@ const MathPaperPage = () => {
             }
 
             if (result.data) {
+                // Set form fields from URL parameters
+                dispatch(setSelectedYear(year.toString()));
+                dispatch(setSelectedPaper(paper));
+                dispatch(setSelectedQuestionNo(questionNo.toString()));
+
                 dispatch(setSelectedQuestion(result.data));
                 dispatch(setQuestions([result.data])); // Show single question in results
 
@@ -304,7 +307,7 @@ const MathPaperPage = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    }, [getQuestionTagsFromData, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [getQuestionTagsFromData]); // Removed searchParams to prevent recreation
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
@@ -398,7 +401,7 @@ const MathPaperPage = () => {
 
                 const totalQuestions = count || 0;
                 dispatch(setTotalQuestions(totalQuestions));
-                setTotalPages(Math.ceil(totalQuestions / pageSize));
+                dispatch(setTotalPages(Math.ceil(totalQuestions / pageSize)));
 
                 // Now get the paginated data
                 let query = supabase
@@ -474,6 +477,7 @@ const MathPaperPage = () => {
 
     // Clear URL parameters and reset to general search
     const clearURLParams = useCallback(() => {
+        // Always redirect to /DSE_Math when clear button is pressed
         navigate('/DSE_Math', { replace: true });
     }, [navigate]);
 
@@ -496,7 +500,6 @@ const MathPaperPage = () => {
 
     // Initialize state from URL parameters
     useEffect(() => {
-
         // Skip if we're in the middle of a filter search
         if (isFilterSearching) {
             return;
@@ -530,24 +533,21 @@ const MathPaperPage = () => {
                     handleTagSearchFromURL(tagsArray, pageFromURL);
                 }
             } else {
-                // Clear tags if no URL parameters, but only if we're not in the middle of a filter search
-                const hasActiveFilters = selectedYear || selectedPaper || selectedQuestionNo;
-                if (!hasActiveFilters) {
-                    dispatch(setSearchTags([]));
-                    dispatch(setSearchInput(''));
-                    dispatch(setQuestions([]));
-                    dispatch(setSelectedQuestion(null));
-                    dispatch(clearError());
-                    dispatch(setLoading(false));
-                    dispatch(setTotalQuestions(0));
-                    dispatch(setTotalPages(0));
-                } else {
-                }
+                // Clear search results when on /DSE_Math with no URL parameters
+                dispatch(setSearchTags([]));
+                dispatch(setSearchInput(''));
+                dispatch(setQuestions([]));
+                dispatch(setSelectedQuestion(null));
+                dispatch(clearError());
+                dispatch(setLoading(false));
+                dispatch(setTotalQuestions(0));
+                dispatch(setTotalPages(0));
+                // Don't clear form fields here - let user interact with them
             }
         }
         // Scroll to top when URL parameters change
         window.scrollTo(0, 0);
-    }, [searchParams, params, isFilterSearching, loadSpecificQuestion, handleTagSearchFromURL, dispatch, selectedYear, selectedPaper, selectedQuestionNo]); // Added all dependencies to prevent infinite loops
+    }, [searchParams, params, isFilterSearching, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -685,7 +685,7 @@ const MathPaperPage = () => {
         } else {
             dispatch(loadPopularTagsThunk());
         }
-    }, [dispatch, isChinese]); // Removed loadAvailableTags from dependencies to prevent circular dependency
+    }, [dispatch, isChinese, loadAvailableTags]); // Added loadAvailableTags back to dependencies
 
     // Reload popular tags when language changes
     useEffect(() => {
@@ -698,13 +698,6 @@ const MathPaperPage = () => {
         }
     }, [isChinese, dispatch]);
 
-    // Clear search field when language changes
-    useEffect(() => {
-        // Simple approach: if we have search tags and language changed, clear them
-        if (searchTags.length > 0) {
-            handleClearFilters();
-        }
-    }, [isChinese, dispatch]);
 
 
     // Debug: Monitor questions state changes
@@ -749,6 +742,24 @@ const MathPaperPage = () => {
                 return; // Exit early since we're navigating away
             }
 
+            // If we have results and it's a specific question search (year, paper and question_no all selected), scroll to question details
+            // But only if we're NOT on a direct question URL (to prevent unwanted scrolling when changing filters on direct question URLs)
+            const questionParams = UnifiedURLService.getQuestionParamsFromRouter(params);
+            if (result && result.length > 0 && selectedYear && selectedPaper && selectedQuestionNo && !questionParams) {
+                // Load tags for the questions
+                if (result.length > 0) {
+                    loadTagsForQuestions(result);
+                }
+
+                // Scroll to question details after a short delay
+                setTimeout(() => {
+                    questionDetailsRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 100);
+            }
+
         } catch (err) {
             console.error('Error fetching questions:', err);
             dispatch(clearError(`Failed to fetch questions: ${err.message}`));
@@ -756,7 +767,7 @@ const MathPaperPage = () => {
             dispatch(setLoading(false));
             setIsFilterSearching(false);
         }
-    }, [isTagSearchActive, selectedYear, selectedPaper, selectedQuestionNo, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isTagSearchActive, selectedYear, selectedPaper, selectedQuestionNo, loadTagsForQuestions, navigate, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Handle tag search (simplified like your reference code)
     const handleTagSearch = useCallback(async (tagsToSearch = null) => {
@@ -856,7 +867,7 @@ const MathPaperPage = () => {
 
                 const totalQuestions = count || 0;
                 dispatch(setTotalQuestions(totalQuestions));
-                setTotalPages(Math.ceil(totalQuestions / pageSize));
+                dispatch(setTotalPages(Math.ceil(totalQuestions / pageSize)));
 
                 // Now get the paginated data
                 let query = supabase
@@ -971,6 +982,48 @@ const MathPaperPage = () => {
         navigate(questionURL);
     }, [navigate, generateQuestionURL, isTagSearchActive, searchTags, currentPage, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Clear all filters
+    const handleClearFilters = useCallback(() => {
+        // Clear button clicked - resetting all state
+
+        // Force immediate state clearing
+        dispatch(setSelectedYear(''));
+        dispatch(setSelectedPaper(''));
+        dispatch(setSelectedQuestionNo(''));
+        dispatch(setSearchTags([]));
+        dispatch(setSearchInput(''));
+        dispatch(setQuestions([]));
+        dispatch(setSelectedQuestion(null));
+        dispatch(setQuestionTags({}));
+        dispatch(clearError());
+        dispatch(setLoading(false));
+        dispatch(setIsTagSearchActive(false));
+        setIsFilterSearching(false);
+
+        // Clear tag-related state (but keep available tags and popular tags as they should persist)
+        // Note: Available tags and popular tags should not be cleared as they're permanent features
+
+        // Clear navigation state
+        dispatch(setCameFromTagSearch(false));
+        dispatch(setOriginalSearchTags([]));
+        dispatch(setOriginalSearchPage(1));
+
+        // Clear cache
+        dispatch(setQuestionsCache({}));
+        dispatch(setTagsCache({}));
+
+        // Reset pagination
+        dispatch(setCurrentPage(1));
+        dispatch(setTotalQuestions(0));
+        dispatch(setTotalPages(0));
+
+        // Scroll to top when clearing filters
+        window.scrollTo(0, 0);
+
+        // Clear URL parameters and redirect to /DSE_Math immediately
+        clearURLParams();
+    }, [dispatch, clearURLParams]);
+
     // Handle popular tag click - set the tag and update URL
     const handlePopularTagClick = (tag) => {
         // Clear any existing navigation state when starting a new tag search
@@ -1007,45 +1060,6 @@ const MathPaperPage = () => {
 
 
 
-
-    // Clear all filters
-    const handleClearFilters = () => {
-        setIsFilterSearching(false);
-        dispatch(setSelectedYear(''));
-        dispatch(setSelectedPaper(''));
-        dispatch(setSelectedQuestionNo(''));
-        dispatch(setSearchTags([]));
-        dispatch(setSearchInput(''));
-        dispatch(setQuestions([]));
-        dispatch(setSelectedQuestion(null));
-        dispatch(setQuestionTags({}));
-        dispatch(clearError());
-        dispatch(setLoading(false));
-        dispatch(setIsTagSearchActive(false));
-
-        // Clear tag-related state (but keep available tags and popular tags as they should persist)
-        // Note: Available tags and popular tags should not be cleared as they're permanent features
-
-        // Clear navigation state
-        dispatch(setCameFromTagSearch(false));
-        dispatch(setOriginalSearchTags([]));
-        dispatch(setOriginalSearchPage(1));
-
-        // Clear cache
-        dispatch(setQuestionsCache({}));
-        dispatch(setTagsCache({}));
-
-        // Reset pagination
-        dispatch(setCurrentPage(1));
-        dispatch(setTotalQuestions(0));
-        dispatch(setTotalPages(0));
-
-        // Clear URL parameters and redirect to /DSE_Math
-        clearURLParams();
-
-        // Scroll to top when clearing filters
-        window.scrollTo(0, 0);
-    };
 
     // Handle page change
     const handlePageChange = useCallback((event, newPage) => {
@@ -1199,10 +1213,21 @@ const MathPaperPage = () => {
                                         label={t('filters.year.label')}
                                         onChange={(e) => {
                                             const newYear = e.target.value;
+
+                                            // Clear form and search state when year changes (but keep pagination)
                                             dispatch(setSelectedYear(newYear));
-                                            // Clear tags when using dropdown filters
+                                            dispatch(setSelectedPaper(''));
+                                            dispatch(setSelectedQuestionNo(''));
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
+                                            dispatch(setQuestions([]));
+                                            dispatch(setSelectedQuestion(null));
+                                            dispatch(clearError());
+                                            dispatch(setLoading(false));
+                                            // Don't clear pagination state - keep totalQuestions, totalPages, currentPage
+
+                                            // Navigate to /DSE_Math to clear URL parameters
+                                            navigate('/DSE_Math', { replace: true });
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1235,6 +1260,13 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
+
+                                            // Auto-trigger search if year and paper are selected
+                                            if (selectedYear && newPaper) {
+                                                setTimeout(() => {
+                                                    handleFilterSearch(1);
+                                                }, 50);
+                                            }
                                         }}
                                         MenuProps={{
                                             PaperProps: {
@@ -1266,6 +1298,13 @@ const MathPaperPage = () => {
                                             // Clear tags when using dropdown filters
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
+
+                                            // Auto-trigger search if year, paper, and question_no are selected
+                                            if (selectedYear && selectedPaper && newQuestionNo) {
+                                                setTimeout(() => {
+                                                    handleFilterSearch(1);
+                                                }, 50);
+                                            }
                                         }}
                                         disabled={!selectedPaper}
                                         MenuProps={{
@@ -1645,10 +1684,12 @@ const MathPaperPage = () => {
                                 onBackToSearch={handleBackToTagSearch}
                             />
 
-                            {/* Discussion Section */}
-                            <Box sx={{ mt: 4 }}>
-                                <DiscussionSection questionId={selectedQuestion.id} />
-                            </Box>
+                            {/* Discussion Section - Only show if user is authenticated */}
+                            {user && (
+                                <Box sx={{ mt: 4 }}>
+                                    <DiscussionSection questionId={selectedQuestion.id} />
+                                </Box>
+                            )}
                         </Box>
                     )}
 
