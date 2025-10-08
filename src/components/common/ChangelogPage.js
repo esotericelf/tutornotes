@@ -80,7 +80,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.5",
-            date: "January 2025",
+            date: "December 2024",
             type: "patch",
             title: "Redux Integration & Build Optimization",
             description: "Successfully merged Redux state management and resolved all build issues for smooth deployment",
@@ -113,7 +113,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.4",
-            date: "September 2025",
+            date: "November 2024",
             type: "patch",
             title: "Robust Back Button for Tag Search Navigation",
             description: "Fixed navigation issue where users couldn't return to tag search results after clicking on specific questions",
@@ -146,7 +146,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.3",
-            date: "September 2025",
+            date: "October 2024",
             type: "patch",
             title: "Enhanced Question Navigation",
             description: "Improved navigation between DSE Math questions with larger, more intuitive controls and better visual design",
@@ -179,7 +179,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.2",
-            date: "September 2025",
+            date: "September 2024",
             type: "patch",
             title: "Smarter Search Experience",
             description: "Made searching for math questions more intuitive and reliable with better navigation and cleaner interface",
@@ -212,7 +212,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.1",
-            date: "September 2025",
+            date: "August 2024",
             type: "patch",
             title: "Popular Tags Count Fix",
             description: "Fixed inaccurate tag counts in the popular tags section",
@@ -233,7 +233,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.1.0",
-            date: "September 2025",
+            date: "July 2024",
             type: "major",
             title: "Direct Question URL System",
             description: "Revolutionary URL system for direct question access and seamless navigation",
@@ -272,7 +272,7 @@ const ChangelogPage = () => {
         },
         {
             version: "v2.0.0",
-            date: "September 2025",
+            date: "June 2024",
             type: "major",
             title: "Enhanced User Experience",
             description: "Major improvements to user interface and functionality",
