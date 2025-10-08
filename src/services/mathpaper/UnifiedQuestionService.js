@@ -26,7 +26,6 @@ class UnifiedQuestionService extends BaseService {
                 };
             }
 
-            console.log(`🔍 Loading question: ${year} Paper ${paper} Question ${questionNo}`);
 
             const result = await this.executeQuery(
                 supabase
@@ -56,7 +55,6 @@ class UnifiedQuestionService extends BaseService {
                 };
             }
 
-            console.log(`✅ Successfully loaded question: ${result.data.id}`);
 
             return {
                 data: result.data,
@@ -128,7 +126,6 @@ class UnifiedQuestionService extends BaseService {
                 throw new Error(`Invalid paper: ${paper}`);
             }
 
-            console.log(`🔍 Loading questions for: ${year} Paper ${paper}${questionNo ? ` Question ${questionNo}` : ''}`);
 
             let query = supabase
                 .from('Math_Past_Paper')
@@ -149,7 +146,6 @@ class UnifiedQuestionService extends BaseService {
                 return { data: null, error: result.error };
             }
 
-            console.log(`✅ Successfully loaded ${result.data?.length || 0} questions for ${year} Paper ${paper}`);
 
             return { data: result.data || [], error: null };
 
@@ -354,7 +350,6 @@ class UnifiedQuestionService extends BaseService {
 
     static async getQuestionNavigation(year, paper, questionNo) {
         try {
-            console.log(`🔍 Getting navigation info for: ${year} Paper ${paper} Question ${questionNo}`);
 
             const result = await this.executeRPC('get_question_navigation', {
                 current_year: year,
@@ -370,7 +365,6 @@ class UnifiedQuestionService extends BaseService {
             const navigationInfo = result.data && result.data.length > 0 ? result.data[0] : null;
 
             if (navigationInfo) {
-                console.log(`✅ Navigation info: has_previous=${navigationInfo.has_previous}, has_next=${navigationInfo.has_next}`);
             }
 
             return { data: navigationInfo, error: null };
@@ -383,7 +377,6 @@ class UnifiedQuestionService extends BaseService {
 
     static async getFirstQuestion() {
         try {
-            console.log('🔍 Getting first question in sequence');
 
             const result = await this.executeRPC('get_first_question');
 
@@ -395,7 +388,6 @@ class UnifiedQuestionService extends BaseService {
             const firstQuestion = result.data && result.data.length > 0 ? result.data[0] : null;
 
             if (firstQuestion) {
-                console.log(`✅ First question: ${firstQuestion.year} Paper ${firstQuestion.paper} Question ${firstQuestion.question_no}`);
             }
 
             return { data: firstQuestion, error: null };
@@ -408,7 +400,6 @@ class UnifiedQuestionService extends BaseService {
 
     static async getLastQuestion() {
         try {
-            console.log('🔍 Getting last question in sequence');
 
             const result = await this.executeRPC('get_last_question');
 
@@ -420,7 +411,6 @@ class UnifiedQuestionService extends BaseService {
             const lastQuestion = result.data && result.data.length > 0 ? result.data[0] : null;
 
             if (lastQuestion) {
-                console.log(`✅ Last question: ${lastQuestion.year} Paper ${lastQuestion.paper} Question ${lastQuestion.question_no}`);
             }
 
             return { data: lastQuestion, error: null };
@@ -433,7 +423,6 @@ class UnifiedQuestionService extends BaseService {
 
     static async getAllNavigationInfo(year, paper, questionNo) {
         try {
-            console.log(`🔍 Getting all navigation info for: ${year} Paper ${paper} Question ${questionNo}`);
 
             // Get all navigation info in parallel
             const [navigationResult, firstResult, lastResult] = await Promise.all([
@@ -465,7 +454,6 @@ class UnifiedQuestionService extends BaseService {
                 } : null
             };
 
-            console.log('✅ All navigation info retrieved successfully');
             return { data: navigationInfo, error: null };
 
         } catch (err) {

@@ -43,9 +43,7 @@ export const loadPopularTags = createAsyncThunk(
     'mathPaper/loadPopularTags',
     async (limit = 15, { rejectWithValue }) => {
         try {
-            console.log('🔍 Redux thunk: loadPopularTags called with limit:', limit);
             const { data, error } = await UnifiedTagService.getPopularTags(limit)
-            console.log('🔍 Redux thunk: loadPopularTags result:', { data: data?.length || 0, error });
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -61,9 +59,7 @@ export const loadPopularTagsChinese = createAsyncThunk(
     'mathPaper/loadPopularTagsChinese',
     async (limit = 15, { rejectWithValue }) => {
         try {
-            console.log('🔍 Redux thunk: loadPopularTagsChinese called with limit:', limit);
             const { data, error } = await UnifiedTagService.getPopularTagsChinese(limit)
-            console.log('🔍 Redux thunk: loadPopularTagsChinese result:', { data: data?.length || 0, error });
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -191,9 +187,7 @@ export const loadQuestionsByFilters = createAsyncThunk(
     'mathPaper/loadQuestionsByFilters',
     async ({ year, paper, questionNo }, { rejectWithValue }) => {
         try {
-            console.log('🔍 Redux thunk: loadQuestionsByFilters called with:', { year, paper, questionNo });
             const { data, error } = await UnifiedQuestionService.loadQuestionsByYearAndPaper(year, paper, questionNo)
-            console.log('🔍 Redux thunk: loadQuestionsByFilters result:', { data: data?.length || 0, error });
             if (error) {
                 return rejectWithValue(error.message)
             }
@@ -474,12 +468,10 @@ const mathPaperSlice = createSlice({
                 state.error = ''
             })
             .addCase(loadQuestionsByFilters.fulfilled, (state, action) => {
-                console.log('🔍 Redux slice: loadQuestionsByFilters.fulfilled', { payload: action.payload });
                 state.questions = action.payload
                 state.totalQuestions = action.payload ? action.payload.length : 0
                 state.loading = false
                 state.error = ''
-                console.log('🔍 Redux slice: Updated state', { questions: state.questions.length, totalQuestions: state.totalQuestions });
             })
             .addCase(loadQuestionsByFilters.rejected, (state, action) => {
                 state.loading = false

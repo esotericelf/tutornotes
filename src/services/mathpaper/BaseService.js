@@ -14,9 +14,7 @@ class BaseService {
      */
     static async executeRPC(functionName, params = {}) {
         try {
-            console.log(`🔍 BaseService: Executing RPC ${functionName} with params:`, params);
             const { data, error } = await supabase.rpc(functionName, params);
-            console.log(`🔍 BaseService: RPC ${functionName} result:`, { data: data?.length || 0, error });
 
             if (error) {
                 console.error(`🔍 BaseService: Error executing RPC ${functionName}:`, error);

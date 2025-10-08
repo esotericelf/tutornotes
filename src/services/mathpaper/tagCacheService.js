@@ -43,7 +43,6 @@ class TagCacheService {
             return null;
         }
 
-        console.log(`📦 Cache hit for key: ${key}`);
         return this.cache.get(key);
     }
 
@@ -61,7 +60,6 @@ class TagCacheService {
 
         this.cache.set(key, value);
         this.cacheTimestamps.set(key, Date.now());
-        console.log(`📦 Cached item with key: ${key} (TTL: ${ttl}ms)`);
     }
 
     /**
@@ -71,7 +69,6 @@ class TagCacheService {
     delete(key) {
         this.cache.delete(key);
         this.cacheTimestamps.delete(key);
-        console.log(`📦 Deleted cache item: ${key}`);
     }
 
     /**
