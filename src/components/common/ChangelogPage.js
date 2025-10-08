@@ -40,6 +40,45 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.2.0",
+            date: "December 2024",
+            type: "major",
+            title: "🌐 Bilingual Tag Translation & Enhanced Search",
+            description: "Revolutionary translation system that automatically translates search tags between English and Chinese, plus major improvements to search functionality",
+            features: [
+                {
+                    icon: <NewReleases color="primary" />,
+                    title: "Bidirectional Tag Translation",
+                    description: "Search tags automatically translate when switching languages - English tags become Chinese and vice versa",
+                    type: "feature"
+                },
+                {
+                    icon: <Search color="primary" />,
+                    title: "Smart Pagination with Tag Preservation",
+                    description: "Fixed pagination to preserve search tags in URLs - no more losing your search when clicking page 2",
+                    type: "fix"
+                },
+                {
+                    icon: <Speed color="primary" />,
+                    title: "Enhanced Search Field Experience",
+                    description: "Eliminated flickering and disappearing text in the tag search field for smooth tag selection",
+                    type: "improvement"
+                },
+                {
+                    icon: <MobileFriendly color="primary" />,
+                    title: "Improved Tag Selection Display",
+                    description: "Selected tags now display properly in the search box with automatic focus management",
+                    type: "improvement"
+                },
+                {
+                    icon: <Code color="primary" />,
+                    title: "Robust URL Parameter Handling",
+                    description: "Enhanced URL parsing to handle both single tags with spaces and comma-separated multiple tags",
+                    type: "improvement"
+                }
+            ]
+        },
+        {
             version: "v2.1.5",
             date: "January 2025",
             type: "patch",
@@ -408,7 +447,7 @@ const ChangelogPage = () => {
                         Ready to Explore?
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-                        Try out the new direct question URL system and enhanced search functionality
+                        Try out the new bilingual tag translation system and enhanced search functionality
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button
