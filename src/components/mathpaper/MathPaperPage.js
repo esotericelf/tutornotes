@@ -685,18 +685,62 @@ const MathPaperPage = () => {
         } else {
             dispatch(loadPopularTagsThunk());
         }
-    }, [dispatch, isChinese, loadAvailableTags]); // Added loadAvailableTags back to dependencies
+    }, [dispatch, isChinese]); // Removed loadAvailableTags to prevent infinite loop
 
-    // Reload popular tags when language changes
+    // Reload popular tags when language changes - REMOVED DUPLICATE
+    // This is already handled in the main useEffect above
+
+    // Force reload available tags when language changes to update autocomplete
     useEffect(() => {
         if (tagsLoadedRef.current) {
-            if (isChinese()) {
-                dispatch(loadPopularTagsChineseThunk());
-            } else {
-                dispatch(loadPopularTagsThunk());
+            loadAvailableTags();
+
+            // Try to translate currently selected tag when language changes
+            if (searchTags.length > 0) {
+                const currentTag = searchTags[0];
+
+                // Try to find the translated equivalent using topic_tags table
+                const translateTag = async () => {
+                    try {
+                        const { data, error } = await supabase
+                            .from('topic_tags')
+                            .select('tag_ch, topic_ch')
+                            .eq('tag', currentTag)
+                            .eq('is_active', true)
+                            .not('tag_ch', 'is', null)
+                            .limit(1);
+
+                        if (error) {
+                            console.error('Error translating tag:', error);
+                            // Fallback: clear the tag
+                            dispatch(setSearchTags([]));
+                            dispatch(setSearchInput(''));
+                            return;
+                        }
+
+                        if (data && data.length > 0) {
+                            // Found translation, use it
+                            const translatedTag = data[0].tag_ch;
+                            dispatch(setSearchTags([translatedTag]));
+                            dispatch(setSearchInput(translatedTag));
+                        } else {
+                            // No translation found, clear the tag
+                            dispatch(setSearchTags([]));
+                            dispatch(setSearchInput(''));
+                        }
+                    } catch (error) {
+                        console.error('Error translating tag:', error);
+                        // Fallback: clear the tag
+                        dispatch(setSearchTags([]));
+                        dispatch(setSearchInput(''));
+                    }
+                };
+
+                translateTag();
             }
         }
-    }, [isChinese, dispatch]);
+    }, [isChinese]); // Only depend on language change to prevent infinite loops
+
 
 
 
@@ -942,7 +986,13 @@ const MathPaperPage = () => {
         }
     }, [searchTags, updateURLWithPagination, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate, isChinese]); // eslint-disable-line react-hooks/exhaustive-deps
 
-
+    // Handle language change - reload search results and tags
+    // DISABLED TO PREVENT INFINITE LOOPS - causing Chrome freeze
+    // useEffect(() => {
+    //     if (questions.length > 0 && tagsLoadedRef.current && !isFilterSearching) {
+    //         loadTagsForQuestions(questions);
+    //     }
+    // }, [isChinese, questions, loadTagsForQuestions, isFilterSearching]);
 
     // Generate URL for a specific question
     const generateQuestionURL = useCallback((question) => {
@@ -1072,7 +1122,7 @@ const MathPaperPage = () => {
         } else if (selectedYear || selectedPaper || selectedQuestionNo) {
             handleFilterSearch(newPage);
         }
-    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL, handleFilterSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL]); // Removed handleFilterSearch to prevent circular dependency
 
     const breadcrumbs = [
         { name: t('breadcrumbs.home'), url: '/' },
