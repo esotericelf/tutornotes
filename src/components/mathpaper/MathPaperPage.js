@@ -62,7 +62,6 @@ import {
     setTagsCache,
     loadPopularTags as loadPopularTagsThunk,
     loadPopularTagsChinese as loadPopularTagsChineseThunk,
-    translateTags as translateTagsThunk,
     loadQuestionsByFilters
 } from '../../store/slices/mathPaperSlice';
 
@@ -73,7 +72,7 @@ const MathPaperPage = () => {
     const questionDetailsRef = React.useRef(null);
 
     // Translation hook
-    const { t, isChinese } = useTranslation();
+    const { t, isChinese, changeLanguage } = useTranslation();
 
     // Redux state and dispatch
     const {
@@ -125,6 +124,17 @@ const MathPaperPage = () => {
             setComponentMounted(false);
         };
     }, [dispatch, isChinese, navigate]);
+
+    // Handle language parameter from URL
+    useEffect(() => {
+        if (params.lang) {
+            // If we have a language parameter in the URL, set the language accordingly
+            const targetLanguage = params.lang === 'zh' ? 'zh' : 'en';
+            if (isChinese() !== (targetLanguage === 'zh')) {
+                changeLanguage(targetLanguage);
+            }
+        }
+    }, [params.lang, isChinese, changeLanguage]);
 
 
     // Convert question tags array to the format expected by the UI

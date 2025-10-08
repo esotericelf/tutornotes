@@ -21,13 +21,14 @@ import {
     Translate,
     LanguageOutlined
 } from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../store/hooks'
 import { signOut } from '../../store/slices/authSlice'
 import { useTranslation } from '../../hooks/useTranslation'
 
 const AppBar = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     const { user, loading, dispatch } = useAuth()
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -71,9 +72,34 @@ const AppBar = () => {
         setLanguageMenuAnchor(event.currentTarget)
     }
 
+    // Function to parse question parameters from URL pathname
+    const parseQuestionParamsFromPath = (pathname) => {
+        // Match patterns like /DSE_Math/2013/II/2 or /DSE_Math/2013/II/2/zh
+        const match = pathname.match(/^\/DSE_Math\/(\d{4})\/([I]+)\/(\d+)(?:\/([a-z]{2}))?$/);
+        if (match) {
+            const [, year, paper, questionNo] = match;
+            return {
+                year: parseInt(year, 10),
+                paper: paper,
+                questionNo: parseInt(questionNo, 10)
+            };
+        }
+        return null;
+    };
+
     const handleLanguageSelect = async (language) => {
-        await changeLanguage(language)
-        setLanguageMenuAnchor(null)
+        // Check if we're on a direct question URL by parsing the pathname
+        const questionParams = parseQuestionParamsFromPath(location.pathname);
+
+        if (questionParams) {
+            // We're on a direct question URL, preserve the question parameters and add language
+            const newURL = `/DSE_Math/${questionParams.year}/${questionParams.paper}/${questionParams.questionNo}/${language}`;
+            navigate(newURL);
+        } else {
+            // Regular language toggle for other pages
+            await changeLanguage(language);
+        }
+        setLanguageMenuAnchor(null);
     }
 
     const handleCloseLanguageMenu = () => {

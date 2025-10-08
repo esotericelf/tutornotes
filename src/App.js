@@ -197,11 +197,12 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/changelog" element={<ChangelogPage />} />
+                  <Route path="/DSE_Math/:year/:paper/:questionNo/:lang" element={<MathPaperPage />} />
                   <Route path="/DSE_Math/:year/:paper/:questionNo" element={<MathPaperPage />} />
                   <Route path="/DSE_Math" element={<MathPaperPage />} />
                   <Route
                     path="/question-demo"
-                    element={
+                    element={                                                             //Admin only
                       <AdminRoute>
                         <QuestionDisplayDemo />
                       </AdminRoute>
