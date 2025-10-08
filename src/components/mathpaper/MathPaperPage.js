@@ -71,6 +71,7 @@ const MathPaperPage = () => {
     const [searchParams] = useSearchParams();
     const params = useParams(); // Get URL parameters for direct question access
     const questionDetailsRef = React.useRef(null);
+    const autocompleteRef = React.useRef(null);
 
     // Translation hook
     const { t, isChinese, changeLanguage } = useTranslation();
@@ -822,44 +823,54 @@ const MathPaperPage = () => {
                 // Try to find the translated equivalent using topic_tags table
                 const translateTag = async () => {
                     try {
-                        const { data, error } = await supabase
-                            .from('topic_tags')
-                            .select('tag_ch, topic_ch')
-                            .eq('tag', currentTag)
-                            .eq('is_active', true)
-                            .not('tag_ch', 'is', null)
-                            .limit(1);
+                        let query;
+                        if (isChinese()) {
+                            // Translate from English to Chinese
+                            query = supabase
+                                .from('topic_tags')
+                                .select('tag_ch, topic_ch')
+                                .eq('tag', currentTag)
+                                .eq('is_active', true)
+                                .not('tag_ch', 'is', null)
+                                .limit(1);
+                        } else {
+                            // Translate from Chinese to English
+                            query = supabase
+                                .from('topic_tags')
+                                .select('tag, topic')
+                                .eq('tag_ch', currentTag)
+                                .eq('is_active', true)
+                                .not('tag', 'is', null)
+                                .limit(1);
+                        }
+
+                        const { data, error } = await query;
 
                         if (error) {
                             console.error('Error translating tag:', error);
-                            // Fallback: clear the tag
-                            dispatch(setSearchTags([]));
-                            dispatch(setSearchInput(''));
+                            // Don't clear the tag, just keep the original
                             return;
                         }
 
                         if (data && data.length > 0) {
                             // Found translation, use it
-                            const translatedTag = data[0].tag_ch;
+                            const translatedTag = isChinese() ? data[0].tag_ch : data[0].tag;
                             dispatch(setSearchTags([translatedTag]));
                             dispatch(setSearchInput(translatedTag));
                         } else {
-                            // No translation found, clear the tag
-                            dispatch(setSearchTags([]));
-                            dispatch(setSearchInput(''));
+                            // No translation found, keep the original tag
+                            // Don't clear it to prevent flickering
                         }
                     } catch (error) {
                         console.error('Error translating tag:', error);
-                        // Fallback: clear the tag
-                        dispatch(setSearchTags([]));
-                        dispatch(setSearchInput(''));
+                        // Don't clear the tag, just keep the original
                     }
                 };
 
                 translateTag();
             }
         }
-    }, [isChinese, dispatch, loadAvailableTags, searchTags]); // Include all dependencies
+    }, [isChinese, dispatch, loadAvailableTags, searchTags]); // Include searchTags dependency
 
 
 
@@ -1514,7 +1525,7 @@ const MathPaperPage = () => {
 
                             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Autocomplete
-                                    key={`${searchTags.join(',')}-${searchInput}-${selectedYear}-${selectedPaper}-${selectedQuestionNo}-${isChinese() ? 'zh' : 'en'}`} // Force remount when search state, filter state, or language changes
+                                    ref={autocompleteRef}
                                     options={availableTags}
                                     value={searchTags.length > 0 ? searchTags[0] : null}
                                     onChange={(event, newValue) => {
@@ -1527,7 +1538,17 @@ const MathPaperPage = () => {
 
                                             // Set the tag and trigger search directly
                                             dispatch(setSearchTags([newValue]));
-                                            dispatch(setSearchInput(''));
+                                            dispatch(setSearchInput(newValue));
+
+                                            // Blur the input field to remove focus and allow proper rendering
+                                            setTimeout(() => {
+                                                if (autocompleteRef.current) {
+                                                    const inputElement = autocompleteRef.current.querySelector('input');
+                                                    if (inputElement) {
+                                                        inputElement.blur();
+                                                    }
+                                                }
+                                            }, 100);
 
                                             // Trigger search with the new tag directly
                                             handleTagSearch([newValue]);
@@ -1538,7 +1559,10 @@ const MathPaperPage = () => {
                                     }}
                                     inputValue={searchInput}
                                     onInputChange={(event, newInputValue, reason) => {
-                                        dispatch(setSearchInput(newInputValue));
+                                        // Only update input if it's not a selection (reason !== 'selectOption')
+                                        if (reason !== 'selectOption') {
+                                            dispatch(setSearchInput(newInputValue));
+                                        }
                                     }}
                                     onOpen={() => {
                                         // Autocomplete opened

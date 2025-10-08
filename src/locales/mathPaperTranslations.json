@@ -29,7 +29,8 @@
             },
             "buttons": {
                 "search": "Search",
-                "clear": "Clear"
+                "clear": "Clear",
+                "backToSearch": "Back to Results"
             }
         },
         "popularTags": {
@@ -118,7 +119,8 @@
             },
             "buttons": {
                 "search": "搜尋",
-                "clear": "清除"
+                "clear": "清除",
+                "backToSearch": "返回結果"
             }
         },
         "popularTags": {
