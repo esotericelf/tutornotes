@@ -986,13 +986,13 @@ const MathPaperPage = () => {
         }
     }, [searchTags, updateURLWithPagination, pageSize, loadTagsForQuestions, extractTagsFromQuestions, navigate, isChinese]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Handle language change - reload search results and tags
-    // DISABLED TO PREVENT INFINITE LOOPS - causing Chrome freeze
-    // useEffect(() => {
-    //     if (questions.length > 0 && tagsLoadedRef.current && !isFilterSearching) {
-    //         loadTagsForQuestions(questions);
-    //     }
-    // }, [isChinese, questions, loadTagsForQuestions, isFilterSearching]);
+    // Handle language change - reload tags for result list
+    useEffect(() => {
+        // Only reload tags for existing results when language changes
+        if (questions.length > 0 && tagsLoadedRef.current && !isFilterSearching) {
+            loadTagsForQuestions(questions);
+        }
+    }, [isChinese]); // Only depend on language change to prevent infinite loops
 
     // Generate URL for a specific question
     const generateQuestionURL = useCallback((question) => {
@@ -1351,9 +1351,18 @@ const MathPaperPage = () => {
 
                                             // Auto-trigger search if year, paper, and question_no are selected
                                             if (selectedYear && selectedPaper && newQuestionNo) {
-                                                setTimeout(() => {
-                                                    handleFilterSearch(1);
-                                                }, 50);
+                                                // If we're on a direct question URL, load the specific question directly
+                                                const questionParams = UnifiedURLService.getQuestionParamsFromRouter(params);
+                                                if (questionParams) {
+                                                    // We're on a direct question URL, load the new question directly
+                                                    // Use the current URL parameters for year and paper, only change question number
+                                                    loadSpecificQuestion(questionParams.year, questionParams.paper, newQuestionNo);
+                                                } else {
+                                                    // We're on the main page, use filter search
+                                                    setTimeout(() => {
+                                                        handleFilterSearch(1);
+                                                    }, 50);
+                                                }
                                             }
                                         }}
                                         disabled={!selectedPaper}
