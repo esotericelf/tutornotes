@@ -25,7 +25,8 @@ import {
     FilterList,
     School,
     Home,
-    Visibility
+    Visibility,
+    ArrowBack
 } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink, useSearchParams, useParams } from 'react-router-dom';
 import QuestionDisplay from './QuestionDisplay';
@@ -98,6 +99,7 @@ const MathPaperPage = () => {
         totalQuestions,
         dispatch
     } = useMathPaper();
+
 
     // Auth state
     const { user } = useAuth();
@@ -199,7 +201,9 @@ const MathPaperPage = () => {
 
             if (urlFromTagSearch === 'true' && urlTags) {
                 isFromTagSearchURL = true;
-                urlTagsArray = urlTags.split(',').filter(tag => tag.trim());
+                urlTagsArray = urlTags.includes(',')
+                    ? urlTags.split(',').filter(tag => tag.trim())
+                    : [urlTags.trim()];
                 urlPageNum = urlPage ? parseInt(urlPage, 10) : 1;
             } else {
             }
@@ -244,7 +248,9 @@ const MathPaperPage = () => {
                     const pageParam = referrerURL.searchParams.get('page');
 
                     if (tagsParam) {
-                        const tagsArray = tagsParam.split(',').filter(tag => tag.trim());
+                        const tagsArray = tagsParam.includes(',')
+                            ? tagsParam.split(',').filter(tag => tag.trim())
+                            : [tagsParam.trim()];
                         dispatch(setOriginalSearchTags(tagsArray));
                         dispatch(setOriginalSearchPage(pageParam ? parseInt(pageParam, 10) : 1));
                         dispatch(setCameFromTagSearch(true));
@@ -308,6 +314,117 @@ const MathPaperPage = () => {
             dispatch(setLoading(false));
         }
     }, [getQuestionTagsFromData, dispatch, searchParams]); // Include all dependencies
+
+    // Handle tag search pagination (preserves search state)
+    const handleTagSearchPagination = useCallback(async (tags, page = 1) => {
+        if (tags.length === 0) return;
+
+        setIsTagSearchActive(true);
+        dispatch(setLoading(true));
+        dispatch(clearError());
+
+        try {
+            if (isChinese()) {
+                // Use Chinese tag search with Supabase function
+                const result = await UnifiedTagService.searchByChineseTagsPaginated(tags, page, pageSize);
+
+                if (result.error) {
+                    console.error('Error in Chinese tag search pagination:', result.error);
+                    dispatch(clearError(`Failed to search by Chinese tags: ${result.error.message}`));
+                    return;
+                }
+
+                const searchResult = result.data;
+                const matchingQuestions = searchResult.questions || [];
+                const totalQuestions = searchResult.total_count || 0;
+                const totalPages = searchResult.total_pages || 0;
+
+                dispatch(setQuestions(matchingQuestions));
+                dispatch(setTotalQuestions(totalQuestions));
+                dispatch(setTotalPages(totalPages));
+
+                // Load tags for the matching questions
+                if (matchingQuestions.length > 0) {
+                    loadTagsForQuestions(matchingQuestions);
+                }
+
+                if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                    dispatch(clearError(`No questions found with Chinese tags: ${tags.join(', ')}`));
+                }
+            } else {
+                // Use English tag search (existing logic)
+                const offset = (page - 1) * pageSize;
+
+                // First, get the total count
+                let countQuery = supabase
+                    .from('Math_Past_Paper')
+                    .select('*', { count: 'exact', head: true });
+
+                if (tags.length > 0) {
+                    countQuery = countQuery.contains('tags', tags);
+                }
+
+                const { count, error: countError } = await countQuery;
+
+                if (countError) {
+                    console.error('Error getting count:', countError);
+                    dispatch(clearError(`Failed to get results count: ${countError.message}`));
+                    return;
+                }
+
+                const totalQuestions = count || 0;
+                dispatch(setTotalQuestions(totalQuestions));
+                dispatch(setTotalPages(Math.ceil(totalQuestions / pageSize)));
+
+                // Now get the paginated data
+                let query = supabase
+                    .from('Math_Past_Paper')
+                    .select('*')
+                    .order('year', { ascending: false })
+                    .order('question_no', { ascending: true })
+                    .range(offset, offset + pageSize - 1);
+
+                // Add tag filtering
+                if (tags.length > 0) {
+                    query = query.contains('tags', tags);
+                }
+
+                // Add timeout
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Request timeout')), 10000)
+                );
+
+                const { data, error } = await Promise.race([query, timeoutPromise]);
+
+                if (error) {
+                    console.error('Error in tag search pagination:', error);
+                    dispatch(clearError(`Failed to search by tags: ${error.message}`));
+                    return;
+                }
+
+                const matchingQuestions = data || [];
+                dispatch(setQuestions(matchingQuestions));
+
+                // Load tags for the matching questions
+                if (matchingQuestions.length > 0) {
+                    loadTagsForQuestions(matchingQuestions);
+                }
+
+                if (matchingQuestions.length === 0 && totalQuestions === 0) {
+                    dispatch(clearError(`No questions found with tags: ${tags.join(', ')}`));
+                }
+            }
+
+        } catch (err) {
+            console.error('Error searching by tags pagination:', err);
+            dispatch(clearError(`Failed to search by tags: ${err.message}`));
+        } finally {
+            dispatch(setLoading(false));
+            setTimeout(() => {
+                setIsTagSearchActive(false);
+            }, 1000);
+        }
+    }, [loadTagsForQuestions, pageSize, isChinese, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
@@ -524,7 +641,10 @@ const MathPaperPage = () => {
             dispatch(setCurrentPage(pageFromURL));
 
             if (urlTags) {
-                const tagsArray = urlTags.split(',').filter(tag => tag.trim());
+                // Handle both comma-separated tags and single tags with spaces
+                const tagsArray = urlTags.includes(',')
+                    ? urlTags.split(',').filter(tag => tag.trim())
+                    : [urlTags.trim()];
                 dispatch(setSearchTags(tagsArray));
                 // Clear search input when loading from URL to prevent autocomplete from showing the tag value
                 dispatch(setSearchInput(''));
@@ -1118,16 +1238,21 @@ const MathPaperPage = () => {
 
     // Handle page change
     const handlePageChange = useCallback((event, newPage) => {
+        // Get current tags from URL as fallback if Redux state is empty
+        const currentUrlTags = searchParams.get('tags');
+        const tagsToUse = searchTags.length > 0 ? searchTags :
+            (currentUrlTags ? (currentUrlTags.includes(',') ? currentUrlTags.split(',').filter(tag => tag.trim()) : [currentUrlTags.trim()]) : []);
+
         dispatch(setCurrentPage(newPage));
-        updateURLWithPagination(searchTags, newPage);
+        updateURLWithPagination(tagsToUse, newPage);
 
         // Re-run the current search with new page
-        if (searchTags.length > 0) {
-            handleTagSearchFromURL(searchTags, newPage);
+        if (tagsToUse.length > 0) {
+            handleTagSearchPagination(tagsToUse, newPage);
         } else if (selectedYear || selectedPaper || selectedQuestionNo) {
             handleFilterSearch(newPage);
         }
-    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL, dispatch, handleFilterSearch]); // Include all dependencies
+    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchPagination, dispatch, handleFilterSearch, searchParams]); // Include all dependencies
 
     const breadcrumbs = [
         { name: t('breadcrumbs.home'), url: '/' },
@@ -1498,6 +1623,28 @@ const MathPaperPage = () => {
                                     {t('filters.buttons.clear')}
                                 </Button>
                             </Grid>
+
+                            {/* Back to Search Results Button - Only show when viewing a specific question and came from tag search */}
+                            {selectedQuestion && cameFromTagSearch && originalSearchTags.length > 0 && (
+                                <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+                                    <Button
+                                        variant="contained"
+                                        fullWidth
+                                        startIcon={<ArrowBack />}
+                                        onClick={handleBackToTagSearch}
+                                        disabled={loading}
+                                        sx={{
+                                            height: 56,
+                                            backgroundColor: 'secondary.main',
+                                            '&:hover': {
+                                                backgroundColor: 'secondary.dark'
+                                            }
+                                        }}
+                                    >
+                                        {t('filters.buttons.backToSearch')}
+                                    </Button>
+                                </Grid>
+                            )}
                         </Grid>
 
                     </Paper>
