@@ -307,7 +307,7 @@ const MathPaperPage = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    }, [getQuestionTagsFromData]); // Removed searchParams to prevent recreation
+    }, [getQuestionTagsFromData, dispatch, searchParams]); // Include all dependencies
 
     // Handle tag search from URL parameters (simplified like your reference code)
     const handleTagSearchFromURL = useCallback(async (tags, page = 1) => {
@@ -685,7 +685,7 @@ const MathPaperPage = () => {
         } else {
             dispatch(loadPopularTagsThunk());
         }
-    }, [dispatch, isChinese]); // Removed loadAvailableTags to prevent infinite loop
+    }, [dispatch, isChinese, loadAvailableTags]); // Include loadAvailableTags dependency
 
     // Reload popular tags when language changes - REMOVED DUPLICATE
     // This is already handled in the main useEffect above
@@ -739,7 +739,7 @@ const MathPaperPage = () => {
                 translateTag();
             }
         }
-    }, [isChinese]); // Only depend on language change to prevent infinite loops
+    }, [isChinese, dispatch, loadAvailableTags, searchTags]); // Include all dependencies
 
 
 
@@ -769,6 +769,11 @@ const MathPaperPage = () => {
         setIsTagSearchActive(false);
 
         try {
+            // Validate inputs before making the API call
+            if (!selectedYear || !selectedPaper) {
+                console.log('Skipping search - year or paper not selected');
+                return;
+            }
 
             // Use the Redux thunk instead of direct Supabase queries
             const result = await dispatch(loadQuestionsByFilters({
@@ -992,7 +997,7 @@ const MathPaperPage = () => {
         if (questions.length > 0 && tagsLoadedRef.current && !isFilterSearching) {
             loadTagsForQuestions(questions);
         }
-    }, [isChinese]); // Only depend on language change to prevent infinite loops
+    }, [isChinese, isFilterSearching, loadTagsForQuestions, questions]); // Include all dependencies
 
     // Generate URL for a specific question
     const generateQuestionURL = useCallback((question) => {
@@ -1122,7 +1127,7 @@ const MathPaperPage = () => {
         } else if (selectedYear || selectedPaper || selectedQuestionNo) {
             handleFilterSearch(newPage);
         }
-    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL]); // Removed handleFilterSearch to prevent circular dependency
+    }, [searchTags, selectedYear, selectedPaper, selectedQuestionNo, updateURLWithPagination, handleTagSearchFromURL, dispatch, handleFilterSearch]); // Include all dependencies
 
     const breadcrumbs = [
         { name: t('breadcrumbs.home'), url: '/' },
