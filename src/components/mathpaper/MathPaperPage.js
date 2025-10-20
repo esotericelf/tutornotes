@@ -25,8 +25,7 @@ import {
     FilterList,
     School,
     Home,
-    Visibility,
-    ArrowBack
+    Visibility
 } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink, useSearchParams, useParams } from 'react-router-dom';
 import QuestionDisplay from './QuestionDisplay';
@@ -1624,8 +1623,9 @@ const MathPaperPage = () => {
                                             // Clear tag search when doing filter search
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
-                                            // For filter search, update URL with page 1
-                                            updateURLWithPagination([], 1);
+                                            // For filter search, do NOT navigate away first.
+                                            // Navigating to /DSE_Math here causes the URL-driven effect
+                                            // to clear state before the search starts, breaking the flow.
                                             handleFilterSearch(1);
                                         }
                                     }}
@@ -1648,27 +1648,7 @@ const MathPaperPage = () => {
                                 </Button>
                             </Grid>
 
-                            {/* Back to Search Results Button - Only show when viewing a specific question and came from tag search */}
-                            {selectedQuestion && cameFromTagSearch && originalSearchTags.length > 0 && (
-                                <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-                                    <Button
-                                        variant="contained"
-                                        fullWidth
-                                        startIcon={<ArrowBack />}
-                                        onClick={handleBackToTagSearch}
-                                        disabled={loading}
-                                        sx={{
-                                            height: 56,
-                                            backgroundColor: 'secondary.main',
-                                            '&:hover': {
-                                                backgroundColor: 'secondary.dark'
-                                            }
-                                        }}
-                                    >
-                                        {t('filters.buttons.backToSearch')}
-                                    </Button>
-                                </Grid>
-                            )}
+                            {/* Back to Search Results Button moved to QuestionDisplay metadata row */}
                         </Grid>
 
                     </Paper>

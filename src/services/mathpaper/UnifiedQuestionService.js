@@ -34,7 +34,7 @@ class UnifiedQuestionService extends BaseService {
                     .eq('year', year)
                     .eq('paper', paper)
                     .eq('question_no', questionNo)
-                    .single()
+                    .maybeSingle()
             );
 
             if (result.error) {
@@ -215,10 +215,10 @@ class UnifiedQuestionService extends BaseService {
                     .eq('year', year)
                     .eq('paper', paper)
                     .eq('question_no', questionNo)
-                    .single()
+                    .maybeSingle()
             );
 
-            if (result.error && result.error.code !== 'PGRST116') { // PGRST116 is "not found" error
+            if (result.error) {
                 return { exists: false, error: result.error };
             }
 

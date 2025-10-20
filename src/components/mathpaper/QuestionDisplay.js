@@ -275,7 +275,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                     </Paper>
                 </Box>
 
-                {/* Back to Search Results Button */}
+                {/* Back to Search Results Button - aligned to right side of metadata row */}
                 {cameFromTagSearch && originalSearchTags.length > 0 && (
                     <Box sx={{
                         display: 'flex',
@@ -284,46 +284,19 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                         justifyContent: { xs: 'center', sm: 'flex-end' }
                     }}>
                         <Button
-                            variant="outlined"
+                            variant="contained"
                             startIcon={<ArrowBack />}
                             onClick={onBackToSearch}
                             sx={{
-                                backgroundColor: 'white',
-                                borderColor: 'primary.main',
-                                color: 'primary.main',
-                                '&:hover': {
-                                    backgroundColor: 'primary.main',
-                                    color: 'white',
-                                    borderColor: 'primary.main'
-                                },
                                 fontWeight: 'bold',
                                 px: { xs: 2, sm: 3 },
                                 py: { xs: 1, sm: 1 },
                                 width: { xs: '100%', sm: 'auto' },
                                 minWidth: { xs: 'auto', sm: 'auto' },
-                                fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                                '& .MuiButton-startIcon': {
-                                    fontSize: { xs: '1rem', sm: '1.2rem' }
-                                }
+                                fontSize: { xs: '0.8rem', sm: '0.875rem' }
                             }}
                         >
-                            <Box sx={{
-                                display: { xs: 'none', sm: 'inline' },
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                maxWidth: { sm: '200px', md: '300px' }
-                            }}>
-                                Back to {originalSearchTags.join(', ')}
-                            </Box>
-                            <Box sx={{
-                                display: { xs: 'inline', sm: 'none' },
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                            }}>
-                                Back to {originalSearchTags.length > 1 ? `${originalSearchTags[0]}...` : originalSearchTags[0]}
-                            </Box>
+                            {`Back to Results`}
                         </Button>
                     </Box>
                 )}

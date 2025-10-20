@@ -19,7 +19,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Add global configuration for better web compatibility
     global: {
         headers: {
-            'X-Client-Info': 'tutornotes-web'
+            'X-Client-Info': 'tutornotes-web',
+            'Accept': 'application/json'
         }
     },
     // Ensure realtime works properly
