@@ -1489,20 +1489,13 @@ const MathPaperPage = () => {
                                             dispatch(setSearchTags([]));
                                             dispatch(setSearchInput(''));
 
-                                            // Auto-trigger search if year, paper, and question_no are selected
+                                            // When year, paper and question number are present, navigate directly to the question URL
                                             if (selectedYear && selectedPaper && newQuestionNo) {
-                                                // If we're on a direct question URL, load the specific question directly
                                                 const questionParams = UnifiedURLService.getQuestionParamsFromRouter(params);
-                                                if (questionParams) {
-                                                    // We're on a direct question URL, load the new question directly
-                                                    // Use the current URL parameters for year and paper, only change question number
-                                                    loadSpecificQuestion(questionParams.year, questionParams.paper, newQuestionNo);
-                                                } else {
-                                                    // We're on the main page, use filter search
-                                                    setTimeout(() => {
-                                                        handleFilterSearch(1);
-                                                    }, 50);
-                                                }
+                                                const targetYear = questionParams ? questionParams.year : parseInt(selectedYear, 10);
+                                                const targetPaper = questionParams ? questionParams.paper : selectedPaper;
+                                                const questionURL = UnifiedURLService.generateQuestionURL(targetYear, targetPaper, newQuestionNo);
+                                                navigate(questionURL);
                                             }
                                         }}
                                         disabled={!selectedPaper}
