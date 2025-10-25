@@ -12,11 +12,61 @@
     # Disable secrets scanning for expected environment variables
     SECRETS_SCAN_OMIT_KEYS = "REACT_APP_SUPABASE_ANON_KEY,REACT_APP_SUPABASE_URL,REACT_APP_SUPABASE_SERVICE_ROLE_KEY"
 
-# Redirects for React Router
+# Redirects for React Router - only valid routes get SPA
+# Valid React routes
 [[redirects]]
-  from = "/*"
+  from = "/"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/changelog"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/question-demo"
+  to = "/index.html"
+  status = 200
+
+# DSE_Math routes (with parameters)
+[[redirects]]
+  from = "/DSE_Math/*"
+  to = "/index.html"
+  status = 200
+
+# Quiz routes
+[[redirects]]
+  from = "/quiz/take"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/quiz/results"
+  to = "/index.html"
+  status = 200
+
+# Debug routes (protected)
+[[redirects]]
+  from = "/debug/topic-tags"
+  to = "/index.html"
+  status = 200
+
+# All other routes return 404
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
 
 # Headers for security and performance
 [[headers]]

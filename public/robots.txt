@@ -1,22 +1,24 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Allow: /
 
-# Disallow admin and private areas
+# Allow valid React routes (nginx will return 404 for invalid routes)
+Allow: /
+Allow: /login
+Allow: /changelog
+Allow: /DSE_Math
+Allow: /dashboard
+Allow: /quiz/
+
+# Block private/admin areas
 Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
 Disallow: /static/
+Disallow: /debug/
 Disallow: /question-demo
 
-# Allow important pages
-Allow: /
-Allow: /login
-Allow: /DSE_Math
-Allow: /quiz/
+# Note: nginx configuration returns 404 for any other invalid routes
+# This ensures search engines don't index non-existent pages
 
 # Sitemap location
 Sitemap: https://tutornotes.com.hk/sitemap.xml
-
-# Crawl delay (optional - be respectful to server resources)
-Crawl-delay: 1
