@@ -36,6 +36,13 @@ const HomePage = () => {
 
     const features = [
         {
+            icon: <School sx={{ fontSize: 48, color: 'primary.main' }} />,
+            title: 'Interactive Examples',
+            description: 'Learn with interactive examples, key concepts, and step-by-step solutions',
+            color: '#e8f5e9',
+            path: '/example'
+        },
+        {
             icon: <PlayCircleOutline sx={{ fontSize: 48, color: 'primary.main' }} />,
             title: t('features.practiceQuizzes.title'),
             description: t('features.practiceQuizzes.description'),
@@ -243,6 +250,10 @@ const HomePage = () => {
                                             onClick={() => {
                                                 if (feature.title === 'Practice Quizzes') {
                                                     navigate('/dashboard')
+                                                } else if (feature.title === 'Interactive Examples') {
+                                                    navigate('/example')
+                                                } else if (feature.path) {
+                                                    navigate(feature.path)
                                                 } else {
                                                     // Handle other features
                                                 }

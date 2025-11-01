@@ -16,6 +16,7 @@ import { QuizTaker, QuizResults } from './components/quiz'
 import TopicTagsDebug from './components/debug/TopicTagsDebug'
 import ChangelogPage from './components/common/ChangelogPage'
 import Layout from './components/common/Layout'
+import ExampleModule from './components/example/ExampleModule'
 
 import './App.css'
 
@@ -235,6 +236,9 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  {/* Example Routes */}
+                  <Route path="/example" element={<ExampleModule />} />
 
                   {/* Debug Routes */}
                   <Route
