@@ -16,12 +16,18 @@ import {
     MenuBook,
     Construction
 } from '@mui/icons-material'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
+import { parseTopicTagUrl, createTopicTagUrl } from '../../utils/urlHelpers'
 import ExampleSidebar from './ExampleSidebar'
 import KeyConceptHighlight from './KeyConceptHighlight'
 import ExampleQuestions from './ExampleQuestions'
 
 const ExampleModule = () => {
+    const navigate = useNavigate()
+    const params = useParams()
+    const { topic: topicParam, tag: tagParam } = params || {}
+
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [selectedTopic, setSelectedTopic] = useState(null)
     const [selectedTag, setSelectedTag] = useState(null)
@@ -32,6 +38,23 @@ const ExampleModule = () => {
     const [currentExampleIndex, setCurrentExampleIndex] = useState(0)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+
+    // Initialize from URL params on mount or when params change
+    useEffect(() => {
+        if (topicParam && tagParam) {
+            const parsed = parseTopicTagUrl(topicParam, tagParam)
+            if (parsed) {
+                setSelectedTopic(parsed.topic)
+                setSelectedTag(parsed.tag)
+            }
+        } else {
+            // Clear selections if no URL params
+            setSelectedTopic(null)
+            setSelectedTag(null)
+            setConcepts([])
+            setExamples([])
+        }
+    }, [topicParam, tagParam])
 
     useEffect(() => {
         // Fetch from database when topic/tag is selected
@@ -72,7 +95,7 @@ const ExampleModule = () => {
             setCurrentConceptIndex(0)
 
             // If we have concepts, fetch examples for the first one
-            if (conceptsData && conceptsData.length > 0 && conceptsData[0].id) {
+            if (conceptsData && conceptsData.length > 0 && conceptsData[0]?.id) {
                 await fetchExamples(conceptsData[0].id)
             } else {
                 setExamples([])
@@ -110,8 +133,11 @@ const ExampleModule = () => {
     }
 
     const handleConceptChange = (newIndex) => {
-        setCurrentConceptIndex(newIndex)
-        setCurrentExampleIndex(0) // Reset to first example when concept changes
+        if (concepts[newIndex]) {
+            setCurrentConceptIndex(newIndex)
+            setCurrentExampleIndex(0) // Reset to first example when concept changes
+            // Note: URL stays the same, only concept selection changes
+        }
     }
 
     const handleExamplePrevious = () => {
@@ -123,8 +149,9 @@ const ExampleModule = () => {
     }
 
     const handleTopicTagSelect = (topic, tag) => {
-        setSelectedTopic(topic)
-        setSelectedTag(tag)
+        // Navigate to the topic/tag URL
+        const url = createTopicTagUrl(topic, tag)
+        navigate(url)
     }
 
     // Render "Under Construction" message

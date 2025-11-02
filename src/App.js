@@ -237,8 +237,10 @@ function App() {
                     }
                   />
 
-                  {/* Example Routes */}
+                  {/* Example Routes - Put specific routes first, then generic topic/tag route at the end */}
                   <Route path="/example" element={<ExampleModule />} />
+                  {/* Generic topic/tag route - must be last to avoid conflicts with other routes */}
+                  <Route path="/:topic/:tag" element={<ExampleModule />} />
 
                   {/* Debug Routes */}
                   <Route

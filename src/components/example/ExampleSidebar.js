@@ -17,9 +17,12 @@ import {
     ExpandMore,
     Search
 } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
+import { createTopicTagUrl } from '../../utils/urlHelpers'
 
 const ExampleSidebar = ({ open, onClose, onTopicTagSelect, width = 280 }) => {
+    const navigate = useNavigate()
     const [searchTerm, setSearchTerm] = useState('')
     const [topicsData, setTopicsData] = useState([])
     const [loading, setLoading] = useState(true)
@@ -96,6 +99,9 @@ const ExampleSidebar = ({ open, onClose, onTopicTagSelect, width = 280 }) => {
     }, [searchTerm, topicsData])
 
     const handleTagClick = (topic, tag) => {
+        // Navigate directly to topic/tag URL
+        const url = createTopicTagUrl(topic, tag)
+        navigate(url)
         onTopicTagSelect(topic, tag)
         onClose()
     }
