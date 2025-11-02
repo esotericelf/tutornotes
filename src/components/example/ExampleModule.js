@@ -6,7 +6,9 @@ import {
     IconButton,
     CircularProgress,
     Alert,
-    Paper
+    Paper,
+    useMediaQuery,
+    useTheme
 } from '@mui/material'
 import {
     Menu,
@@ -26,6 +28,8 @@ import ExampleQuestions from './ExampleQuestions'
 const ExampleModule = () => {
     const navigate = useNavigate()
     const params = useParams()
+    const theme = useTheme()
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
     const { topic: topicParam, tag: tagParam } = params || {}
 
     const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -177,29 +181,47 @@ const ExampleModule = () => {
     )
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-                <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 } }}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 2, sm: 2 },
+                mb: { xs: 3, sm: 4 }
+            }}>
+                <IconButton
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
+                >
                     {sidebarOpen ? <MenuOpen /> : <Menu />}
                 </IconButton>
-                <Box sx={{ flex: 1 }} />
                 {selectedTopic && selectedTag && (
                     <Box sx={{
-                        px: 3,
-                        py: 2,
+                        px: { xs: 2, sm: 3 },
+                        py: { xs: 1.5, sm: 2 },
                         backgroundColor: 'primary.main',
                         color: 'primary.contrastText',
                         borderRadius: 2,
-                        display: 'inline-block'
+                        display: 'inline-block',
+                        alignSelf: { xs: 'flex-start', sm: 'center' },
+                        ml: { xs: 0, sm: 'auto' },
+                        width: { xs: '100%', sm: 'auto' }
                     }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        <Typography
+                            variant="h5"
+                            sx={{
+                                fontWeight: 600,
+                                fontSize: { xs: '1rem', sm: '1.5rem' },
+                                wordBreak: 'break-word'
+                            }}
+                        >
                             {selectedTopic} &gt; {selectedTag}
                         </Typography>
                     </Box>
                 )}
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 3 }}>
+            <Box sx={{ display: 'flex', gap: { xs: 0, md: 3 } }}>
                 {/* Sidebar */}
                 <ExampleSidebar
                     open={sidebarOpen}
@@ -219,7 +241,7 @@ const ExampleModule = () => {
                 )}
 
                 {/* Main Content */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ flex: 1, minWidth: 0, width: '100%', maxWidth: '100%' }}>
                     {loading && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
                             <CircularProgress />
@@ -246,29 +268,37 @@ const ExampleModule = () => {
                                 <Box>
                                     <Box sx={{
                                         display: 'flex',
-                                        alignItems: 'center',
+                                        flexDirection: { xs: 'column', sm: 'row' },
+                                        alignItems: { xs: 'flex-start', sm: 'center' },
                                         justifyContent: 'space-between',
-                                        mb: 3,
-                                        p: 2,
+                                        mb: { xs: 2, sm: 3 },
+                                        p: { xs: 1.5, sm: 2 },
                                         backgroundColor: 'background.paper',
                                         borderRadius: 1,
-                                        boxShadow: 1
+                                        boxShadow: 1,
+                                        gap: { xs: 2, sm: 0 }
                                     }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <MenuBook sx={{ fontSize: 28, color: 'primary.main' }} />
-                                            <Typography variant="h6" component="h2">
-                                                <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary' }}>
+                                            <MenuBook sx={{ fontSize: { xs: 24, sm: 28 }, color: 'primary.main', flexShrink: 0 }} />
+                                            <Typography variant="h6" component="h2" sx={{ fontSize: { xs: '0.875rem', sm: '1.25rem' } }}>
+                                                <Typography component="span" variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                                                     ({currentExampleIndex + 1} of {examples.length})
                                                 </Typography>
                                             </Typography>
                                         </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: { xs: 1, sm: 2 },
+                                            alignSelf: { xs: 'stretch', sm: 'center' },
+                                            justifyContent: { xs: 'space-between', sm: 'flex-end' }
+                                        }}>
                                             <IconButton
                                                 onClick={handleExamplePrevious}
                                                 disabled={loading}
                                                 aria-label="Previous Example"
                                                 color="primary"
-                                                size="medium"
+                                                size={isMobile ? 'small' : 'medium'}
                                                 sx={{
                                                     border: '1px solid',
                                                     borderColor: 'divider',
@@ -279,7 +309,15 @@ const ExampleModule = () => {
                                             >
                                                 <ChevronLeft />
                                             </IconButton>
-                                            <Typography variant="body1" color="text.primary" sx={{ minWidth: '60px', textAlign: 'center' }}>
+                                            <Typography
+                                                variant="body1"
+                                                color="text.primary"
+                                                sx={{
+                                                    minWidth: { xs: '50px', sm: '60px' },
+                                                    textAlign: 'center',
+                                                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                                                }}
+                                            >
                                                 {currentExampleIndex + 1} / {examples.length}
                                             </Typography>
                                             <IconButton
@@ -287,7 +325,7 @@ const ExampleModule = () => {
                                                 disabled={loading}
                                                 aria-label="Next Example"
                                                 color="primary"
-                                                size="medium"
+                                                size={isMobile ? 'small' : 'medium'}
                                                 sx={{
                                                     border: '1px solid',
                                                     borderColor: 'divider',

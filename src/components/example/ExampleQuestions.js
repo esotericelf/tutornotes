@@ -59,7 +59,7 @@ const ExampleQuestions = ({ example }) => {
         const lines = mathString.split('\\n').filter(line => line.trim() !== '')
 
         return (
-            <Box sx={{ my: 2 }}>
+            <Box sx={{ my: { xs: 1.5, sm: 2 }, '& .katex': { fontSize: { xs: '0.9em', sm: '1em' } } }}>
                 {lines.map((line, index) => {
                     let mathContent = line.trim()
 
@@ -83,7 +83,7 @@ const ExampleQuestions = ({ example }) => {
                     }
 
                     return (
-                        <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0 }}>
+                        <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0, overflowX: 'auto' }}>
                             <BlockMath math={mathContent} />
                         </Box>
                     )
@@ -225,21 +225,37 @@ const ExampleQuestions = ({ example }) => {
     return (
         <Box>
             {/* Problem Statement */}
-            <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
+            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, sm: 4 } }}>
                 {example.example_title && (
-                    <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+                    <Typography
+                        variant="h5"
+                        gutterBottom
+                        sx={{
+                            mb: 2,
+                            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                            wordBreak: 'break-word'
+                        }}
+                    >
                         {example.example_title}
                     </Typography>
                 )}
-                <Typography variant="body1">
+                <Typography
+                    variant="body1"
+                    sx={{
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        '& .katex': {
+                            fontSize: { xs: '0.9em', sm: '1em' }
+                        }
+                    }}
+                >
                     {renderWithLaTeX(example.problem || '')}
                 </Typography>
             </Paper>
 
             {/* Steps and Diagrams Side by Side */}
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, md: 3 } }}>
                 {/* Steps Column */}
-                <Box sx={{ flex: { md: '1 1 50%' }, flexWrap: { md: 'nowrap' } }}>
+                <Box sx={{ flex: { md: '1 1 50%' }, flexWrap: { md: 'nowrap' }, width: '100%' }}>
                     {steps.map((step, index) => (
                         <Accordion
                             key={index}
@@ -266,8 +282,8 @@ const ExampleQuestions = ({ example }) => {
                             <AccordionSummary
                                 expandIcon={<ExpandMore />}
                                 sx={{
-                                    px: 2,
-                                    py: 1.5,
+                                    px: { xs: 1.5, sm: 2 },
+                                    py: { xs: 1, sm: 1.5 },
                                     border: 'none',
                                     borderTop: 'none',
                                     borderBottom: 'none',
@@ -281,27 +297,44 @@ const ExampleQuestions = ({ example }) => {
                                         borderBottom: 'none'
                                     },
                                     '& .MuiAccordionSummary-content': {
-                                        margin: '12px 0',
+                                        margin: { xs: '8px 0', sm: '12px 0' },
                                         '&.Mui-expanded': {
-                                            margin: '12px 0'
+                                            margin: { xs: '8px 0', sm: '12px 0' }
                                         }
                                     }
                                 }}
                             >
-                                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 2 }}>
-                                    <Typography variant="h6" sx={{ flex: 1, fontWeight: activeStep === index ? 600 : 400 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: { xs: 1, sm: 2 }, minWidth: 0 }}>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            flex: 1,
+                                            fontWeight: activeStep === index ? 600 : 400,
+                                            fontSize: { xs: '0.875rem', sm: '1.25rem' },
+                                            wordBreak: 'break-word',
+                                            overflowWrap: 'break-word'
+                                        }}
+                                    >
                                         {step.title || `Step ${index + 1}`}
                                     </Typography>
                                     {index < activeStep && (
-                                        <Typography variant="body2" color="success.main" sx={{ fontWeight: 600 }}>
+                                        <Typography
+                                            variant="body2"
+                                            color="success.main"
+                                            sx={{
+                                                fontWeight: 600,
+                                                fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                                                flexShrink: 0
+                                            }}
+                                        >
                                             ✓
                                         </Typography>
                                     )}
                                 </Box>
                             </AccordionSummary>
                             <AccordionDetails sx={{
-                                px: 2,
-                                py: 3,
+                                px: { xs: 1.5, sm: 2 },
+                                py: { xs: 2, sm: 3 },
                                 border: 'none',
                                 borderTop: 'none',
                                 borderBottom: 'none',
@@ -309,11 +342,24 @@ const ExampleQuestions = ({ example }) => {
                                 borderRight: 'none'
                             }}>
                                 {step.description && (
-                                    <Typography variant="body1" paragraph>
+                                    <Typography
+                                        variant="body1"
+                                        paragraph
+                                        sx={{
+                                            fontSize: { xs: '0.875rem', sm: '1rem' },
+                                            '& .katex': {
+                                                fontSize: { xs: '0.9em', sm: '1em' }
+                                            }
+                                        }}
+                                    >
                                         {renderWithLaTeX(step.description)}
                                     </Typography>
                                 )}
-                                {step.math && renderMath(step.math)}
+                                {step.math && (
+                                    <Box sx={{ overflowX: 'auto' }}>
+                                        {renderMath(step.math)}
+                                    </Box>
+                                )}
                             </AccordionDetails>
                         </Accordion>
                     ))}
@@ -321,10 +367,10 @@ const ExampleQuestions = ({ example }) => {
 
                 {/* Diagrams Column */}
                 {diagrams.length > 0 && (
-                    <Box sx={{ flex: { md: '1 1 50%' } }}>
+                    <Box sx={{ flex: { md: '1 1 50%' }, width: '100%' }}>
                         <Card elevation={2}>
-                            <CardContent>
-                                <Typography variant="h6" gutterBottom>
+                            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                                     Interactive Diagram
                                 </Typography>
                                 {diagrams.length > 1 ? (
@@ -332,10 +378,24 @@ const ExampleQuestions = ({ example }) => {
                                         <Tabs
                                             value={diagramTabIndex}
                                             onChange={(e, newValue) => setDiagramTabIndex(newValue)}
-                                            sx={{ mb: 2 }}
+                                            sx={{
+                                                mb: 2,
+                                                '& .MuiTabs-scrollButtons': {
+                                                    display: { xs: 'flex', sm: 'flex' }
+                                                }
+                                            }}
+                                            variant="scrollable"
+                                            scrollButtons="auto"
                                         >
                                             {diagrams.map((_, index) => (
-                                                <Tab key={index} label={index + 1} />
+                                                <Tab
+                                                    key={index}
+                                                    label={index + 1}
+                                                    sx={{
+                                                        minWidth: { xs: 48, sm: 72 },
+                                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                                    }}
+                                                />
                                             ))}
                                         </Tabs>
                                         <Box>
