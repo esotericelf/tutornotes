@@ -51,10 +51,6 @@ const ExampleQuestions = ({ example }) => {
         })
     }
 
-    const handleStep = (step) => () => {
-        setActiveStep(step)
-    }
-
     const renderDiagram = (diagram) => {
         if (!diagram) return null
 
@@ -189,6 +185,11 @@ const ExampleQuestions = ({ example }) => {
         <Box>
             {/* Problem Statement */}
             <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
+                {example.example_title && (
+                    <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+                        {example.example_title}
+                    </Typography>
+                )}
                 <Typography variant="h6" gutterBottom>
                     Problem
                 </Typography>

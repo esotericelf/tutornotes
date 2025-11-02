@@ -24,6 +24,7 @@ const ExampleSidebar = ({ open, onClose, onTopicTagSelect, width = 280 }) => {
     const [topicsData, setTopicsData] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [expandedTopics, setExpandedTopics] = useState(new Set())
 
     useEffect(() => {
         const fetchTopics = async () => {
@@ -33,7 +34,6 @@ const ExampleSidebar = ({ open, onClose, onTopicTagSelect, width = 280 }) => {
                     .from('topic_tags')
                     .select('topic, tag')
                     .eq('is_active', true)
-                    .eq('content_type', 'master_tag')
                     .order('topic')
                     .order('tag')
 
@@ -75,17 +75,39 @@ const ExampleSidebar = ({ open, onClose, onTopicTagSelect, width = 280 }) => {
         return { topic, tags: filteredTags }
     }).filter(({ tags }) => tags.length > 0 || searchTerm === '')
 
+    // Auto-expand matching topics when searching
+    useEffect(() => {
+        if (searchTerm) {
+            const matchingTopics = new Set()
+            topicsData.forEach(({ topic, tags }) => {
+                const topicMatch = topic.toLowerCase().includes(searchTerm.toLowerCase())
+                const tagMatch = tags.some(tag =>
+                    tag.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                if (topicMatch || tagMatch) {
+                    matchingTopics.add(topic)
+                }
+            })
+            setExpandedTopics(matchingTopics)
+        } else {
+            // Clear all expansions when search is cleared
+            setExpandedTopics(new Set())
+        }
+    }, [searchTerm, topicsData])
+
     const handleTagClick = (topic, tag) => {
         onTopicTagSelect(topic, tag)
         onClose()
     }
 
-    const shouldExpandAccordion = (topic, tags) => {
-        if (searchTerm === '') return false
-        return tags.some(tag =>
-            topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tag.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+    const handleAccordionChange = (topic) => (event, isExpanded) => {
+        const newExpanded = new Set(expandedTopics)
+        if (isExpanded) {
+            newExpanded.add(topic)
+        } else {
+            newExpanded.delete(topic)
+        }
+        setExpandedTopics(newExpanded)
     }
 
     return (
@@ -135,8 +157,8 @@ const ExampleSidebar = ({ open, onClose, onTopicTagSelect, width = 280 }) => {
                 {!loading && !error && filteredTopics.map(({ topic, tags }) => (
                     <Accordion
                         key={topic}
-                        defaultExpanded={shouldExpandAccordion(topic, tags)}
-                        disabled={searchTerm !== ''}
+                        expanded={expandedTopics.has(topic)}
+                        onChange={handleAccordionChange(topic)}
                     >
                         <AccordionSummary expandIcon={<ExpandMore />}>
                             <Typography variant="subtitle1" fontWeight="medium">

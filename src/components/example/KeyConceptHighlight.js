@@ -74,7 +74,7 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
             <Box sx={{ mt: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <FunctionsIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                    <Typography variant="h6">Formula</Typography>
+                    <Typography variant="h6">Formula/ Core Idea</Typography>
                 </Box>
                 {formulaArray.map((item, index) => {
                     // Check if item is purely math (starts and ends with $)
