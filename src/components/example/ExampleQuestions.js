@@ -51,6 +51,47 @@ const ExampleQuestions = ({ example }) => {
         })
     }
 
+    // Helper function to render math field with support for \n line breaks
+    const renderMath = (mathString) => {
+        if (!mathString) return null
+
+        // Split by \n to handle multiple lines
+        const lines = mathString.split('\\n').filter(line => line.trim() !== '')
+
+        return (
+            <Box sx={{ my: 2 }}>
+                {lines.map((line, index) => {
+                    let mathContent = line.trim()
+
+                    // Check if already wrapped in $...$
+                    if (mathContent.startsWith('$') && mathContent.endsWith('$')) {
+                        // Extract content between $ signs
+                        mathContent = mathContent.slice(1, -1).trim()
+                    } else {
+                        // If not wrapped, wrap it (for block math)
+                        // But first check if it contains $ signs that might indicate inline math
+                        const hasInlineMath = mathContent.includes('$')
+                        if (hasInlineMath) {
+                            // Handle mixed content with inline math
+                            return (
+                                <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0 }}>
+                                    {renderWithLaTeX(mathContent)}
+                                </Box>
+                            )
+                        }
+                        // Pure math content - will be rendered as block math
+                    }
+
+                    return (
+                        <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0 }}>
+                            <BlockMath math={mathContent} />
+                        </Box>
+                    )
+                })}
+            </Box>
+        )
+    }
+
     const renderDiagram = (diagram) => {
         if (!diagram) return null
 
@@ -190,9 +231,6 @@ const ExampleQuestions = ({ example }) => {
                         {example.example_title}
                     </Typography>
                 )}
-                <Typography variant="h6" gutterBottom>
-                    Problem
-                </Typography>
                 <Typography variant="body1">
                     {renderWithLaTeX(example.problem || '')}
                 </Typography>
@@ -275,11 +313,7 @@ const ExampleQuestions = ({ example }) => {
                                         {renderWithLaTeX(step.description)}
                                     </Typography>
                                 )}
-                                {step.math && (
-                                    <Box sx={{ my: 2 }}>
-                                        <BlockMath math={step.math} />
-                                    </Box>
-                                )}
+                                {step.math && renderMath(step.math)}
                             </AccordionDetails>
                         </Accordion>
                     ))}
