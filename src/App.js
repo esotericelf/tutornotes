@@ -197,6 +197,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/changelog/zh" element={<ChangelogPage />} />
                   <Route path="/changelog" element={<ChangelogPage />} />
                   <Route path="/DSE_Math/:year/:paper/:questionNo/:lang" element={<MathPaperPage />} />
                   <Route path="/DSE_Math/:year/:paper/:questionNo" element={<MathPaperPage />} />

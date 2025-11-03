@@ -172,10 +172,7 @@ const HomePage = () => {
 
                 {/* Features Section */}
                 <Container maxWidth="lg" sx={{ py: 8 }}>
-                    <Typography variant="h3" component="h2" align="center" gutterBottom>
-                        {t('features.title')}
-                    </Typography>
-                    <Grid container spacing={4} sx={{ mt: 4 }}>
+                    <Grid container spacing={4}>
                         <Grid size={{ xs: 12, md: 4 }}>
                             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 <CardContent sx={{ flexGrow: 1 }}>

@@ -1,0 +1,442 @@
+{
+    "en": {
+        "title": "Changelog",
+        "subtitle": "Stay updated with the latest features, improvements, and fixes in TutorNote",
+        "cta": {
+            "title": "Ready to Explore?",
+            "description": "Try out the new interactive examples module with step-by-step solutions and dynamic diagrams",
+            "exploreExamples": "Explore Interactive Examples",
+            "browsePapers": "Browse Math Papers"
+        },
+        "footer": "Built with ❤️ for Hong Kong DSE students",
+        "sections": {
+            "keyFeatures": "Key Features & Improvements"
+        },
+        "types": {
+            "feature": "feature",
+            "improvement": "improvement",
+            "fix": "fix",
+            "security": "security"
+        },
+        "entries": {
+            "v2.3.0": {
+                "title": "📚 Interactive Examples Module & Enhanced Notes",
+                "description": "Revolutionary interactive examples system with step-by-step solutions, dynamic diagrams, and continuously expanding note library",
+                "features": [
+                    {
+                        "title": "Interactive Examples Module",
+                        "description": "Complete interactive examples system with key concepts, step-by-step solutions, and GeoGebra diagrams"
+                    },
+                    {
+                        "title": "Continuously Expanding Content",
+                        "description": "Notes augmented with examples are continuously being added to provide comprehensive learning materials"
+                    },
+                    {
+                        "title": "Mobile-Optimized Rendering",
+                        "description": "Fully responsive design with mobile-first approach - optimized typography, spacing, and scrollable content for all devices"
+                    },
+                    {
+                        "title": "Dynamic URL System",
+                        "description": "Direct access to examples via clean URLs like /quadratic-equations-in-one-unknown/real-roots"
+                    },
+                    {
+                        "title": "Enhanced Math Rendering",
+                        "description": "Improved KaTeX rendering with proper handling of line breaks and escaped characters in problem statements"
+                    },
+                    {
+                        "title": "Improved Functionality",
+                        "description": "Various functionality improvements across the platform for better user experience and performance"
+                    }
+                ]
+            },
+            "v2.2.0": {
+                "title": "🌐 Bilingual Tag Translation & Enhanced Search",
+                "description": "Revolutionary translation system that automatically translates search tags between English and Chinese, plus major improvements to search functionality",
+                "features": [
+                    {
+                        "title": "Bidirectional Tag Translation",
+                        "description": "Search tags automatically translate when switching languages - English tags become Chinese and vice versa"
+                    },
+                    {
+                        "title": "Smart Pagination with Tag Preservation",
+                        "description": "Fixed pagination to preserve search tags in URLs - no more losing your search when clicking page 2"
+                    },
+                    {
+                        "title": "Enhanced Search Field Experience",
+                        "description": "Eliminated flickering and disappearing text in the tag search field for smooth tag selection"
+                    },
+                    {
+                        "title": "Improved Tag Selection Display",
+                        "description": "Selected tags now display properly in the search box with automatic focus management"
+                    },
+                    {
+                        "title": "Robust URL Parameter Handling",
+                        "description": "Enhanced URL parsing to handle both single tags with spaces and comma-separated multiple tags"
+                    }
+                ]
+            },
+            "v2.1.5": {
+                "title": "Redux Integration & Build Optimization",
+                "description": "Successfully merged Redux state management and resolved all build issues for smooth deployment",
+                "features": [
+                    {
+                        "title": "Redux State Management",
+                        "description": "Integrated Redux Toolkit for centralized state management across the application"
+                    },
+                    {
+                        "title": "Build Process Optimization",
+                        "description": "Fixed all ESLint warnings and build errors to ensure successful Netlify deployment"
+                    },
+                    {
+                        "title": "Code Quality Improvements",
+                        "description": "Cleaned up unused imports and functions for better maintainability and performance"
+                    },
+                    {
+                        "title": "Deployment Ready",
+                        "description": "Application now builds successfully without warnings, ready for production deployment"
+                    }
+                ]
+            },
+            "v2.1.4": {
+                "title": "Robust Back Button for Tag Search Navigation",
+                "description": "Fixed navigation issue where users couldn't return to tag search results after clicking on specific questions",
+                "features": [
+                    {
+                        "title": "Smart Back Button Detection",
+                        "description": "Back button now appears when navigating from tag search results to question pages, showing the correct search context"
+                    },
+                    {
+                        "title": "Triple-Layer Navigation State",
+                        "description": "Uses URL parameters, sessionStorage, and document referrer for reliable navigation state detection"
+                    },
+                    {
+                        "title": "Enhanced User Experience",
+                        "description": "Users can now easily return to their original tag search results with a single click"
+                    },
+                    {
+                        "title": "Robust State Management",
+                        "description": "Navigation state is embedded in URLs and automatically cleaned up to prevent conflicts"
+                    }
+                ]
+            },
+            "v2.1.3": {
+                "title": "Enhanced Question Navigation",
+                "description": "Improved navigation between DSE Math questions with larger, more intuitive controls and better visual design",
+                "features": [
+                    {
+                        "title": "Sequential Question Navigation",
+                        "description": "Navigate through questions in logical order: earlier years → later years, Paper I → Paper II, ascending question numbers"
+                    },
+                    {
+                        "title": "Smart Question Skipping",
+                        "description": "Automatically skips missing questions (e.g., if Q6 doesn't exist, goes to Q30) for seamless navigation"
+                    },
+                    {
+                        "title": "Enhanced Visual Design",
+                        "description": "Larger navigation arrows with professional styling, smooth hover effects, and better integration with the UI"
+                    },
+                    {
+                        "title": "Intelligent Tooltips",
+                        "description": "Hover over navigation buttons to see exactly which question you'll navigate to next"
+                    }
+                ]
+            },
+            "v2.1.2": {
+                "title": "Smarter Search Experience",
+                "description": "Made searching for math questions more intuitive and reliable with better navigation and cleaner interface",
+                "features": [
+                    {
+                        "title": "No More Confusing URLs",
+                        "description": "When you click on topic tags, you'll always land on the right search page instead of getting stuck on weird mixed URLs"
+                    },
+                    {
+                        "title": "One Search Method at a Time",
+                        "description": "The system now automatically clears conflicting search options - no more accidentally mixing year filters with topic tags"
+                    },
+                    {
+                        "title": "Faster Page Loading",
+                        "description": "Improved backend performance means search results load quicker, especially when browsing through multiple pages"
+                    },
+                    {
+                        "title": "Cleaner Mobile Experience",
+                        "description": "Search interface is now more streamlined on phones and tablets, making it easier to find questions on the go"
+                    }
+                ]
+            },
+            "v2.1.1": {
+                "title": "Popular Tags Count Fix",
+                "description": "Fixed inaccurate tag counts in the popular tags section",
+                "features": [
+                    {
+                        "title": "Accurate Tag Counts",
+                        "description": "Popular tags now show correct counts from the entire database instead of just the first 100 questions"
+                    },
+                    {
+                        "title": "Improved Data Accuracy",
+                        "description": "Tag popularity statistics now reflect the true distribution across all questions"
+                    }
+                ]
+            },
+            "v2.1.0": {
+                "title": "Direct Question URL System",
+                "description": "Revolutionary URL system for direct question access and seamless navigation",
+                "features": [
+                    {
+                        "title": "Direct Question URLs",
+                        "description": "Access any question directly via URLs like /DSE_Math/2023/I/15"
+                    },
+                    {
+                        "title": "Smart Search Integration",
+                        "description": "Search functionality works perfectly from any direct question URL"
+                    },
+                    {
+                        "title": "Intelligent Navigation",
+                        "description": "Seamless navigation between questions with proper URL updates"
+                    },
+                    {
+                        "title": "Performance Optimized",
+                        "description": "Fixed infinite loop issues and optimized rendering performance"
+                    },
+                    {
+                        "title": "Mobile Responsive",
+                        "description": "Fully responsive design that works perfectly on all devices"
+                    }
+                ]
+            },
+            "v2.0.0": {
+                "title": "Enhanced User Experience",
+                "description": "Major improvements to user interface and functionality",
+                "features": [
+                    {
+                        "title": "Improved Question Display",
+                        "description": "Better formatting and readability for math questions"
+                    },
+                    {
+                        "title": "Bug Fixes",
+                        "description": "Resolved various UI and functionality issues"
+                    }
+                ]
+            }
+        }
+    },
+    "zh": {
+        "title": "更新日誌",
+        "subtitle": "了解 TutorNote 的最新功能、改進和修復",
+        "cta": {
+            "title": "準備好探索了嗎？",
+            "description": "試試新的互動範例模組，包含逐步解答和動態圖表",
+            "exploreExamples": "探索互動範例",
+            "browsePapers": "瀏覽數學試卷"
+        },
+        "footer": "用 ❤️ 為香港DSE學生打造",
+        "sections": {
+            "keyFeatures": "主要功能和改進"
+        },
+        "types": {
+            "feature": "功能",
+            "improvement": "改進",
+            "fix": "修復",
+            "security": "安全"
+        },
+        "entries": {
+            "v2.3.0": {
+                "title": "📚 互動範例模組與增強筆記",
+                "description": "革命性的互動範例系統，包含逐步解答、動態圖表，以及持續擴展的筆記庫",
+                "features": [
+                    {
+                        "title": "互動範例模組",
+                        "description": "完整的互動範例系統，包含核心概念、逐步解答和 GeoGebra 圖表"
+                    },
+                    {
+                        "title": "持續擴展內容",
+                        "description": "附有範例的筆記持續新增，提供全面的學習材料"
+                    },
+                    {
+                        "title": "手機優化渲染",
+                        "description": "完全響應式設計，採用手機優先方法 - 優化字體、間距和可滾動內容，適用於所有設備"
+                    },
+                    {
+                        "title": "動態URL系統",
+                        "description": "通過簡潔的URL（如 /quadratic-equations-in-one-unknown/real-roots）直接存取範例"
+                    },
+                    {
+                        "title": "增強的數學渲染",
+                        "description": "改進的 KaTeX 渲染，正確處理問題陳述中的換行和轉義字符"
+                    },
+                    {
+                        "title": "功能改進",
+                        "description": "平台上各種功能的改進，提升用戶體驗和性能"
+                    }
+                ]
+            },
+            "v2.2.0": {
+                "title": "🌐 雙語標籤翻譯與增強搜尋",
+                "description": "革命性的翻譯系統，自動在英文和中文之間翻譯搜尋標籤，並大幅改進搜尋功能",
+                "features": [
+                    {
+                        "title": "雙向標籤翻譯",
+                        "description": "切換語言時搜尋標籤自動翻譯 - 英文標籤變為中文，反之亦然"
+                    },
+                    {
+                        "title": "智能分頁與標籤保留",
+                        "description": "修復分頁功能，在URL中保留搜尋標籤 - 點擊第2頁時不會再丟失搜尋條件"
+                    },
+                    {
+                        "title": "增強的搜尋欄體驗",
+                        "description": "消除標籤搜尋欄中的閃爍和消失文字，實現流暢的標籤選擇"
+                    },
+                    {
+                        "title": "改進的標籤選擇顯示",
+                        "description": "選中的標籤現在在搜尋框中正確顯示，並具有自動焦點管理"
+                    },
+                    {
+                        "title": "強健的URL參數處理",
+                        "description": "增強的URL解析，可處理帶空格的單個標籤和逗號分隔的多個標籤"
+                    }
+                ]
+            },
+            "v2.1.5": {
+                "title": "Redux 整合與構建優化",
+                "description": "成功合併 Redux 狀態管理並解決所有構建問題，實現順暢部署",
+                "features": [
+                    {
+                        "title": "Redux 狀態管理",
+                        "description": "整合 Redux Toolkit，實現應用程式的集中式狀態管理"
+                    },
+                    {
+                        "title": "構建過程優化",
+                        "description": "修復所有 ESLint 警告和構建錯誤，確保成功的 Netlify 部署"
+                    },
+                    {
+                        "title": "代碼質量改進",
+                        "description": "清理未使用的導入和函數，提升可維護性和性能"
+                    },
+                    {
+                        "title": "部署就緒",
+                        "description": "應用程式現在可以在沒有警告的情況下成功構建，準備生產部署"
+                    }
+                ]
+            },
+            "v2.1.4": {
+                "title": "強健的標籤搜尋導航返回按鈕",
+                "description": "修復導航問題，用戶在點擊特定問題後無法返回標籤搜尋結果",
+                "features": [
+                    {
+                        "title": "智能返回按鈕檢測",
+                        "description": "從標籤搜尋結果導航到問題頁面時，返回按鈕現在會顯示，顯示正確的搜尋上下文"
+                    },
+                    {
+                        "title": "三層導航狀態",
+                        "description": "使用URL參數、sessionStorage 和文檔引用器進行可靠的導航狀態檢測"
+                    },
+                    {
+                        "title": "增強的用戶體驗",
+                        "description": "用戶現在只需單擊即可輕鬆返回原始標籤搜尋結果"
+                    },
+                    {
+                        "title": "強健的狀態管理",
+                        "description": "導航狀態嵌入在URL中，並自動清理以防止衝突"
+                    }
+                ]
+            },
+            "v2.1.3": {
+                "title": "增強的問題導航",
+                "description": "改進DSE數學問題之間的導航，具有更大、更直觀的控制和更好的視覺設計",
+                "features": [
+                    {
+                        "title": "順序問題導航",
+                        "description": "以邏輯順序瀏覽問題：較早年份 → 較晚年份，試卷一 → 試卷二，遞增問題編號"
+                    },
+                    {
+                        "title": "智能問題跳過",
+                        "description": "自動跳過缺失的問題（例如，如果Q6不存在，則轉到Q30）以實現無縫導航"
+                    },
+                    {
+                        "title": "增強的視覺設計",
+                        "description": "更大的導航箭頭，具有專業樣式、平滑懸停效果和更好的UI整合"
+                    },
+                    {
+                        "title": "智能工具提示",
+                        "description": "懸停在導航按鈕上可看到您將導航到的確切問題"
+                    }
+                ]
+            },
+            "v2.1.2": {
+                "title": "更智能的搜尋體驗",
+                "description": "通過更好的導航和更清潔的界面，使數學問題搜尋更加直觀和可靠",
+                "features": [
+                    {
+                        "title": "不再有混淆的URL",
+                        "description": "當您點擊主題標籤時，您總是會登陸正確的搜尋頁面，而不會卡在奇怪的混合URL上"
+                    },
+                    {
+                        "title": "一次使用一種搜尋方法",
+                        "description": "系統現在自動清除衝突的搜尋選項 - 不再意外混合年份過濾器和主題標籤"
+                    },
+                    {
+                        "title": "更快的頁面加載",
+                        "description": "改進的後端性能意味著搜尋結果加載更快，特別是在瀏覽多個頁面時"
+                    },
+                    {
+                        "title": "更清潔的手機體驗",
+                        "description": "搜尋界面現在在手機和平板上更加精簡，使在旅途中查找問題更容易"
+                    }
+                ]
+            },
+            "v2.1.1": {
+                "title": "熱門標籤計數修復",
+                "description": "修復了熱門標籤部分中不準確的標籤計數",
+                "features": [
+                    {
+                        "title": "準確的標籤計數",
+                        "description": "熱門標籤現在顯示整個數據庫的正確計數，而不僅僅是前100個問題"
+                    },
+                    {
+                        "title": "改進的數據準確性",
+                        "description": "標籤流行度統計現在反映所有問題的真實分佈"
+                    }
+                ]
+            },
+            "v2.1.0": {
+                "title": "直接問題URL系統",
+                "description": "革命性的URL系統，用於直接問題訪問和無縫導航",
+                "features": [
+                    {
+                        "title": "直接問題URL",
+                        "description": "通過URL（如 /DSE_Math/2023/I/15）直接訪問任何問題"
+                    },
+                    {
+                        "title": "智能搜尋整合",
+                        "description": "搜尋功能從任何直接問題URL完美運行"
+                    },
+                    {
+                        "title": "智能導航",
+                        "description": "問題之間的無縫導航，具有正確的URL更新"
+                    },
+                    {
+                        "title": "性能優化",
+                        "description": "修復了無限循環問題並優化了渲染性能"
+                    },
+                    {
+                        "title": "手機響應式",
+                        "description": "完全響應式設計，在所有設備上完美運行"
+                    }
+                ]
+            },
+            "v2.0.0": {
+                "title": "增強的用戶體驗",
+                "description": "用戶界面和功能的重大改進",
+                "features": [
+                    {
+                        "title": "改進的問題顯示",
+                        "description": "數學問題的更好格式化和可讀性"
+                    },
+                    {
+                        "title": "錯誤修復",
+                        "description": "解決了各種UI和功能問題"
+                    }
+                ]
+            }
+        }
+    }
+}

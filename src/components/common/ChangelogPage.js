@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
     Box,
     Container,
@@ -12,13 +12,9 @@ import {
     ListItemIcon,
     ListItemText,
     Button,
-    AppBar,
-    Toolbar,
-    IconButton,
     useTheme
 } from '@mui/material';
 import {
-    ArrowBack,
     School,
     CheckCircle,
     BugReport,
@@ -31,312 +27,94 @@ import {
     MobileFriendly,
     Code
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from '../../hooks/useTranslation';
+import translationService from '../../services/translation/translationService';
 import SEOHead from './SEOHead';
 
 const ChangelogPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const theme = useTheme();
+    const { t, changeLanguage, getCurrentLanguage, currentLanguage } = useTranslation();
 
-    const changelogEntries = [
-        {
-            version: "v2.3.0",
-            date: "January 2025",
-            type: "major",
-            title: "📚 Interactive Examples Module & Enhanced Notes",
-            description: "Revolutionary interactive examples system with step-by-step solutions, dynamic diagrams, and continuously expanding note library",
-            features: [
-                {
-                    icon: <School color="primary" />,
-                    title: "Interactive Examples Module",
-                    description: "Complete interactive examples system with key concepts, step-by-step solutions, and GeoGebra diagrams",
-                    type: "feature"
-                },
-                {
-                    icon: <NewReleases color="primary" />,
-                    title: "Continuously Expanding Content",
-                    description: "Notes augmented with examples are continuously being added to provide comprehensive learning materials",
-                    type: "feature"
-                },
-                {
-                    icon: <MobileFriendly color="primary" />,
-                    title: "Mobile-Optimized Rendering",
-                    description: "Fully responsive design with mobile-first approach - optimized typography, spacing, and scrollable content for all devices",
-                    type: "improvement"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Dynamic URL System",
-                    description: "Direct access to examples via clean URLs like /quadratic-equations-in-one-unknown/real-roots",
-                    type: "feature"
-                },
-                {
-                    icon: <Code color="primary" />,
-                    title: "Enhanced Math Rendering",
-                    description: "Improved KaTeX rendering with proper handling of line breaks and escaped characters in problem statements",
-                    type: "improvement"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "Improved Functionality",
-                    description: "Various functionality improvements across the platform for better user experience and performance",
-                    type: "improvement"
-                }
-            ]
-        },
-        {
-            version: "v2.2.0",
-            date: "December 2024",
-            type: "major",
-            title: "🌐 Bilingual Tag Translation & Enhanced Search",
-            description: "Revolutionary translation system that automatically translates search tags between English and Chinese, plus major improvements to search functionality",
-            features: [
-                {
-                    icon: <NewReleases color="primary" />,
-                    title: "Bidirectional Tag Translation",
-                    description: "Search tags automatically translate when switching languages - English tags become Chinese and vice versa",
-                    type: "feature"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "Smart Pagination with Tag Preservation",
-                    description: "Fixed pagination to preserve search tags in URLs - no more losing your search when clicking page 2",
-                    type: "fix"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Enhanced Search Field Experience",
-                    description: "Eliminated flickering and disappearing text in the tag search field for smooth tag selection",
-                    type: "improvement"
-                },
-                {
-                    icon: <MobileFriendly color="primary" />,
-                    title: "Improved Tag Selection Display",
-                    description: "Selected tags now display properly in the search box with automatic focus management",
-                    type: "improvement"
-                },
-                {
-                    icon: <Code color="primary" />,
-                    title: "Robust URL Parameter Handling",
-                    description: "Enhanced URL parsing to handle both single tags with spaces and comma-separated multiple tags",
-                    type: "improvement"
-                }
-            ]
-        },
-        {
-            version: "v2.1.5",
-            date: "December 2024",
-            type: "patch",
-            title: "Redux Integration & Build Optimization",
-            description: "Successfully merged Redux state management and resolved all build issues for smooth deployment",
-            features: [
-                {
-                    icon: <Code color="primary" />,
-                    title: "Redux State Management",
-                    description: "Integrated Redux Toolkit for centralized state management across the application",
-                    type: "feature"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Build Process Optimization",
-                    description: "Fixed all ESLint warnings and build errors to ensure successful Netlify deployment",
-                    type: "improvement"
-                },
-                {
-                    icon: <Security color="primary" />,
-                    title: "Code Quality Improvements",
-                    description: "Cleaned up unused imports and functions for better maintainability and performance",
-                    type: "improvement"
-                },
-                {
-                    icon: <MobileFriendly color="primary" />,
-                    title: "Deployment Ready",
-                    description: "Application now builds successfully without warnings, ready for production deployment",
-                    type: "improvement"
-                }
-            ]
-        },
-        {
-            version: "v2.1.4",
-            date: "November 2024",
-            type: "patch",
-            title: "Robust Back Button for Tag Search Navigation",
-            description: "Fixed navigation issue where users couldn't return to tag search results after clicking on specific questions",
-            features: [
-                {
-                    icon: <Navigation color="primary" />,
-                    title: "Smart Back Button Detection",
-                    description: "Back button now appears when navigating from tag search results to question pages, showing the correct search context",
-                    type: "feature"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "Triple-Layer Navigation State",
-                    description: "Uses URL parameters, sessionStorage, and document referrer for reliable navigation state detection",
-                    type: "improvement"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Enhanced User Experience",
-                    description: "Users can now easily return to their original tag search results with a single click",
-                    type: "improvement"
-                },
-                {
-                    icon: <Code color="primary" />,
-                    title: "Robust State Management",
-                    description: "Navigation state is embedded in URLs and automatically cleaned up to prevent conflicts",
-                    type: "improvement"
-                }
-            ]
-        },
-        {
-            version: "v2.1.3",
-            date: "October 2024",
-            type: "patch",
-            title: "Enhanced Question Navigation",
-            description: "Improved navigation between DSE Math questions with larger, more intuitive controls and better visual design",
-            features: [
-                {
-                    icon: <Navigation color="primary" />,
-                    title: "Sequential Question Navigation",
-                    description: "Navigate through questions in logical order: earlier years → later years, Paper I → Paper II, ascending question numbers",
-                    type: "feature"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Smart Question Skipping",
-                    description: "Automatically skips missing questions (e.g., if Q6 doesn't exist, goes to Q30) for seamless navigation",
-                    type: "improvement"
-                },
-                {
-                    icon: <MobileFriendly color="primary" />,
-                    title: "Enhanced Visual Design",
-                    description: "Larger navigation arrows with professional styling, smooth hover effects, and better integration with the UI",
-                    type: "improvement"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "Intelligent Tooltips",
-                    description: "Hover over navigation buttons to see exactly which question you'll navigate to next",
-                    type: "feature"
-                }
-            ]
-        },
-        {
-            version: "v2.1.2",
-            date: "September 2024",
-            type: "patch",
-            title: "Smarter Search Experience",
-            description: "Made searching for math questions more intuitive and reliable with better navigation and cleaner interface",
-            features: [
-                {
-                    icon: <Navigation color="primary" />,
-                    title: "No More Confusing URLs",
-                    description: "When you click on topic tags, you'll always land on the right search page instead of getting stuck on weird mixed URLs",
-                    type: "fix"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "One Search Method at a Time",
-                    description: "The system now automatically clears conflicting search options - no more accidentally mixing year filters with topic tags",
-                    type: "improvement"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Faster Page Loading",
-                    description: "Improved backend performance means search results load quicker, especially when browsing through multiple pages",
-                    type: "improvement"
-                },
-                {
-                    icon: <MobileFriendly color="primary" />,
-                    title: "Cleaner Mobile Experience",
-                    description: "Search interface is now more streamlined on phones and tablets, making it easier to find questions on the go",
-                    type: "improvement"
-                }
-            ]
-        },
-        {
-            version: "v2.1.1",
-            date: "August 2024",
-            type: "patch",
-            title: "Popular Tags Count Fix",
-            description: "Fixed inaccurate tag counts in the popular tags section",
-            features: [
-                {
-                    icon: <BugReport color="primary" />,
-                    title: "Accurate Tag Counts",
-                    description: "Popular tags now show correct counts from the entire database instead of just the first 100 questions",
-                    type: "fix"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "Improved Data Accuracy",
-                    description: "Tag popularity statistics now reflect the true distribution across all questions",
-                    type: "improvement"
-                }
-            ]
-        },
-        {
-            version: "v2.1.0",
-            date: "July 2024",
-            type: "major",
-            title: "Direct Question URL System",
-            description: "Revolutionary URL system for direct question access and seamless navigation",
-            features: [
-                {
-                    icon: <Link color="primary" />,
-                    title: "Direct Question URLs",
-                    description: "Access any question directly via URLs like /DSE_Math/2023/I/15",
-                    type: "feature"
-                },
-                {
-                    icon: <Search color="primary" />,
-                    title: "Smart Search Integration",
-                    description: "Search functionality works perfectly from any direct question URL",
-                    type: "feature"
-                },
-                {
-                    icon: <Navigation color="primary" />,
-                    title: "Intelligent Navigation",
-                    description: "Seamless navigation between questions with proper URL updates",
-                    type: "feature"
-                },
-                {
-                    icon: <Speed color="primary" />,
-                    title: "Performance Optimized",
-                    description: "Fixed infinite loop issues and optimized rendering performance",
-                    type: "improvement"
-                },
-                {
-                    icon: <MobileFriendly color="primary" />,
-                    title: "Mobile Responsive",
-                    description: "Fully responsive design that works perfectly on all devices",
-                    type: "feature"
-                }
-            ]
-        },
-        {
-            version: "v2.0.0",
-            date: "June 2024",
-            type: "major",
-            title: "Enhanced User Experience",
-            description: "Major improvements to user interface and functionality",
-            features: [
-                {
-                    icon: <School color="primary" />,
-                    title: "Improved Question Display",
-                    description: "Better formatting and readability for math questions",
-                    type: "improvement"
-                },
-                {
-                    icon: <BugReport color="primary" />,
-                    title: "Bug Fixes",
-                    description: "Resolved various UI and functionality issues",
-                    type: "fix"
-                }
-            ]
+    // Detect language from URL (e.g., /changelog/zh)
+    useEffect(() => {
+        const pathParts = location.pathname.split('/');
+        const langFromUrl = pathParts[pathParts.length - 1];
+
+        if (langFromUrl === 'zh' || langFromUrl === 'en') {
+            if (getCurrentLanguage() !== langFromUrl) {
+                changeLanguage(langFromUrl);
+            }
         }
-    ];
+    }, [location.pathname, getCurrentLanguage, changeLanguage]);
+
+    // Helper function to get icon for feature type
+    const getFeatureIcon = (index, entryIndex) => {
+        const versionEntries = [
+            { version: "v2.3.0", icons: [School, NewReleases, MobileFriendly, Speed, Code, Search] },
+            { version: "v2.2.0", icons: [NewReleases, Search, Speed, MobileFriendly, Code] },
+            { version: "v2.1.5", icons: [Code, Speed, Security, MobileFriendly] },
+            { version: "v2.1.4", icons: [Navigation, Search, Speed, Code] },
+            { version: "v2.1.3", icons: [Navigation, Speed, MobileFriendly, Search] },
+            { version: "v2.1.2", icons: [Navigation, Search, Speed, MobileFriendly] },
+            { version: "v2.1.1", icons: [BugReport, Search] },
+            { version: "v2.1.0", icons: [Link, Search, Navigation, Speed, MobileFriendly] },
+            { version: "v2.0.0", icons: [School, BugReport] }
+        ];
+
+        const entry = versionEntries[entryIndex];
+        if (entry && entry.icons[index]) {
+            const IconComponent = entry.icons[index];
+            return <IconComponent color="primary" />;
+        }
+        return <CheckCircle color="primary" />;
+    };
+
+    // Rebuild changelog entries when language changes
+    const changelogEntries = useMemo(() => {
+        const versions = ["v2.3.0", "v2.2.0", "v2.1.5", "v2.1.4", "v2.1.3", "v2.1.2", "v2.1.1", "v2.1.0", "v2.0.0"];
+        const dates = ["January 2025", "December 2024", "December 2024", "November 2024", "October 2024", "September 2024", "August 2024", "July 2024", "June 2024"];
+        const types = ["major", "major", "patch", "patch", "patch", "patch", "patch", "major", "major"];
+        const featureTypes = [
+            ["feature", "feature", "improvement", "feature", "improvement", "improvement"],
+            ["feature", "fix", "improvement", "improvement", "improvement"],
+            ["feature", "improvement", "improvement", "improvement"],
+            ["feature", "improvement", "improvement", "improvement"],
+            ["feature", "improvement", "improvement", "feature"],
+            ["fix", "improvement", "improvement", "improvement"],
+            ["fix", "improvement"],
+            ["feature", "feature", "feature", "improvement", "feature"],
+            ["improvement", "fix"]
+        ];
+
+        return versions.map((version, index) => {
+            const entries = translationService.getSection('entries');
+            const entryData = entries && entries[version] ? entries[version] : null;
+
+            if (!entryData || typeof entryData !== 'object') {
+                return null;
+            }
+
+            const featuresList = entryData.features || [];
+
+            return {
+                version,
+                date: dates[index],
+                type: types[index],
+                title: entryData.title || version,
+                description: entryData.description || "",
+                features: featuresList.map((feature, featureIndex) => ({
+                    icon: getFeatureIcon(featureIndex, index),
+                    title: feature.title || "",
+                    description: feature.description || "",
+                    type: featureTypes[index]?.[featureIndex] || "improvement"
+                }))
+            };
+        }).filter(entry => entry !== null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentLanguage]);
 
     const getTypeColor = (type) => {
         switch (type) {
@@ -366,24 +144,6 @@ const ChangelogPage = () => {
                 keywords="changelog, updates, new features, DSE math, TutorNote, improvements"
             />
 
-            {/* Header */}
-            <AppBar position="static" elevation={0} sx={{ bgcolor: 'primary.main' }}>
-                <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={() => navigate('/')}
-                        sx={{ mr: 2 }}
-                    >
-                        <ArrowBack />
-                    </IconButton>
-                    <School sx={{ mr: 2 }} />
-                    <Typography variant="h6" component="h1" sx={{ flexGrow: 1 }}>
-                        Changelog
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 {/* Header Section */}
                 <Box sx={{ textAlign: 'center', mb: 6 }}>
@@ -404,7 +164,7 @@ const ChangelogPage = () => {
                         color="text.secondary"
                         sx={{ maxWidth: 600, mx: 'auto', fontSize: { xs: '1rem', md: '1.25rem' } }}
                     >
-                        Stay updated with the latest features, improvements, and fixes in TutorNote
+                        {t('subtitle', {}, 'Stay updated with the latest features, improvements, and fixes in TutorNote')}
                     </Typography>
                 </Box>
 
@@ -444,7 +204,7 @@ const ChangelogPage = () => {
                             {/* Features List */}
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-                                    Key Features & Improvements
+                                    {t('sections.keyFeatures', {}, 'Key Features & Improvements')}
                                 </Typography>
                                 <List dense>
                                     {entry.features.map((feature, featureIndex) => (
@@ -459,7 +219,7 @@ const ChangelogPage = () => {
                                                             {feature.title}
                                                         </Typography>
                                                         <Chip
-                                                            label={feature.type}
+                                                            label={t(`types.${feature.type}`, {}, feature.type)}
                                                             color={getTypeColor(feature.type)}
                                                             size="small"
                                                             icon={getTypeIcon(feature.type)}
@@ -489,10 +249,10 @@ const ChangelogPage = () => {
                     }}
                 >
                     <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                        Ready to Explore?
+                        {t('cta.title', {}, 'Ready to Explore?')}
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-                        Try out the new interactive examples module with step-by-step solutions and dynamic diagrams
+                        {t('cta.description', {}, 'Try out the new interactive examples module with step-by-step solutions and dynamic diagrams')}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button
@@ -505,7 +265,7 @@ const ChangelogPage = () => {
                                 '&:hover': { bgcolor: 'grey.100' }
                             }}
                         >
-                            Explore Interactive Examples
+                            {t('cta.exploreExamples', {}, 'Explore Interactive Examples')}
                         </Button>
                         <Button
                             variant="outlined"
@@ -517,7 +277,7 @@ const ChangelogPage = () => {
                                 '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' }
                             }}
                         >
-                            Browse Math Papers
+                            {t('cta.browsePapers', {}, 'Browse Math Papers')}
                         </Button>
                     </Box>
                 </Paper>
@@ -525,7 +285,7 @@ const ChangelogPage = () => {
                 {/* Footer */}
                 <Box sx={{ textAlign: 'center', mt: 4, py: 2 }}>
                     <Typography variant="body2" color="text.secondary">
-                        Built with ❤️ for Hong Kong DSE students
+                        {t('footer', {}, 'Built with ❤️ for Hong Kong DSE students')}
                     </Typography>
                 </Box>
             </Container>

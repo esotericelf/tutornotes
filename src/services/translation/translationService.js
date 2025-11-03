@@ -1,5 +1,6 @@
 import mathPaperTranslations from '../../locales/mathPaperTranslations.json';
 import homeTranslations from '../../locales/homeTranslations.json';
+import changelogTranslations from '../../locales/changelogTranslations.json';
 
 class TranslationService {
     /**
@@ -29,8 +30,11 @@ class TranslationService {
 
     constructor() {
         this.currentLanguage = 'en';
-        // Merge all translation files - homeTranslations takes precedence
-        this.translations = this.mergeTranslations(mathPaperTranslations, homeTranslations);
+        // Merge all translation files - later files take precedence
+        this.translations = this.mergeTranslations(
+            this.mergeTranslations(mathPaperTranslations, homeTranslations),
+            changelogTranslations
+        );
     }
 
     /**
@@ -145,8 +149,8 @@ class TranslationService {
         if (savedLanguage && this.translations[savedLanguage]) {
             this.setLanguage(savedLanguage);
         } else {
-            // Default to English
-            this.setLanguage('en');
+            // Default to Chinese on first visit
+            this.setLanguage('zh');
         }
     }
 

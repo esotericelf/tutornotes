@@ -29,7 +29,7 @@ const initialState = {
     // UI state
     sidebarOpen: false,
     theme: 'light',
-    language: 'en',
+    language: 'zh',
 
     // Notifications
     notifications: [],
