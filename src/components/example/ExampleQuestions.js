@@ -44,7 +44,10 @@ const ExampleQuestions = ({ example }) => {
 
         return parts.map((part, index) => {
             if (part.startsWith('$') && part.endsWith('$')) {
-                const mathContent = part.slice(1, -1)
+                let mathContent = part.slice(1, -1)
+                // Normalize double backslashes to single backslashes
+                // This handles cases where backslashes are escaped in the database
+                mathContent = mathContent.replace(/\\\\/g, '\\')
                 return <InlineMath key={index} math={mathContent} />
             }
             return <span key={index}>{part}</span>

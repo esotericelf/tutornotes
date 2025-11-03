@@ -251,7 +251,7 @@ const HomePage = () => {
                                                 if (feature.title === 'Practice Quizzes') {
                                                     navigate('/dashboard')
                                                 } else if (feature.title === 'Interactive Examples') {
-                                                    navigate('/example')
+                                                    navigate('/quadratic-equations-in-one-unknown/real-roots')
                                                 } else if (feature.path) {
                                                     navigate(feature.path)
                                                 } else {
