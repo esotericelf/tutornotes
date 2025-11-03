@@ -40,6 +40,51 @@ const ChangelogPage = () => {
 
     const changelogEntries = [
         {
+            version: "v2.3.0",
+            date: "January 2025",
+            type: "major",
+            title: "📚 Interactive Examples Module & Enhanced Notes",
+            description: "Revolutionary interactive examples system with step-by-step solutions, dynamic diagrams, and continuously expanding note library",
+            features: [
+                {
+                    icon: <School color="primary" />,
+                    title: "Interactive Examples Module",
+                    description: "Complete interactive examples system with key concepts, step-by-step solutions, and GeoGebra diagrams",
+                    type: "feature"
+                },
+                {
+                    icon: <NewReleases color="primary" />,
+                    title: "Continuously Expanding Content",
+                    description: "Notes augmented with examples are continuously being added to provide comprehensive learning materials",
+                    type: "feature"
+                },
+                {
+                    icon: <MobileFriendly color="primary" />,
+                    title: "Mobile-Optimized Rendering",
+                    description: "Fully responsive design with mobile-first approach - optimized typography, spacing, and scrollable content for all devices",
+                    type: "improvement"
+                },
+                {
+                    icon: <Speed color="primary" />,
+                    title: "Dynamic URL System",
+                    description: "Direct access to examples via clean URLs like /quadratic-equations-in-one-unknown/real-roots",
+                    type: "feature"
+                },
+                {
+                    icon: <Code color="primary" />,
+                    title: "Enhanced Math Rendering",
+                    description: "Improved KaTeX rendering with proper handling of line breaks and escaped characters in problem statements",
+                    type: "improvement"
+                },
+                {
+                    icon: <Search color="primary" />,
+                    title: "Improved Functionality",
+                    description: "Various functionality improvements across the platform for better user experience and performance",
+                    type: "improvement"
+                }
+            ]
+        },
+        {
             version: "v2.2.0",
             date: "December 2024",
             type: "major",
@@ -447,32 +492,32 @@ const ChangelogPage = () => {
                         Ready to Explore?
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-                        Try out the new bilingual tag translation system and enhanced search functionality
+                        Try out the new interactive examples module with step-by-step solutions and dynamic diagrams
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button
                             variant="contained"
                             size="large"
-                            onClick={() => navigate('/DSE_Math')}
+                            onClick={() => navigate('/quadratic-equations-in-one-unknown/real-roots')}
                             sx={{
                                 bgcolor: 'white',
                                 color: 'primary.main',
                                 '&:hover': { bgcolor: 'grey.100' }
                             }}
                         >
-                            Explore Math Papers
+                            Explore Interactive Examples
                         </Button>
                         <Button
                             variant="outlined"
                             size="large"
-                            onClick={() => navigate('/DSE_Math/2023/I/15')}
+                            onClick={() => navigate('/DSE_Math')}
                             sx={{
                                 borderColor: 'white',
                                 color: 'white',
                                 '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' }
                             }}
                         >
-                            Try Direct URL
+                            Browse Math Papers
                         </Button>
                     </Box>
                 </Paper>
