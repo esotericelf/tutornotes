@@ -36,25 +36,29 @@ const HomePage = () => {
 
     const features = [
         {
+            key: 'interactiveExamples',
             icon: <School sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Interactive Examples',
-            description: 'Learn with interactive examples, key concepts, and step-by-step solutions',
+            title: t('features.interactiveExamples.title'),
+            description: t('features.interactiveExamples.description'),
             color: '#e8f5e9',
             path: '/example'
         },
         {
+            key: 'practiceQuizzes',
             icon: <PlayCircleOutline sx={{ fontSize: 48, color: 'primary.main' }} />,
             title: t('features.practiceQuizzes.title'),
             description: t('features.practiceQuizzes.description'),
             color: '#e3f2fd'
         },
         {
+            key: 'discussions',
             icon: <Forum sx={{ fontSize: 48, color: 'primary.main' }} />,
             title: t('features.discussions.title'),
             description: t('features.discussions.description'),
             color: '#e8f5e8'
         },
         {
+            key: 'favorites',
             icon: <Favorite sx={{ fontSize: 48, color: 'primary.main' }} />,
             title: t('features.favorites.title'),
             description: t('features.favorites.description'),
@@ -245,9 +249,9 @@ const HomePage = () => {
                                             size="small"
                                             variant="outlined"
                                             onClick={() => {
-                                                if (feature.title === 'Practice Quizzes') {
+                                                if (feature.key === 'practiceQuizzes') {
                                                     navigate('/dashboard')
-                                                } else if (feature.title === 'Interactive Examples') {
+                                                } else if (feature.key === 'interactiveExamples') {
                                                     navigate('/quadratic-equations-in-one-unknown/real-roots')
                                                 } else if (feature.path) {
                                                     navigate(feature.path)
@@ -256,7 +260,9 @@ const HomePage = () => {
                                                 }
                                             }}
                                         >
-                                            {feature.title === t('features.practiceQuizzes.title') ? t('features.practiceQuizzes.startQuiz') : t('features.discussions.learnMore')}
+                                            {feature.key === 'practiceQuizzes' ? t('features.practiceQuizzes.startQuiz') :
+                                                feature.key === 'interactiveExamples' ? t('features.interactiveExamples.learnMore') :
+                                                    t('features.discussions.learnMore')}
                                         </Button>
                                     </CardActions>
                                 </Card>

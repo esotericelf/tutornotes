@@ -23,6 +23,11 @@
                 "description": "Test your knowledge with interactive practice quizzes. Track your progress and identify areas for improvement.",
                 "startQuiz": "Start Quiz"
             },
+            "interactiveExamples": {
+                "title": "Interactive Examples",
+                "description": "Learn with interactive examples, key concepts, and step-by-step solutions",
+                "learnMore": "Learn More"
+            },
             "discussions": {
                 "title": "Discussions",
                 "description": "Join discussions with other students, ask questions, and get help with difficult topics.",
@@ -80,6 +85,11 @@
                 "title": "練習測驗",
                 "description": "透過互動式練習測驗測試您的知識。追蹤進度並識別需要改進的領域。",
                 "startQuiz": "開始測驗"
+            },
+            "interactiveExamples": {
+                "title": "互動範例",
+                "description": "透過互動範例、核心概念和逐步解題來學習",
+                "learnMore": "了解更多"
             },
             "discussions": {
                 "title": "討論區",
