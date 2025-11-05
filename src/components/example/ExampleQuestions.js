@@ -62,35 +62,127 @@ const ExampleQuestions = ({ example }) => {
         const lines = mathString.split('\\n').filter(line => line.trim() !== '')
 
         return (
-            <Box sx={{ my: { xs: 1.5, sm: 2 }, '& .katex': { fontSize: { xs: '0.9em', sm: '1em' } } }}>
-                {lines.map((line, index) => {
-                    let mathContent = line.trim()
+            <Box sx={{ my: { xs: 1.5, sm: 2 }, display: 'flex', justifyContent: 'center' }}>
+                <Paper
+                    elevation={2}
+                    sx={{
+                        maxWidth: '90%',
+                        width: '100%',
+                        p: { xs: 2, sm: 3 },
+                        backgroundColor: 'background.default',
+                        borderLeft: '4px solid',
+                        borderColor: 'primary.main',
+                        borderRadius: 1
+                    }}
+                >
+                    <Box sx={{
+                        '& .katex': {
+                            fontSize: { xs: '0.9em', sm: '1em' }
+                        },
+                        '& .katex-display': {
+                            textAlign: 'left !important',
+                            margin: '0.5em 0',
+                            display: 'block'
+                        },
+                        '& .katex-display > .katex': {
+                            textAlign: 'left !important'
+                        }
+                    }}>
+                        {lines.map((line, index) => {
+                            let mathContent = line.trim()
 
-                    // Check if already wrapped in $...$
-                    if (mathContent.startsWith('$') && mathContent.endsWith('$')) {
-                        // Extract content between $ signs
-                        mathContent = mathContent.slice(1, -1).trim()
-                    } else {
-                        // If not wrapped, wrap it (for block math)
-                        // But first check if it contains $ signs that might indicate inline math
-                        const hasInlineMath = mathContent.includes('$')
-                        if (hasInlineMath) {
-                            // Handle mixed content with inline math
+                            // Check if already wrapped in $...$
+                            if (mathContent.startsWith('$') && mathContent.endsWith('$')) {
+                                // Extract content between $ signs
+                                mathContent = mathContent.slice(1, -1).trim()
+                            }
+
+                            // Check for LaTeX line breaks
+                            // Pattern: \\ (two backslashes) not followed by a letter (which would be a LaTeX command)
+                            // This handles both \\ (2 backslashes in string) and \\\\ (4 backslashes in string = 2 after JSON)
+                            // First normalize \\\\ to \\ if present (from database escaping)
+                            let contentForCheck = mathContent.replace(/\\\\\\\\/g, '\\\\')
+
+                            // Check if there are line breaks: \\ not followed by a letter
+                            const hasLineBreak = /\\\\(?!\s*[a-zA-Z])/.test(contentForCheck)
+
+                            if (hasLineBreak) {
+                                // Split by LaTeX line breaks (\\ not followed by letter)
+                                const mathParts = contentForCheck.split(/\\\\(?!\s*[a-zA-Z])/).filter(part => part.trim() !== '')
+
+                                return (
+                                    <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0, pl: { xs: 1.5, sm: 2 }, textAlign: 'left' }}>
+                                        {mathParts.map((part, partIndex) => {
+                                            let normalizedPart = part.trim()
+                                            // Normalize remaining escaped backslashes (preserve LaTeX commands)
+                                            // Normalize \\\\ to \\, but keep \\alpha, \\beta, etc.
+                                            while (normalizedPart.includes('\\\\\\\\')) {
+                                                normalizedPart = normalizedPart.replace(/\\\\\\\\/g, '\\\\')
+                                            }
+                                            // Normalize \\ to \ only if not followed by a letter
+                                            normalizedPart = normalizedPart.replace(/\\\\(?!\s*[a-zA-Z])/g, '\\')
+
+                                            return (
+                                                <Box
+                                                    key={partIndex}
+                                                    sx={{
+                                                        mb: partIndex < mathParts.length - 1 ? 0.5 : 0,
+                                                        overflowX: 'auto',
+                                                        '& .katex-display': {
+                                                            textAlign: 'left !important',
+                                                            margin: '0.5em 0'
+                                                        }
+                                                    }}
+                                                >
+                                                    <BlockMath math={normalizedPart} />
+                                                </Box>
+                                            )
+                                        })}
+                                    </Box>
+                                )
+                            }
+
+                            // No LaTeX line breaks, normalize escaped backslashes normally
+                            // Normalize quadruple backslashes to double
+                            while (mathContent.includes('\\\\\\\\')) {
+                                mathContent = mathContent.replace(/\\\\\\\\/g, '\\\\')
+                            }
+                            // Normalize double backslashes that aren't LaTeX commands to single
+                            mathContent = mathContent.replace(/\\\\(?!\s*[a-zA-Z])/g, '\\')
+
+                            // If not wrapped, check if it contains $ signs that might indicate inline math
+                            if (!mathContent.startsWith('$') && !mathContent.endsWith('$')) {
+                                const hasInlineMath = mathContent.includes('$')
+                                if (hasInlineMath) {
+                                    // Handle mixed content with inline math
+                                    return (
+                                        <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0, pl: { xs: 1.5, sm: 2 }, textAlign: 'left' }}>
+                                            {renderWithLaTeX(mathContent)}
+                                        </Box>
+                                    )
+                                }
+                            }
+
                             return (
-                                <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0 }}>
-                                    {renderWithLaTeX(mathContent)}
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        mb: index < lines.length - 1 ? 1 : 0,
+                                        pl: { xs: 1.5, sm: 2 },
+                                        textAlign: 'left',
+                                        overflowX: 'auto',
+                                        '& .katex-display': {
+                                            textAlign: 'left !important',
+                                            margin: '0.5em 0'
+                                        }
+                                    }}
+                                >
+                                    <BlockMath math={mathContent} />
                                 </Box>
                             )
-                        }
-                        // Pure math content - will be rendered as block math
-                    }
-
-                    return (
-                        <Box key={index} sx={{ mb: index < lines.length - 1 ? 1 : 0, overflowX: 'auto' }}>
-                            <BlockMath math={mathContent} />
-                        </Box>
-                    )
-                })}
+                        })}
+                    </Box>
+                </Paper>
             </Box>
         )
     }
@@ -358,11 +450,7 @@ const ExampleQuestions = ({ example }) => {
                                         {renderWithLaTeX(step.description)}
                                     </Typography>
                                 )}
-                                {step.math && (
-                                    <Box sx={{ overflowX: 'auto' }}>
-                                        {renderMath(step.math)}
-                                    </Box>
-                                )}
+                                {step.math && renderMath(step.math)}
                             </AccordionDetails>
                         </Accordion>
                     ))}

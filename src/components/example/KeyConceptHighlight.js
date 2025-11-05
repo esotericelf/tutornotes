@@ -78,187 +78,243 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
 
         return (
             <Box sx={{ mt: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <FunctionsIcon sx={{ fontSize: { xs: 18, sm: 20 }, color: 'primary.main', flexShrink: 0 }} />
                     <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                         Formula/ Core Idea
                     </Typography>
                 </Box>
-                {formulaArray.map((item, index) => {
-                    const trimmed = item.trim()
-                    const isPureMath = trimmed.startsWith('$') && trimmed.endsWith('$')
+                {/* Centered highlighted container for formulas */}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        mb: 2
+                    }}
+                >
+                    <Paper
+                        elevation={2}
+                        sx={{
+                            maxWidth: '90%',
+                            width: '100%',
+                            p: { xs: 2, sm: 3 },
+                            backgroundColor: 'background.default',
+                            borderLeft: '4px solid',
+                            borderColor: 'primary.main',
+                            borderRadius: 1
+                        }}
+                    >
+                        {formulaArray.map((item, index) => {
+                            const trimmed = item.trim()
+                            const isPureMath = trimmed.startsWith('$') && trimmed.endsWith('$')
 
-                    if (isPureMath) {
-                        let mathContent = trimmed.slice(1, -1)
-                        // Normalize escaped backslashes - handle multiple levels of escaping
-                        while (mathContent.includes('\\\\')) {
-                            mathContent = mathContent.replace(/\\\\/g, '\\')
-                        }
+                            if (isPureMath) {
+                                let mathContent = trimmed.slice(1, -1)
+                                // Normalize escaped backslashes - handle multiple levels of escaping
+                                while (mathContent.includes('\\\\')) {
+                                    mathContent = mathContent.replace(/\\\\/g, '\\')
+                                }
 
-                        // Check if math content contains \n (newline inside math block)
-                        const hasNewline = mathContent.includes('\\n') || mathContent.includes('\n')
+                                // Check if math content contains \n (newline inside math block)
+                                const hasNewline = mathContent.includes('\\n') || mathContent.includes('\n')
 
-                        if (hasNewline) {
-                            // Split math content by \n and render each part as separate BlockMath
-                            const mathLines = mathContent.split(/\\n|\n/).filter(line => line.trim() !== '')
+                                if (hasNewline) {
+                                    // Split math content by \n and render each part as separate BlockMath
+                                    const mathLines = mathContent.split(/\\n|\n/).filter(line => line.trim() !== '')
 
-                            return (
-                                <Box key={index} sx={{ mb: 1 }}>
-                                    {mathLines.map((line, lineIndex) => {
-                                        const trimmedLine = line.trim()
-                                        // Normalize backslashes for this line
-                                        let normalizedLine = trimmedLine
-                                        while (normalizedLine.includes('\\\\')) {
-                                            normalizedLine = normalizedLine.replace(/\\\\/g, '\\')
+                                    return (
+                                        <Box key={index} sx={{ mb: 1, pl: { xs: 1.5, sm: 2 }, textAlign: 'left' }}>
+                                            {mathLines.map((line, lineIndex) => {
+                                                const trimmedLine = line.trim()
+                                                // Normalize backslashes for this line
+                                                let normalizedLine = trimmedLine
+                                                while (normalizedLine.includes('\\\\')) {
+                                                    normalizedLine = normalizedLine.replace(/\\\\/g, '\\')
+                                                }
+
+                                                return (
+                                                    <Box
+                                                        key={lineIndex}
+                                                        sx={{
+                                                            mb: lineIndex < mathLines.length - 1 ? 0.5 : 0,
+                                                            overflowX: 'auto',
+                                                            '& .katex-display': {
+                                                                textAlign: 'left !important',
+                                                                margin: '0.5em 0'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <BlockMath math={normalizedLine} />
+                                                    </Box>
+                                                )
+                                            })}
+                                        </Box>
+                                    )
+                                } else {
+                                    // No newlines, render as single BlockMath
+                                    return (
+                                        <Box
+                                            key={index}
+                                            sx={{
+                                                mb: 1,
+                                                pl: { xs: 1.5, sm: 2 },
+                                                textAlign: 'left',
+                                                overflowX: 'auto',
+                                                '& .katex-display': {
+                                                    textAlign: 'left !important',
+                                                    margin: '0.5em 0'
+                                                }
+                                            }}
+                                        >
+                                            <BlockMath math={mathContent} />
+                                        </Box>
+                                    )
+                                }
+                            } else {
+                                // Mixed content (text + math) - check if \n is inside a math block
+                                // Find all math blocks and check if any contain \n
+                                const mathBlockRegex = /\$([^$]+)\$/g
+                                const mathBlocks = []
+                                let match
+
+                                while ((match = mathBlockRegex.exec(item)) !== null) {
+                                    mathBlocks.push({
+                                        start: match.index,
+                                        end: match.index + match[0].length,
+                                        fullMatch: match[0],
+                                        content: match[1]
+                                    })
+                                }
+
+                                // Check if any math block contains \n
+                                const hasNewlineInMath = mathBlocks.some(block =>
+                                    block.content.includes('\\n') || block.content.includes('\n')
+                                )
+
+                                if (hasNewlineInMath) {
+                                    // Process each math block that contains \n
+                                    let result = []
+                                    let currentIndex = 0
+
+                                    mathBlocks.forEach((block, blockIndex) => {
+                                        // Add text before this math block
+                                        if (currentIndex < block.start) {
+                                            const textBefore = item.slice(currentIndex, block.start)
+                                            if (textBefore.trim()) {
+                                                result.push({ type: 'text', content: textBefore })
+                                            }
                                         }
 
-                                        return (
-                                            <Box key={lineIndex} sx={{ mb: lineIndex < mathLines.length - 1 ? 0.5 : 0, overflowX: 'auto' }}>
-                                                <BlockMath math={normalizedLine} />
-                                            </Box>
-                                        )
-                                    })}
-                                </Box>
-                            )
-                        } else {
-                            // No newlines, render as single BlockMath
-                            return (
-                                <Box key={index} sx={{ mb: 1, overflowX: 'auto' }}>
-                                    <BlockMath math={mathContent} />
-                                </Box>
-                            )
-                        }
-                    } else {
-                        // Mixed content (text + math) - check if \n is inside a math block
-                        // Find all math blocks and check if any contain \n
-                        const mathBlockRegex = /\$([^$]+)\$/g
-                        const mathBlocks = []
-                        let match
+                                        // Process math block with \n
+                                        if (block.content.includes('\\n') || block.content.includes('\n')) {
+                                            let mathContent = block.content
+                                            // Normalize backslashes
+                                            while (mathContent.includes('\\\\')) {
+                                                mathContent = mathContent.replace(/\\\\/g, '\\')
+                                            }
+                                            // Split by \n
+                                            const mathLines = mathContent.split(/\\n|\n/).filter(line => line.trim() !== '')
+                                            result.push({ type: 'math-multiline', content: mathLines })
+                                        } else {
+                                            // Single math block without \n
+                                            let mathContent = block.content
+                                            while (mathContent.includes('\\\\')) {
+                                                mathContent = mathContent.replace(/\\\\/g, '\\')
+                                            }
+                                            result.push({ type: 'math', content: mathContent })
+                                        }
 
-                        while ((match = mathBlockRegex.exec(item)) !== null) {
-                            mathBlocks.push({
-                                start: match.index,
-                                end: match.index + match[0].length,
-                                fullMatch: match[0],
-                                content: match[1]
-                            })
-                        }
+                                        currentIndex = block.end
+                                    })
 
-                        // Check if any math block contains \n
-                        const hasNewlineInMath = mathBlocks.some(block =>
-                            block.content.includes('\\n') || block.content.includes('\n')
-                        )
-
-                        if (hasNewlineInMath) {
-                            // Process each math block that contains \n
-                            let result = []
-                            let currentIndex = 0
-
-                            mathBlocks.forEach((block, blockIndex) => {
-                                // Add text before this math block
-                                if (currentIndex < block.start) {
-                                    const textBefore = item.slice(currentIndex, block.start)
-                                    if (textBefore.trim()) {
-                                        result.push({ type: 'text', content: textBefore })
+                                    // Add remaining text after last math block
+                                    if (currentIndex < item.length) {
+                                        const textAfter = item.slice(currentIndex)
+                                        if (textAfter.trim()) {
+                                            result.push({ type: 'text', content: textAfter })
+                                        }
                                     }
-                                }
 
-                                // Process math block with \n
-                                if (block.content.includes('\\n') || block.content.includes('\n')) {
-                                    let mathContent = block.content
-                                    // Normalize backslashes
-                                    while (mathContent.includes('\\\\')) {
-                                        mathContent = mathContent.replace(/\\\\/g, '\\')
-                                    }
-                                    // Split by \n
-                                    const mathLines = mathContent.split(/\\n|\n/).filter(line => line.trim() !== '')
-                                    result.push({ type: 'math-multiline', content: mathLines })
+                                    return (
+                                        <Box key={index} sx={{ mb: 1, pl: { xs: 1.5, sm: 2 }, textAlign: 'left' }}>
+                                            {result.map((part, partIndex) => {
+                                                if (part.type === 'text') {
+                                                    return (
+                                                        <Typography
+                                                            key={partIndex}
+                                                            variant="body1"
+                                                            component="span"
+                                                            sx={{
+                                                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                                                '& .katex': {
+                                                                    fontSize: { xs: '0.9em', sm: '1em' }
+                                                                }
+                                                            }}
+                                                        >
+                                                            {renderWithLaTeX(part.content)}
+                                                        </Typography>
+                                                    )
+                                                } else if (part.type === 'math-multiline') {
+                                                    return (
+                                                        <Box key={partIndex}>
+                                                            {part.content.map((mathLine, lineIndex) => {
+                                                                let normalizedLine = mathLine.trim()
+                                                                while (normalizedLine.includes('\\\\')) {
+                                                                    normalizedLine = normalizedLine.replace(/\\\\/g, '\\')
+                                                                }
+                                                                return (
+                                                                    <Box
+                                                                        key={lineIndex}
+                                                                        sx={{
+                                                                            mb: lineIndex < part.content.length - 1 ? 0.5 : 0,
+                                                                            overflowX: 'auto',
+                                                                            '& .katex-display': {
+                                                                                textAlign: 'left !important',
+                                                                                margin: '0.5em 0'
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <BlockMath math={normalizedLine} />
+                                                                    </Box>
+                                                                )
+                                                            })}
+                                                        </Box>
+                                                    )
+                                                } else if (part.type === 'math') {
+                                                    return (
+                                                        <Box key={partIndex} component="span" sx={{ display: 'inline-block', overflowX: 'auto' }}>
+                                                            <InlineMath math={part.content} />
+                                                        </Box>
+                                                    )
+                                                }
+                                                return null
+                                            })}
+                                        </Box>
+                                    )
                                 } else {
-                                    // Single math block without \n
-                                    let mathContent = block.content
-                                    while (mathContent.includes('\\\\')) {
-                                        mathContent = mathContent.replace(/\\\\/g, '\\')
-                                    }
-                                    result.push({ type: 'math', content: mathContent })
-                                }
-
-                                currentIndex = block.end
-                            })
-
-                            // Add remaining text after last math block
-                            if (currentIndex < item.length) {
-                                const textAfter = item.slice(currentIndex)
-                                if (textAfter.trim()) {
-                                    result.push({ type: 'text', content: textAfter })
+                                    // No newlines in math blocks, render normally
+                                    return (
+                                        <Typography
+                                            key={index}
+                                            variant="body1"
+                                            sx={{
+                                                mb: 1,
+                                                pl: { xs: 1.5, sm: 2 },
+                                                textAlign: 'left',
+                                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                                '& .katex': {
+                                                    fontSize: { xs: '0.9em', sm: '1em' }
+                                                }
+                                            }}
+                                        >
+                                            {renderWithLaTeX(item)}
+                                        </Typography>
+                                    )
                                 }
                             }
-
-                            return (
-                                <Box key={index} sx={{ mb: 1 }}>
-                                    {result.map((part, partIndex) => {
-                                        if (part.type === 'text') {
-                                            return (
-                                                <Typography
-                                                    key={partIndex}
-                                                    variant="body1"
-                                                    component="span"
-                                                    sx={{
-                                                        fontSize: { xs: '0.875rem', sm: '1rem' },
-                                                        '& .katex': {
-                                                            fontSize: { xs: '0.9em', sm: '1em' }
-                                                        }
-                                                    }}
-                                                >
-                                                    {renderWithLaTeX(part.content)}
-                                                </Typography>
-                                            )
-                                        } else if (part.type === 'math-multiline') {
-                                            return (
-                                                <Box key={partIndex}>
-                                                    {part.content.map((mathLine, lineIndex) => {
-                                                        let normalizedLine = mathLine.trim()
-                                                        while (normalizedLine.includes('\\\\')) {
-                                                            normalizedLine = normalizedLine.replace(/\\\\/g, '\\')
-                                                        }
-                                                        return (
-                                                            <Box key={lineIndex} sx={{ mb: lineIndex < part.content.length - 1 ? 0.5 : 0, overflowX: 'auto' }}>
-                                                                <BlockMath math={normalizedLine} />
-                                                            </Box>
-                                                        )
-                                                    })}
-                                                </Box>
-                                            )
-                                        } else if (part.type === 'math') {
-                                            return (
-                                                <Box key={partIndex} component="span" sx={{ display: 'inline-block', overflowX: 'auto' }}>
-                                                    <InlineMath math={part.content} />
-                                                </Box>
-                                            )
-                                        }
-                                        return null
-                                    })}
-                                </Box>
-                            )
-                        } else {
-                            // No newlines in math blocks, render normally
-                            return (
-                                <Typography
-                                    key={index}
-                                    variant="body1"
-                                    sx={{
-                                        mb: 1,
-                                        fontSize: { xs: '0.875rem', sm: '1rem' },
-                                        '& .katex': {
-                                            fontSize: { xs: '0.9em', sm: '1em' }
-                                        }
-                                    }}
-                                >
-                                    {renderWithLaTeX(item)}
-                                </Typography>
-                            )
-                        }
-                    }
-                })}
+                        })}
+                    </Paper>
+                </Box>
             </Box>
         )
     }
