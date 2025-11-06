@@ -461,9 +461,6 @@ const ExampleQuestions = ({ example }) => {
                     <Box sx={{ flex: { md: '1 1 50%' }, width: '100%' }}>
                         <Card elevation={2}>
                             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                                <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                                    Interactive Diagram
-                                </Typography>
                                 {diagrams.length > 1 ? (
                                     <Box>
                                         <Tabs
