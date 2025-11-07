@@ -119,6 +119,44 @@ export const useTranslation = () => {
         return await translationService.getEnglishTags(chineseTags);
     }, []);
 
+    /**
+     * Translate a topic from English to Chinese
+     * @param {string} englishTopic - English topic name
+     * @returns {Promise<string>} Chinese topic translation
+     */
+    const translateTopic = useCallback(async (englishTopic) => {
+        return await translationService.translateTopic(englishTopic);
+    }, []);
+
+    /**
+     * Translate a tag from English to Chinese
+     * @param {string} englishTag - English tag name
+     * @returns {Promise<string>} Chinese tag translation
+     */
+    const translateTag = useCallback(async (englishTag) => {
+        return await translationService.translateTag(englishTag);
+    }, []);
+
+    /**
+     * Translate topic and tag pair from English to Chinese
+     * @param {string} topic - English topic name
+     * @param {string} tag - English tag name
+     * @returns {Promise<{topic: string, tag: string}>} Translated topic and tag
+     */
+    const translateTopicTag = useCallback(async (topic, tag) => {
+        return await translationService.translateTopicTag(topic, tag);
+    }, []);
+
+    /**
+     * Look up English topic and tag from Chinese translations
+     * @param {string} chineseTopic - Chinese topic name
+     * @param {string} chineseTag - Chinese tag name
+     * @returns {Promise<{topic: string, tag: string}>} English topic and tag
+     */
+    const lookupEnglishFromChinese = useCallback(async (chineseTopic, chineseTag) => {
+        return await translationService.lookupEnglishFromChinese(chineseTopic, chineseTag);
+    }, []);
+
     return {
         t,
         changeLanguage,
@@ -129,6 +167,10 @@ export const useTranslation = () => {
         getSection,
         getChineseTags,
         getEnglishTags,
+        translateTopic,
+        translateTag,
+        translateTopicTag,
+        lookupEnglishFromChinese,
         currentLanguage,
         isLoading
     };

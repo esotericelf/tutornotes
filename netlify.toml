@@ -1,6 +1,6 @@
 [build]
-  # Build command with SEO optimization
-  command = "npm run build:seo"
+  # Build command
+  command = "npm run build"
 
   # Publish directory
   publish = "build"
@@ -62,11 +62,12 @@
   to = "/index.html"
   status = 200
 
-# All other routes return 404
+# All other routes - SPA fallback (must be last)
+# This handles topic/tag routes (both English and Chinese) and any other React Router routes
 [[redirects]]
   from = "/*"
-  to = "/404.html"
-  status = 404
+  to = "/index.html"
+  status = 200
 
 # Headers for security and performance
 [[headers]]

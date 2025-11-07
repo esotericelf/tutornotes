@@ -15,8 +15,10 @@ import {
 } from '@mui/icons-material'
 import { InlineMath, BlockMath } from 'react-katex'
 import 'katex/dist/katex.min.css'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 }) => {
+    const { isChinese } = useTranslation()
     // Normalize concepts to array
     const conceptsArray = Array.isArray(concepts) ? concepts : concepts ? [concepts] : []
 
@@ -367,7 +369,9 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
                             overflowWrap: 'break-word'
                         }}
                     >
-                        {selectedConcept.concept_title || 'Key Concept'}
+                        {(isChinese() && selectedConcept.concept_title_ch && selectedConcept.concept_title_ch.trim())
+                            ? selectedConcept.concept_title_ch
+                            : (selectedConcept.concept_title || 'Key Concept')}
                     </Typography>
                 </Box>
 
@@ -406,27 +410,45 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
                         }
                     }}
                 >
-                    {renderWithLaTeX(selectedConcept.concept_statement || '')}
+                    {renderWithLaTeX(
+                        (isChinese() && selectedConcept.concept_statement_ch && selectedConcept.concept_statement_ch.trim())
+                            ? selectedConcept.concept_statement_ch
+                            : (selectedConcept.concept_statement || '')
+                    )}
                 </Typography>
 
-                {renderFormulaArray(selectedConcept.formula)}
-
-                {renderDerivationArray(selectedConcept.derivation)}
-
-                {selectedConcept.supplementary_note && (
-                    <Box sx={{ mt: 2 }}>
-                        <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{
-                                fontStyle: 'italic',
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                            }}
-                        >
-                            {renderWithLaTeX(selectedConcept.supplementary_note)}
-                        </Typography>
-                    </Box>
+                {renderFormulaArray(
+                    (isChinese() && selectedConcept.formula_ch && selectedConcept.formula_ch.length > 0)
+                        ? selectedConcept.formula_ch
+                        : (selectedConcept.formula || [])
                 )}
+
+                {renderDerivationArray(
+                    (isChinese() && selectedConcept.derivation_ch && selectedConcept.derivation_ch.length > 0)
+                        ? selectedConcept.derivation_ch
+                        : (selectedConcept.derivation || [])
+                )}
+
+                {((isChinese() && selectedConcept.supplementary_note_ch && selectedConcept.supplementary_note_ch.trim())
+                    ? selectedConcept.supplementary_note_ch
+                    : selectedConcept.supplementary_note) && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                    fontStyle: 'italic',
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                }}
+                            >
+                                {renderWithLaTeX(
+                                    (isChinese() && selectedConcept.supplementary_note_ch && selectedConcept.supplementary_note_ch.trim())
+                                        ? selectedConcept.supplementary_note_ch
+                                        : (selectedConcept.supplementary_note || '')
+                                )}
+                            </Typography>
+                        </Box>
+                    )}
             </Box>
         </Paper>
     )

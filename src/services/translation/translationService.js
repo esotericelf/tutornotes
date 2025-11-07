@@ -1,6 +1,7 @@
 import mathPaperTranslations from '../../locales/mathPaperTranslations.json';
 import homeTranslations from '../../locales/homeTranslations.json';
 import changelogTranslations from '../../locales/changelogTranslations.json';
+import { supabase } from '../supabase';
 
 class TranslationService {
     /**
@@ -155,26 +156,299 @@ class TranslationService {
     }
 
     /**
-     * Get Chinese translations for database tags
-     * This method can be extended to fetch from Supabase functions
+     * Get Chinese translations for database tags from Supabase
      * @param {string[]} englishTags - Array of English tags
      * @returns {Promise<string[]>} Array of Chinese translations
      */
     async getChineseTags(englishTags) {
-        // For now, return the same tags
-        // This can be extended to use the Supabase Chinese tag functions
-        return englishTags;
+        if (!englishTags || englishTags.length === 0) {
+            return [];
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('tag, tag_ch')
+                .in('tag', englishTags)
+                .eq('is_active', true);
+
+            if (error) {
+                console.error('Error fetching Chinese tag translations:', error);
+                return englishTags; // Fallback to original tags
+            }
+
+            // Create a map for quick lookup
+            const translationMap = {};
+            data?.forEach(item => {
+                if (item.tag_ch) {
+                    translationMap[item.tag] = item.tag_ch;
+                }
+            });
+
+            // Return translated tags, fallback to original if translation not found
+            return englishTags.map(tag => translationMap[tag] || tag);
+        } catch (err) {
+            console.error('Error in getChineseTags:', err);
+            return englishTags; // Fallback to original tags
+        }
     }
 
     /**
-     * Get English translations for Chinese tags
+     * Get English translations for Chinese tags from Supabase
      * @param {string[]} chineseTags - Array of Chinese tags
      * @returns {Promise<string[]>} Array of English translations
      */
     async getEnglishTags(chineseTags) {
-        // For now, return the same tags
-        // This can be extended to use the Supabase tag translation functions
-        return chineseTags;
+        if (!chineseTags || chineseTags.length === 0) {
+            return [];
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('tag, tag_ch')
+                .in('tag_ch', chineseTags)
+                .eq('is_active', true);
+
+            if (error) {
+                console.error('Error fetching English tag translations:', error);
+                return chineseTags; // Fallback to original tags
+            }
+
+            // Create a map for quick lookup
+            const translationMap = {};
+            data?.forEach(item => {
+                if (item.tag_ch) {
+                    translationMap[item.tag_ch] = item.tag;
+                }
+            });
+
+            // Return translated tags, fallback to original if translation not found
+            return chineseTags.map(tag => translationMap[tag] || tag);
+        } catch (err) {
+            console.error('Error in getEnglishTags:', err);
+            return chineseTags; // Fallback to original tags
+        }
+    }
+
+    /**
+     * Translate a topic from English to Chinese
+     * @param {string} englishTopic - English topic name
+     * @returns {Promise<string>} Chinese topic translation
+     */
+    async translateTopic(englishTopic) {
+        if (!englishTopic) {
+            return englishTopic;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('topic, topic_ch')
+                .eq('topic', englishTopic)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (error) {
+                console.error('Error querying topic translation:', error);
+                return englishTopic; // Fallback to original
+            }
+
+            if (data && data.length > 0 && data[0].topic_ch) {
+                const translated = data[0].topic_ch.trim();
+                return translated || englishTopic;
+            }
+
+            return englishTopic; // Fallback to original
+        } catch (err) {
+            console.error('Error translating topic:', err);
+            return englishTopic; // Fallback to original
+        }
+    }
+
+    /**
+     * Translate a tag from English to Chinese
+     * @param {string} englishTag - English tag name
+     * @returns {Promise<string>} Chinese tag translation
+     */
+    async translateTag(englishTag) {
+        if (!englishTag) {
+            return englishTag;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('tag, tag_ch')
+                .eq('tag', englishTag)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (error) {
+                console.error('Error querying tag translation:', error);
+                return englishTag; // Fallback to original
+            }
+
+            if (data && data.length > 0 && data[0].tag_ch) {
+                const translated = data[0].tag_ch.trim();
+                return translated || englishTag;
+            }
+
+            return englishTag; // Fallback to original
+        } catch (err) {
+            console.error('Error translating tag:', err);
+            return englishTag; // Fallback to original
+        }
+    }
+
+    /**
+     * Translate topic and tag pair from English to Chinese
+     * @param {string} topic - English topic name
+     * @param {string} tag - English tag name
+     * @returns {Promise<{topic: string, tag: string}>} Translated topic and tag
+     */
+    async translateTopicTag(topic, tag) {
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('topic, tag, topic_ch, tag_ch')
+                .eq('topic', topic)
+                .eq('tag', tag)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (error) {
+                console.error('Error querying topic_tags:', error);
+                // Fallback: try to get translations separately
+                const [translatedTopic, translatedTag] = await Promise.all([
+                    this.translateTopic(topic),
+                    this.translateTag(tag)
+                ]);
+                return { topic: translatedTopic, tag: translatedTag };
+            }
+
+            if (data && data.length > 0) {
+                const item = data[0];
+                return {
+                    topic: (item.topic_ch && item.topic_ch.trim()) || topic,
+                    tag: (item.tag_ch && item.tag_ch.trim()) || tag
+                };
+            }
+
+            // If no exact match, try to get translations separately
+            const [translatedTopic, translatedTag] = await Promise.all([
+                this.translateTopic(topic),
+                this.translateTag(tag)
+            ]);
+            return { topic: translatedTopic, tag: translatedTag };
+        } catch (err) {
+            console.error('Error translating topic and tag:', err);
+            // Fallback: try to get translations separately
+            const [translatedTopic, translatedTag] = await Promise.all([
+                this.translateTopic(topic),
+                this.translateTag(tag)
+            ]);
+            return { topic: translatedTopic, tag: translatedTag };
+        }
+    }
+
+    /**
+     * Look up English topic and tag from Chinese translations
+     * @param {string} chineseTopic - Chinese topic name
+     * @param {string} chineseTag - Chinese tag name
+     * @returns {Promise<{topic: string, tag: string}>} English topic and tag
+     */
+    async lookupEnglishFromChinese(chineseTopic, chineseTag) {
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('topic, tag, topic_ch, tag_ch')
+                .eq('topic_ch', chineseTopic)
+                .eq('tag_ch', chineseTag)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (error) {
+                console.error('Error looking up English from Chinese:', error);
+                // Fallback: try to look up separately
+                const [englishTopic, englishTag] = await Promise.all([
+                    this.lookupEnglishTopic(chineseTopic),
+                    this.lookupEnglishTag(chineseTag)
+                ]);
+                return { topic: englishTopic || chineseTopic, tag: englishTag || chineseTag };
+            }
+
+            if (data && data.length > 0) {
+                return {
+                    topic: data[0].topic || chineseTopic,
+                    tag: data[0].tag || chineseTag
+                };
+            }
+
+            // If no exact match, try to look up separately
+            const [englishTopic, englishTag] = await Promise.all([
+                this.lookupEnglishTopic(chineseTopic),
+                this.lookupEnglishTag(chineseTag)
+            ]);
+            return { topic: englishTopic || chineseTopic, tag: englishTag || chineseTag };
+        } catch (err) {
+            console.error('Error looking up English from Chinese:', err);
+            return { topic: chineseTopic, tag: chineseTag };
+        }
+    }
+
+    /**
+     * Look up English topic from Chinese translation
+     * @param {string} chineseTopic - Chinese topic name
+     * @returns {Promise<string>} English topic name
+     */
+    async lookupEnglishTopic(chineseTopic) {
+        if (!chineseTopic) return chineseTopic;
+
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('topic, topic_ch')
+                .eq('topic_ch', chineseTopic)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (error || !data || data.length === 0) {
+                return chineseTopic;
+            }
+
+            return data[0].topic || chineseTopic;
+        } catch (err) {
+            console.error('Error looking up English topic:', err);
+            return chineseTopic;
+        }
+    }
+
+    /**
+     * Look up English tag from Chinese translation
+     * @param {string} chineseTag - Chinese tag name
+     * @returns {Promise<string>} English tag name
+     */
+    async lookupEnglishTag(chineseTag) {
+        if (!chineseTag) return chineseTag;
+
+        try {
+            const { data, error } = await supabase
+                .from('topic_tags')
+                .select('tag, tag_ch')
+                .eq('tag_ch', chineseTag)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (error || !data || data.length === 0) {
+                return chineseTag;
+            }
+
+            return data[0].tag || chineseTag;
+        } catch (err) {
+            console.error('Error looking up English tag:', err);
+            return chineseTag;
+        }
     }
 }
 

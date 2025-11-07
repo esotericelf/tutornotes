@@ -31,23 +31,50 @@ export const decodeConceptTitle = (encodedTitle) => {
 
 /**
  * Create URL path for a topic/tag (without concept title)
+ * @param {string} topic - English topic name
+ * @param {string} tag - English tag name
+ * @param {string} topicCh - Optional Chinese topic translation
+ * @param {string} tagCh - Optional Chinese tag translation
+ * @param {string} language - Current language ('zh' or 'en')
+ * @returns {string} URL path
  */
-export const createTopicTagUrl = (topic, tag) => {
+export const createTopicTagUrl = (topic, tag, topicCh = null, tagCh = null, language = 'en') => {
+    // Use Chinese translations if language is Chinese and translations exist
+    const displayTopic = (language === 'zh' && topicCh && topicCh.trim()) ? topicCh : topic
+    const displayTag = (language === 'zh' && tagCh && tagCh.trim()) ? tagCh : tag
+
     // Encode topic and tag, replacing spaces with hyphens
-    const encodedTopic = encodeURIComponent(topic).replace(/%20/g, '-')
-    const encodedTag = encodeURIComponent(tag).replace(/%20/g, '-')
+    // For Chinese characters, encodeURIComponent will properly encode them
+    const encodedTopic = encodeURIComponent(displayTopic).replace(/%20/g, '-')
+    const encodedTag = encodeURIComponent(displayTag).replace(/%20/g, '-')
     return `/${encodedTopic}/${encodedTag}`
 }
 
 /**
  * Parse topic/tag URL parameters
+ * Handles both English and Chinese URLs
+ * @param {string} topicParam - URL parameter for topic (can be English or Chinese)
+ * @param {string} tagParam - URL parameter for tag (can be English or Chinese)
+ * @returns {Promise<{topic: string, tag: string}>} English topic and tag names
  */
-export const parseTopicTagUrl = (topicParam, tagParam) => {
+export const parseTopicTagUrl = async (topicParam, tagParam) => {
     try {
         // Decode topic and tag (hyphens were spaces)
-        const topic = decodeURIComponent(topicParam.replace(/-/g, '%20'))
-        const tag = decodeURIComponent(tagParam.replace(/-/g, '%20'))
-        return { topic, tag }
+        const decodedTopic = decodeURIComponent(topicParam.replace(/-/g, '%20'))
+        const decodedTag = decodeURIComponent(tagParam.replace(/-/g, '%20'))
+
+        // Check if decoded values contain Chinese characters
+        const hasChinese = /[\u4e00-\u9fa5]/.test(decodedTopic) || /[\u4e00-\u9fa5]/.test(decodedTag)
+
+        if (hasChinese) {
+            // If Chinese, need to look up English equivalents from database
+            // This will be handled by the component that uses this function
+            // For now, return the decoded values and let the component handle translation lookup
+            return { topic: decodedTopic, tag: decodedTag, isChinese: true }
+        }
+
+        // English URLs - return as-is
+        return { topic: decodedTopic, tag: decodedTag, isChinese: false }
     } catch (e) {
         console.error('Error parsing topic/tag URL:', e)
         return null

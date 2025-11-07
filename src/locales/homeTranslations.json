@@ -60,6 +60,11 @@
             "title": "TutorNote - DSE Math Past Papers for Hong Kong Students",
             "description": "Comprehensive DSE Math Past Papers, practice quizzes, and educational resources for Hong Kong students. Access past papers, track progress, and improve your math skills.",
             "keywords": "DSE, Math, Past Papers, Hong Kong, Education, Tutoring, Mathematics, HKDSE, Secondary School, Exam Preparation, Practice Quizzes"
+        },
+        "sidebar": {
+            "searchPlaceholder": "Search topics and tags...",
+            "loading": "Loading...",
+            "error": "Error: {error}"
         }
     },
     "zh": {
@@ -123,6 +128,11 @@
             "title": "TutorNote - 香港學生DSE數學歷年試題",
             "description": "為香港學生提供全面的DSE數學歷年試題、練習測驗和教育資源。獲取歷年試題、追蹤進度並提升數學技能。",
             "keywords": "DSE, 數學, 歷年試題, 香港, 教育, 輔導, 數學科, 中學文憑試, 中學, 考試準備, 練習測驗"
+        },
+        "sidebar": {
+            "searchPlaceholder": "搜尋主題和標籤...",
+            "loading": "載入中...",
+            "error": "錯誤：{error}"
         }
     }
 }

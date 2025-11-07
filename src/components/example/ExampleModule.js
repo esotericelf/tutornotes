@@ -21,6 +21,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
 import { parseTopicTagUrl, createTopicTagUrl } from '../../utils/urlHelpers'
+import { useTranslation } from '../../hooks/useTranslation'
 import ExampleSidebar from './ExampleSidebar'
 import KeyConceptHighlight from './KeyConceptHighlight'
 import ExampleQuestions from './ExampleQuestions'
@@ -31,10 +32,13 @@ const ExampleModule = () => {
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
     const { topic: topicParam, tag: tagParam } = params || {}
+    const { isChinese, translateTopicTag, lookupEnglishFromChinese, currentLanguage } = useTranslation()
 
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [selectedTopic, setSelectedTopic] = useState(null)
     const [selectedTag, setSelectedTag] = useState(null)
+    const [topicTranslation, setTopicTranslation] = useState(null)
+    const [tagTranslation, setTagTranslation] = useState(null)
 
     const [concepts, setConcepts] = useState([])
     const [currentConceptIndex, setCurrentConceptIndex] = useState(0)
@@ -45,20 +49,46 @@ const ExampleModule = () => {
 
     // Initialize from URL params on mount or when params change
     useEffect(() => {
-        if (topicParam && tagParam) {
-            const parsed = parseTopicTagUrl(topicParam, tagParam)
-            if (parsed) {
-                setSelectedTopic(parsed.topic)
-                setSelectedTag(parsed.tag)
+        const initializeFromUrl = async () => {
+            if (topicParam && tagParam) {
+                const parsed = await parseTopicTagUrl(topicParam, tagParam)
+                if (parsed) {
+                    if (parsed.isChinese) {
+                        // URL contains Chinese - need to look up English equivalents
+                        const { topic, tag } = await lookupEnglishFromChinese(parsed.topic, parsed.tag)
+                        setSelectedTopic(topic)
+                        setSelectedTag(tag)
+                        // Set Chinese translations from URL
+                        setTopicTranslation(parsed.topic)
+                        setTagTranslation(parsed.tag)
+                    } else {
+                        // URL contains English
+                        setSelectedTopic(parsed.topic)
+                        setSelectedTag(parsed.tag)
+                        // Fetch Chinese translations
+                        translateTopicTag(parsed.topic, parsed.tag).then(({ topic, tag }) => {
+                            // Only set if different from English (actual translation exists)
+                            setTopicTranslation(topic !== parsed.topic ? topic : null)
+                            setTagTranslation(tag !== parsed.tag ? tag : null)
+                        }).catch(err => {
+                            console.error('Error fetching translations:', err)
+                            setTopicTranslation(null)
+                            setTagTranslation(null)
+                        })
+                    }
+                }
+            } else {
+                // Clear selections if no URL params
+                setSelectedTopic(null)
+                setSelectedTag(null)
+                setTopicTranslation(null)
+                setTagTranslation(null)
+                setConcepts([])
+                setExamples([])
             }
-        } else {
-            // Clear selections if no URL params
-            setSelectedTopic(null)
-            setSelectedTag(null)
-            setConcepts([])
-            setExamples([])
         }
-    }, [topicParam, tagParam])
+        initializeFromUrl()
+    }, [topicParam, tagParam, translateTopicTag, lookupEnglishFromChinese])
 
     useEffect(() => {
         // Fetch from database when topic/tag is selected
@@ -84,7 +114,7 @@ const ExampleModule = () => {
         setError(null)
 
         try {
-            // Fetch key concepts
+            // Fetch key concepts with Chinese translations
             const { data: conceptsData, error: conceptsError } = await supabase
                 .from('key_concepts')
                 .select('*')
@@ -152,11 +182,39 @@ const ExampleModule = () => {
         setCurrentExampleIndex((prev) => (prev < examples.length - 1 ? prev + 1 : 0))
     }
 
-    const handleTopicTagSelect = (topic, tag) => {
-        // Navigate to the topic/tag URL
-        const url = createTopicTagUrl(topic, tag)
+    const handleTopicTagSelect = async (topic, tag) => {
+        // Fetch translations first
+        const { topic: topicCh, tag: tagCh } = await translateTopicTag(topic, tag)
+        // Only set if different from English (actual translation exists)
+        const finalTopicCh = topicCh !== topic ? topicCh : null
+        const finalTagCh = tagCh !== tag ? tagCh : null
+
+        // Create URL with Chinese translations if language is Chinese
+        const url = createTopicTagUrl(topic, tag, finalTopicCh, finalTagCh, currentLanguage)
         navigate(url)
+
+        setTopicTranslation(finalTopicCh)
+        setTagTranslation(finalTagCh)
     }
+
+    // Update translations when language changes or topic/tag changes
+    useEffect(() => {
+        if (selectedTopic && selectedTag) {
+            const fetchTranslations = async () => {
+                try {
+                    const { topic, tag } = await translateTopicTag(selectedTopic, selectedTag)
+                    // Only set if different from English (actual translation exists)
+                    setTopicTranslation(topic !== selectedTopic ? topic : null)
+                    setTagTranslation(tag !== selectedTag ? tag : null)
+                } catch (err) {
+                    console.error('Error fetching translations:', err)
+                    setTopicTranslation(null)
+                    setTagTranslation(null)
+                }
+            }
+            fetchTranslations()
+        }
+    }, [selectedTopic, selectedTag, isChinese, translateTopicTag])
 
     // Render "Under Construction" message
     const renderUnderConstruction = (message) => (
@@ -215,7 +273,7 @@ const ExampleModule = () => {
                                 wordBreak: 'break-word'
                             }}
                         >
-                            {selectedTopic} &gt; {selectedTag}
+                            {(isChinese() && topicTranslation && topicTranslation !== selectedTopic) ? topicTranslation : selectedTopic} &gt; {(isChinese() && tagTranslation && tagTranslation !== selectedTag) ? tagTranslation : selectedTag}
                         </Typography>
                     </Box>
                 )}
@@ -350,7 +408,7 @@ const ExampleModule = () => {
 
                             {concepts.length === 0 && (
                                 renderUnderConstruction(
-                                    `Content for ${selectedTopic} > ${selectedTag} is currently under construction. Please check back soon.`
+                                    `Content for ${(isChinese() && topicTranslation && topicTranslation !== selectedTopic) ? topicTranslation : selectedTopic} > ${(isChinese() && tagTranslation && tagTranslation !== selectedTag) ? tagTranslation : selectedTag} is currently under construction. Please check back soon.`
                                 )
                             )}
                         </>
