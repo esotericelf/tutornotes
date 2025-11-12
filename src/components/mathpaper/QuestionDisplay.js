@@ -12,6 +12,7 @@ import { ExpandMore, ExpandLess, Label, ArrowBack } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CompactQuestionNavigation from './CompactQuestionNavigation';
+import { KeyConceptExcerpts } from '../example';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionChange, cameFromTagSearch = false, originalSearchTags = [], onBackToSearch }) => {
@@ -701,6 +702,11 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                     />
                 </Box>
             )}
+
+            {/* Key Concepts Excerpts - Below Navigation */}
+            <Box sx={{ mt: 4 }}>
+                <KeyConceptExcerpts limit={6} questionTags={questionTags || []} />
+            </Box>
         </Box>
     );
 };
