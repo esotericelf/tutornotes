@@ -19,6 +19,28 @@
             "security": "security"
         },
         "entries": {
+            "v2.3.1": {
+                "title": "🎨 Improved Key Concept Layout & Display",
+                "description": "Enhanced layout for key concept displays with better two-column arrangement and improved mobile responsiveness",
+                "features": [
+                    {
+                        "title": "Two-Column Key Concept Layout",
+                        "description": "Key concept highlight component now displays in a clean two-column layout (concept statement and formulas on left, derivations and notes on right) for better readability"
+                    },
+                    {
+                        "title": "Side-by-Side Concept Cards",
+                        "description": "Key concept excerpt cards on question detail pages now display side by side in a single row, showing up to 2 cards simultaneously for better space utilization"
+                    },
+                    {
+                        "title": "Enhanced Mobile Responsiveness",
+                        "description": "All key concept components now adapt seamlessly to mobile devices, stacking vertically on small screens and displaying in columns on larger screens"
+                    },
+                    {
+                        "title": "Improved Visual Hierarchy",
+                        "description": "Better organization of key concept information with clearer separation between different sections (formulas, derivations, supplementary notes)"
+                    }
+                ]
+            },
             "v2.3.0": {
                 "title": "📚 Interactive Examples Module & Enhanced Notes",
                 "description": "Revolutionary interactive examples system with step-by-step solutions, dynamic diagrams, and continuously expanding note library",
@@ -239,6 +261,28 @@
             "security": "安全"
         },
         "entries": {
+            "v2.3.1": {
+                "title": "🎨 改進的核心概念佈局與顯示",
+                "description": "增強核心概念顯示的佈局，採用更好的兩欄排列和改進的手機響應式設計",
+                "features": [
+                    {
+                        "title": "兩欄核心概念佈局",
+                        "description": "核心概念高亮組件現在以清晰的兩欄佈局顯示（左側為概念陳述和公式，右側為推導和備註），提升可讀性"
+                    },
+                    {
+                        "title": "並排概念卡片",
+                        "description": "問題詳情頁面上的核心概念摘要卡片現在並排顯示在同一行，最多同時顯示2張卡片，更好地利用空間"
+                    },
+                    {
+                        "title": "增強的手機響應式設計",
+                        "description": "所有核心概念組件現在都能無縫適應手機設備，在小屏幕上垂直堆疊，在較大屏幕上以欄位顯示"
+                    },
+                    {
+                        "title": "改進的視覺層次",
+                        "description": "更好地組織核心概念信息，更清晰地區分不同部分（公式、推導、補充備註）"
+                    }
+                ]
+            },
             "v2.3.0": {
                 "title": "📚 互動範例模組與增強筆記",
                 "description": "革命性的互動範例系統，包含逐步解答、動態圖表，以及持續擴展的筆記庫",

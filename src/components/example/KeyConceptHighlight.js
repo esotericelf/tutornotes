@@ -5,7 +5,8 @@ import {
     Typography,
     Divider,
     IconButton,
-    ButtonGroup
+    ButtonGroup,
+    Grid
 } from '@mui/material'
 import {
     Lightbulb,
@@ -86,26 +87,18 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
                         Formula/ Core Idea
                     </Typography>
                 </Box>
-                {/* Centered highlighted container for formulas */}
-                <Box
+                {/* Highlighted container for formulas */}
+                <Paper
+                    elevation={2}
                     sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        mb: 2
+                        width: '100%',
+                        p: { xs: 2, sm: 3 },
+                        backgroundColor: 'background.default',
+                        borderLeft: '4px solid',
+                        borderColor: 'primary.main',
+                        borderRadius: 1
                     }}
                 >
-                    <Paper
-                        elevation={2}
-                        sx={{
-                            maxWidth: '90%',
-                            width: '100%',
-                            p: { xs: 2, sm: 3 },
-                            backgroundColor: 'background.default',
-                            borderLeft: '4px solid',
-                            borderColor: 'primary.main',
-                            borderRadius: 1
-                        }}
-                    >
                         {formulaArray.map((item, index) => {
                             const trimmed = item.trim()
                             const isPureMath = trimmed.startsWith('$') && trimmed.endsWith('$')
@@ -315,8 +308,7 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
                                 }
                             }
                         })}
-                    </Paper>
-                </Box>
+                </Paper>
             </Box>
         )
     }
@@ -399,57 +391,67 @@ const KeyConceptHighlight = ({ concepts = [], onConceptChange, currentIndex = 0 
 
             <Divider sx={{ mb: 2 }} />
 
-            <Box>
-                <Typography
-                    variant="body1"
-                    paragraph
-                    sx={{
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
-                        '& .katex': {
-                            fontSize: { xs: '0.9em', sm: '1em' }
-                        }
-                    }}
-                >
-                    {renderWithLaTeX(
-                        (isChinese() && selectedConcept.concept_statement_ch && selectedConcept.concept_statement_ch.trim())
-                            ? selectedConcept.concept_statement_ch
-                            : (selectedConcept.concept_statement || '')
-                    )}
-                </Typography>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {/* Left Column */}
+                <Grid item xs={12} md={6}>
+                    <Box>
+                        <Typography
+                            variant="body1"
+                            paragraph
+                            sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                '& .katex': {
+                                    fontSize: { xs: '0.9em', sm: '1em' }
+                                }
+                            }}
+                        >
+                            {renderWithLaTeX(
+                                (isChinese() && selectedConcept.concept_statement_ch && selectedConcept.concept_statement_ch.trim())
+                                    ? selectedConcept.concept_statement_ch
+                                    : (selectedConcept.concept_statement || '')
+                            )}
+                        </Typography>
 
-                {renderFormulaArray(
-                    (isChinese() && selectedConcept.formula_ch && selectedConcept.formula_ch.length > 0)
-                        ? selectedConcept.formula_ch
-                        : (selectedConcept.formula || [])
-                )}
+                        {renderFormulaArray(
+                            (isChinese() && selectedConcept.formula_ch && selectedConcept.formula_ch.length > 0)
+                                ? selectedConcept.formula_ch
+                                : (selectedConcept.formula || [])
+                        )}
+                    </Box>
+                </Grid>
 
-                {renderDerivationArray(
-                    (isChinese() && selectedConcept.derivation_ch && selectedConcept.derivation_ch.length > 0)
-                        ? selectedConcept.derivation_ch
-                        : (selectedConcept.derivation || [])
-                )}
+                {/* Right Column */}
+                <Grid item xs={12} md={6}>
+                    <Box>
+                        {renderDerivationArray(
+                            (isChinese() && selectedConcept.derivation_ch && selectedConcept.derivation_ch.length > 0)
+                                ? selectedConcept.derivation_ch
+                                : (selectedConcept.derivation || [])
+                        )}
 
-                {((isChinese() && selectedConcept.supplementary_note_ch && selectedConcept.supplementary_note_ch.trim())
-                    ? selectedConcept.supplementary_note_ch
-                    : selectedConcept.supplementary_note) && (
-                        <Box sx={{ mt: 2 }}>
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{
-                                    fontStyle: 'italic',
-                                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                }}
-                            >
-                                {renderWithLaTeX(
-                                    (isChinese() && selectedConcept.supplementary_note_ch && selectedConcept.supplementary_note_ch.trim())
-                                        ? selectedConcept.supplementary_note_ch
-                                        : (selectedConcept.supplementary_note || '')
-                                )}
-                            </Typography>
-                        </Box>
-                    )}
-            </Box>
+                        {((isChinese() && selectedConcept.supplementary_note_ch && selectedConcept.supplementary_note_ch.trim())
+                            ? selectedConcept.supplementary_note_ch
+                            : selectedConcept.supplementary_note) && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{
+                                            fontStyle: 'italic',
+                                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                        }}
+                                    >
+                                        {renderWithLaTeX(
+                                            (isChinese() && selectedConcept.supplementary_note_ch && selectedConcept.supplementary_note_ch.trim())
+                                                ? selectedConcept.supplementary_note_ch
+                                                : (selectedConcept.supplementary_note || '')
+                                        )}
+                                    </Typography>
+                                </Box>
+                            )}
+                    </Box>
+                </Grid>
+            </Grid>
         </Paper>
     )
 }

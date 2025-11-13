@@ -4,7 +4,6 @@ import {
     Typography,
     CircularProgress,
     Alert,
-    Grid,
     Card,
     CardActionArea,
     Chip
@@ -13,7 +12,7 @@ import {
     Lightbulb,
     ArrowForward
 } from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
 import { createTopicTagUrl } from '../../utils/urlHelpers'
 import { useTranslation } from '../../hooks/useTranslation'
@@ -43,6 +42,7 @@ import 'katex/dist/katex.min.css'
  */
 const KeyConceptExcerpts = ({ limit = 6, topic = null, tag = null, questionTags = null }) => {
     const navigate = useNavigate()
+    const location = useLocation()
     const { isChinese, translateTopicTag, currentLanguage } = useTranslation()
 
     const [concepts, setConcepts] = useState([])
@@ -245,14 +245,23 @@ const KeyConceptExcerpts = ({ limit = 6, topic = null, tag = null, questionTags 
             const finalTopicCh = topicCh !== concept.topic ? topicCh : null
             const finalTagCh = tagCh !== concept.tag ? tagCh : null
 
-            // Create URL and navigate
+            // Create URL and navigate with referrer information
             const url = createTopicTagUrl(concept.topic, concept.tag, finalTopicCh, finalTagCh, currentLanguage)
-            navigate(url)
+            // Pass current location as referrer so back button can show question details
+            navigate(url, {
+                state: {
+                    referrer: location.pathname + location.search
+                }
+            })
         } catch (err) {
             console.error('Error navigating to concept:', err)
             // Fallback: navigate without translations
             const url = createTopicTagUrl(concept.topic, concept.tag, null, null, currentLanguage)
-            navigate(url)
+            navigate(url, {
+                state: {
+                    referrer: location.pathname + location.search
+                }
+            })
         }
     }
 
@@ -315,7 +324,7 @@ const KeyConceptExcerpts = ({ limit = 6, topic = null, tag = null, questionTags 
     }
 
     return (
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 4, width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                 <Lightbulb sx={{ color: 'primary.main', fontSize: { xs: 24, sm: 28 } }} />
                 <Typography variant="h5" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
@@ -323,7 +332,12 @@ const KeyConceptExcerpts = ({ limit = 6, topic = null, tag = null, questionTags 
                 </Typography>
             </Box>
 
-            <Grid container spacing={2}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+                width: '100%'
+            }}>
                 {concepts.map((concept) => {
                     const title = (isChinese() && concept.concept_title_ch && concept.concept_title_ch.trim())
                         ? concept.concept_title_ch
@@ -338,9 +352,13 @@ const KeyConceptExcerpts = ({ limit = 6, topic = null, tag = null, questionTags 
                     const tagDisplay = (isChinese() && concept.tag_ch) ? concept.tag_ch : concept.tag
 
                     return (
-                        <Grid item xs={12} sm={6} md={4} key={concept.id}>
+                        <Box key={concept.id} sx={{
+                            flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+                            minWidth: 0
+                        }}>
                             <Card
                                 sx={{
+                                    width: '100%',
                                     height: '100%',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -430,10 +448,10 @@ const KeyConceptExcerpts = ({ limit = 6, topic = null, tag = null, questionTags 
                                     </Box>
                                 </CardActionArea>
                             </Card>
-                        </Grid>
+                        </Box>
                     )
                 })}
-            </Grid>
+            </Box>
         </Box>
     )
 }

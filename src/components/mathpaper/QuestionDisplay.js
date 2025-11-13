@@ -705,7 +705,7 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
 
             {/* Key Concepts Excerpts - Below Navigation */}
             <Box sx={{ mt: 4 }}>
-                <KeyConceptExcerpts limit={6} questionTags={questionTags || []} />
+                <KeyConceptExcerpts limit={2} questionTags={questionTags || []} />
             </Box>
         </Box>
     );

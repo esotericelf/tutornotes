@@ -53,6 +53,7 @@ const ChangelogPage = () => {
     // Helper function to get icon for feature type
     const getFeatureIcon = (index, entryIndex) => {
         const versionEntries = [
+            { version: "v2.3.1", icons: [MobileFriendly, Code, MobileFriendly, Code] },
             { version: "v2.3.0", icons: [School, NewReleases, MobileFriendly, Speed, Code, Search] },
             { version: "v2.2.0", icons: [NewReleases, Search, Speed, MobileFriendly, Code] },
             { version: "v2.1.5", icons: [Code, Speed, Security, MobileFriendly] },
@@ -74,10 +75,11 @@ const ChangelogPage = () => {
 
     // Rebuild changelog entries when language changes
     const changelogEntries = useMemo(() => {
-        const versions = ["v2.3.0", "v2.2.0", "v2.1.5", "v2.1.4", "v2.1.3", "v2.1.2", "v2.1.1", "v2.1.0", "v2.0.0"];
-        const dates = ["January 2025", "December 2024", "December 2024", "November 2024", "October 2024", "September 2024", "August 2024", "July 2024", "June 2024"];
-        const types = ["major", "major", "patch", "patch", "patch", "patch", "patch", "major", "major"];
+        const versions = ["v2.3.1", "v2.3.0", "v2.2.0", "v2.1.5", "v2.1.4", "v2.1.3", "v2.1.2", "v2.1.1", "v2.1.0", "v2.0.0"];
+        const dates = ["November 2025", "October 2025", "December 2024", "December 2024", "November 2024", "October 2024", "September 2024", "August 2024", "July 2024", "June 2024"];
+        const types = ["patch", "major", "major", "patch", "patch", "patch", "patch", "patch", "major", "major"];
         const featureTypes = [
+            ["improvement", "improvement", "improvement", "improvement"],
             ["feature", "feature", "improvement", "feature", "improvement", "improvement"],
             ["feature", "fix", "improvement", "improvement", "improvement"],
             ["feature", "improvement", "improvement", "improvement"],

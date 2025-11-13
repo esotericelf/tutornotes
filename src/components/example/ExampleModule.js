@@ -8,7 +8,8 @@ import {
     Alert,
     Paper,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Button
 } from '@mui/material'
 import {
     Menu,
@@ -16,9 +17,10 @@ import {
     ChevronLeft,
     ChevronRight,
     MenuBook,
-    Construction
+    Construction,
+    ArrowBack
 } from '@mui/icons-material'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../services/supabase'
 import { parseTopicTagUrl, createTopicTagUrl } from '../../utils/urlHelpers'
 import { useTranslation } from '../../hooks/useTranslation'
@@ -28,11 +30,15 @@ import ExampleQuestions from './ExampleQuestions'
 
 const ExampleModule = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     const params = useParams()
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
     const { topic: topicParam, tag: tagParam } = params || {}
     const { isChinese, translateTopicTag, lookupEnglishFromChinese, currentLanguage } = useTranslation()
+
+    // Get referrer from navigation state
+    const referrer = location.state?.referrer
 
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [selectedTopic, setSelectedTopic] = useState(null)
@@ -247,12 +253,41 @@ const ExampleModule = () => {
                 gap: { xs: 2, sm: 2 },
                 mb: { xs: 3, sm: 4 }
             }}>
-                <IconButton
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
-                >
-                    {sidebarOpen ? <MenuOpen /> : <Menu />}
-                </IconButton>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <IconButton
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
+                    >
+                        {sidebarOpen ? <MenuOpen /> : <Menu />}
+                    </IconButton>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={() => {
+                            if (referrer) {
+                                navigate(referrer)
+                            } else {
+                                navigate(-1)
+                            }
+                        }}
+                        sx={{
+                            color: 'text.primary',
+                            textTransform: 'none',
+                            '&:hover': {
+                                backgroundColor: 'action.hover'
+                            }
+                        }}
+                    >
+                        {(() => {
+                            if (!referrer) return 'Back'
+                            const dseMathMatch = referrer.match(/\/DSE_Math\/(\d{4})\/([IVX]+)\/(\d+)/)
+                            if (dseMathMatch) {
+                                const [, year, paper, questionNo] = dseMathMatch
+                                return `Back to ${year} Paper ${paper} Question ${questionNo}`
+                            }
+                            return 'Back'
+                        })()}
+                    </Button>
+                </Box>
                 {selectedTopic && selectedTag && (
                     <Box sx={{
                         px: { xs: 2, sm: 3 },
