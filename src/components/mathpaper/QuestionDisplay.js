@@ -12,6 +12,7 @@ import { ExpandMore, ExpandLess, Label, ArrowBack } from '@mui/icons-material';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import CompactQuestionNavigation from './CompactQuestionNavigation';
+import NativeJSXGraphContainer from './NativeJSXGraphContainer';
 import { KeyConceptExcerpts } from '../example';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -60,6 +61,9 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
     };
 
     const solutionDiagrams = getSolutionDiagrams();
+    const hasNativeJsxGraphCode =
+        typeof question.solution_jsxgraph_code === 'string' &&
+        question.solution_jsxgraph_code.trim() !== '';
 
     // Helper function to render text with LaTeX
     const renderWithLaTeX = (text) => {
@@ -570,7 +574,22 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                 minHeight: 0 // Ensure proper flex shrinking
                             }}>
                                 {solutionDiagramExpanded ? (
-                                    solutionDiagrams.length > 0 ? (
+                                    hasNativeJsxGraphCode ? (
+                                        <Box sx={{
+                                            flex: 1,
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            overflow: 'hidden',
+                                            padding: 0,
+                                            minHeight: 0
+                                        }}>
+                                            <NativeJSXGraphContainer
+                                                code={question.solution_jsxgraph_code}
+                                                elementId={`jsx_${question.id}`}
+                                            />
+                                        </Box>
+                                    ) : solutionDiagrams.length > 0 ? (
                                         <>
                                             {/* Diagram Display */}
                                             <Box sx={{
@@ -683,7 +702,9 @@ const QuestionDisplay = ({ question, questionTags = [], onTagClick, onQuestionCh
                                             fontSize: { xs: '0.8rem', sm: '1rem' }
                                         }}
                                     >
-                                        {solutionDiagrams.length > 1 ? `${solutionDiagrams.length} ${t('diagram.multiple')}` : t('diagram.title')}
+                                        {!hasNativeJsxGraphCode && solutionDiagrams.length > 1
+                                            ? `${solutionDiagrams.length} ${t('diagram.multiple')}`
+                                            : t('diagram.title')}
                                     </Typography>
                                 )}
                             </Box>

@@ -12,6 +12,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import AdminRoute from './components/auth/AdminRoute'
 import MathPaperPage from './components/mathpaper/MathPaperPage'
 import QuestionDisplayDemo from './components/mathpaper/QuestionDisplayDemo'
+import SolutionReviewer from './components/admin/SolutionReviewer'
 import { QuizTaker, QuizResults } from './components/quiz'
 import TopicTagsDebug from './components/debug/TopicTagsDebug'
 import ChangelogPage from './components/common/ChangelogPage'
@@ -207,6 +208,14 @@ function App() {
                     element={                                                             //Admin only
                       <AdminRoute>
                         <QuestionDisplayDemo />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/solution-reviewer"
+                    element={
+                      <AdminRoute>
+                        <SolutionReviewer />
                       </AdminRoute>
                     }
                   />
