@@ -4,27 +4,6 @@ import { Box, CircularProgress, Typography, Alert } from '@mui/material'
 import { useAuth } from '../../store/hooks'
 import { ProfileService } from '../../services/user/profileService'
 
-const ADMIN_EMAILS = ['esoteric.elf@gmail.com']
-
-function getEnvAdminEmails() {
-    // CRA embeds REACT_APP_*; NEXT_PUBLIC_* supported if injected at build time.
-    const raw =
-        process.env.NEXT_PUBLIC_ADMIN_EMAILS ||
-        process.env.REACT_APP_ADMIN_EMAILS ||
-        ''
-    return raw
-        .split(',')
-        .map((email) => email.trim().toLowerCase())
-        .filter(Boolean)
-}
-
-function isEmailAllowlisted(email) {
-    if (!email) return false
-    const normalized = String(email).trim().toLowerCase()
-    const hardcoded = ADMIN_EMAILS.map((e) => e.toLowerCase())
-    return hardcoded.includes(normalized) || getEnvAdminEmails().includes(normalized)
-}
-
 const AdminRoute = ({ children }) => {
     const { user, loading } = useAuth()
     const location = useLocation()
@@ -35,16 +14,6 @@ const AdminRoute = ({ children }) => {
     useEffect(() => {
         const checkAdminStatus = async () => {
             if (!user) {
-                setIsAdmin(false)
-                setProfileError(null)
-                setProfileLoading(false)
-                return
-            }
-
-            // Hardcoded / env email allowlist grants admin immediately
-            if (isEmailAllowlisted(user.email)) {
-                setIsAdmin(true)
-                setProfileError(null)
                 setProfileLoading(false)
                 return
             }

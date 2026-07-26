@@ -39,11 +39,6 @@
   to = "/index.html"
   status = 200
 
-[[redirects]]
-  from = "/admin/*"
-  to = "/index.html"
-  status = 200
-
 # DSE_Math routes (with parameters)
 [[redirects]]
   from = "/DSE_Math/*"
