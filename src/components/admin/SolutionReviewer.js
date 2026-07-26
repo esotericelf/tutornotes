@@ -29,7 +29,11 @@ import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import NativeJSXGraphContainer from '../mathpaper/NativeJSXGraphContainer';
 
-const API_BASE = process.env.REACT_APP_STAGING_API_URL || 'http://localhost:8000';
+const API_BASE =
+    process.env.REACT_APP_STAGING_API_URL ||
+    process.env.REACT_APP_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:8000';
 
 function formatQuestionBadge(item) {
     const year = item?.year ?? '????';
