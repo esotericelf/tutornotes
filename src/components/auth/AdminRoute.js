@@ -4,8 +4,10 @@ import { Box, CircularProgress, Typography, Alert } from '@mui/material'
 import { useAuth } from '../../store/hooks'
 import { ProfileService } from '../../services/user/profileService'
 
-function getAdminEmails() {
-    // CRA embeds REACT_APP_*; NEXT_PUBLIC_* supported if set via custom tooling / Netlify inject.
+const ADMIN_EMAILS = ['esoteric.elf@gmail.com']
+
+function getEnvAdminEmails() {
+    // CRA embeds REACT_APP_*; NEXT_PUBLIC_* supported if injected at build time.
     const raw =
         process.env.NEXT_PUBLIC_ADMIN_EMAILS ||
         process.env.REACT_APP_ADMIN_EMAILS ||
@@ -18,7 +20,9 @@ function getAdminEmails() {
 
 function isEmailAllowlisted(email) {
     if (!email) return false
-    return getAdminEmails().includes(String(email).trim().toLowerCase())
+    const normalized = String(email).trim().toLowerCase()
+    const hardcoded = ADMIN_EMAILS.map((e) => e.toLowerCase())
+    return hardcoded.includes(normalized) || getEnvAdminEmails().includes(normalized)
 }
 
 const AdminRoute = ({ children }) => {
@@ -37,7 +41,7 @@ const AdminRoute = ({ children }) => {
                 return
             }
 
-            // Email allowlist grants admin immediately
+            // Hardcoded / env email allowlist grants admin immediately
             if (isEmailAllowlisted(user.email)) {
                 setIsAdmin(true)
                 setProfileError(null)
