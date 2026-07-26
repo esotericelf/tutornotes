@@ -132,6 +132,8 @@ const NativeJSXGraphContainer = ({ code, elementId }) => {
                 }
 
                 // Execute against window.JXG; expose elementId for initBoard(elementId, ...)
+                // Trusted admin/content-authored JSXGraph snippets; Function scopes JXG + elementId.
+                // eslint-disable-next-line no-new-func -- intentional sandboxed board init
                 const execute = new Function('JXG', 'elementId', `"use strict";\n${code}`);
                 execute(JXG, elementId);
             } catch (err) {
